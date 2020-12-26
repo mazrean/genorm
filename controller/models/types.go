@@ -5,7 +5,7 @@ type DataType string
 
 const (
 	// Bit BIT
-	Bit = "bit"
+	Bit DataType = "bit"
 	// TinyInt TINYINT
 	TinyInt = "tiny_int"
 	// SmallInt SMALLINT
