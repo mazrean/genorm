@@ -1,5 +1,7 @@
 package models
 
+import "github.com/mazrean/gopendb-generator/cmd/domain"
+
 // Table テーブルの構造体(yaml用)
 type Table struct {
 	ID           string      `yaml:"id"`
@@ -16,6 +18,6 @@ type Table struct {
 
 // PrimaryKey 主キーの構造体(yaml)
 type PrimaryKey struct {
-	Columns []*IndexColumn `yaml:"columns"`
-	Options *IndexOption   `yaml:"options"`
+	Columns []*domain.IndexColumn `yaml:"columns"`
+	Options *IndexOption          `yaml:"options"`
 }

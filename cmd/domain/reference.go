@@ -1,4 +1,4 @@
-package models
+package domain
 
 // Match マッチの種類
 type Match string
@@ -28,9 +28,8 @@ const (
 
 // Reference 外部キーの構造体(yaml用)
 type Reference struct {
-	Table    string         `yaml:"table"`
-	Columns  []*IndexColumn `yaml:"columns"`
-	Match    Match          `yaml:"match"`
-	OnDelete string         `yaml:"on_delete"`
-	OnUpdate string         `yaml:"on_update"`
+	Table    string `yaml:"table"`
+	Match    Match  `yaml:"match"`
+	OnDelete string `yaml:"on_delete"`
+	OnUpdate string `yaml:"on_update"`
 }

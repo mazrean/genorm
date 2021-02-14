@@ -1,4 +1,4 @@
-package models
+package domain
 
 // DataType DBの型一覧
 type DataType string

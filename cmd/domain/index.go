@@ -1,4 +1,4 @@
-package models
+package domain
 
 // IndexType インデックスの種類
 type IndexType string
@@ -23,7 +23,6 @@ const (
 // IndexOption インデックスのオプション
 type IndexOption struct {
 	KeyBlockSize int    `yaml:"key_block_size"`
-	Type         Type   `yaml:"type"`
 	Parser       string `yaml:"parser"`
 }
 

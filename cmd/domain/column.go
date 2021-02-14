@@ -1,4 +1,4 @@
-package models
+package domain
 
 // ColumnFormat データの保存形式
 type ColumnFormat string
@@ -22,14 +22,12 @@ const (
 
 // Column カラムの構造体(yaml用)
 type Column struct {
-	ID          string       `yaml:"id"`
-	Description string       `yaml:"description"`
-	Name        string       `yaml:"name"`
-	Type        string       `yaml:"type"`
-	Null        bool         `yaml:"null"`
-	Default     string       `yaml:"dafault"`
-	Reference   []*Reference `yaml:"reference"`
-	Extra       *Extra       `yaml:"extra"`
+	ID          string `yaml:"id"`
+	Description string `yaml:"description"`
+	Name        string `yaml:"name"`
+	Type        string `yaml:"type"`
+	Null        bool   `yaml:"null"`
+	Default     string `yaml:"dafault"`
 }
 
 // Extra 特殊な設定

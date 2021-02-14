@@ -1,4 +1,4 @@
-package models
+package domain
 
 // DBMS dbms(mysql,postgres,etc)
 type DBMS string
