@@ -11,13 +11,15 @@ import (
 type Generate struct {
 	config.Reader
 	config.Config
+	config.Table
 }
 
 // NewGenerate Generateのコンストラクタ
-func NewGenerate(cr config.Reader, cf config.Config) *Generate {
+func NewGenerate(cr config.Reader, cf config.Config, ct config.Table) *Generate {
 	return &Generate{
 		Reader: cr,
 		Config: cf,
+		Table:  ct,
 	}
 }
 
@@ -31,6 +33,11 @@ func (g *Generate) Service(ctx context.Context, yamlPath string) error {
 	config, err := g.Config.Get()
 	if err != nil {
 		return fmt.Errorf("failed to get config: %w", err)
+	}
+
+	tables, err := g.Table.GetAll()
+	if err != nil {
+		return fmt.Errorf("failed to get tables: %w", err)
 	}
 
 	return nil
