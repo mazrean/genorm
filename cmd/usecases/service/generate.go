@@ -9,19 +9,19 @@ import (
 
 // Generate コード生成のservice
 type Generate struct {
-	config.ConfigReader
+	config.Reader
 }
 
 // NewGenerate Generateのコンストラクタ
-func NewGenerate(cr config.ConfigReader) *Generate {
+func NewGenerate(cr config.Reader) *Generate {
 	return &Generate{
-		ConfigReader: cr,
+		Reader: cr,
 	}
 }
 
 // Service コード生成のservice
 func (g *Generate) Service(ctx context.Context, yamlPath string) error {
-	err := g.ConfigReader.ReadYAML(yamlPath)
+	err := g.Reader.ReadYAML(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read yaml: %w", err)
 	}
