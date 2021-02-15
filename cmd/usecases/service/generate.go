@@ -10,12 +10,14 @@ import (
 // Generate コード生成のservice
 type Generate struct {
 	config.Reader
+	config.Config
 }
 
 // NewGenerate Generateのコンストラクタ
-func NewGenerate(cr config.Reader) *Generate {
+func NewGenerate(cr config.Reader, cf config.Config) *Generate {
 	return &Generate{
 		Reader: cr,
+		Config: cf,
 	}
 }
 
@@ -24,6 +26,11 @@ func (g *Generate) Service(ctx context.Context, yamlPath string) error {
 	err := g.Reader.ReadYAML(yamlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read yaml: %w", err)
+	}
+
+	config, err := g.Config.Get()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %w", err)
 	}
 
 	return nil
