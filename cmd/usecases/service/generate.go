@@ -24,11 +24,14 @@ type Generate struct {
 }
 
 // NewGenerate Generateのコンストラクタ
-func NewGenerate(cr config.Reader, cf config.Config, ct config.Table) *Generate {
+func NewGenerate(cr config.Reader, cf config.Config, ct config.Table, cc code.Config, cdt code.Table, ww writer.Writer) *Generate {
 	return &Generate{
-		Reader: cr,
-		Config: cf,
-		Table:  ct,
+		Reader:     cr,
+		Config:     cf,
+		Table:      ct,
+		codeConfig: cc,
+		codeTable:  cdt,
+		Writer:     ww,
 	}
 }
 
