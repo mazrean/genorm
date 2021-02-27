@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/mazrean/gopendb-generator/cmd/usecases/code"
 	"github.com/mazrean/gopendb-generator/cmd/usecases/config"
@@ -10,7 +11,7 @@ import (
 )
 
 const (
-	chanBuf = 10
+	chBuf = 10
 )
 
 // Generate コード生成のservice
@@ -57,19 +58,16 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 
 	g.codeConfig.Set(config)
 
-	tableDetails, err := g.Table.GetAll()
-	if err != nil {
-		return fmt.Errorf("failed to get tables: %w", err)
-	}
+	tableDetails := g.Table.GetAll()
 
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	totalChan := make(chan struct{}, chanBuf)
-	progressChan := make(chan struct{}, chanBuf)
-	progressChans := writer.Progress{
-		Total:    totalChan,
-		Progress: progressChan,
+	totalCh := make(chan struct{}, chBuf)
+	progressCh := make(chan struct{}, chBuf)
+	progressChs := writer.Progress{
+		Total:    totalCh,
+		Progress: progressCh,
 	}
 
 	go func(ctx context.Context, totalChan <-chan struct{}, progressChan <-chan struct{}) {
@@ -88,7 +86,7 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 				progressCounter.Set(progress)
 			}
 		}
-	}(childCtx, totalChan, progressChan)
+	}(childCtx, totalCh, progressCh)
 
 	isPbOn := true
 	err = progressCounter.Start()
@@ -100,15 +98,9 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 	for _, tableDetail := range tableDetails {
 		tableID := tableDetail.Table.ID
 
-		columns, err := g.Table.GetColumns(tableID)
-		if err != nil {
-			return fmt.Errorf("failed to get columns: %w", err)
-		}
+		columns := g.Table.GetColumns(tableID)
 
-		references, err := g.Table.GetReference(tableID)
-		if err != nil {
-			return fmt.Errorf("failed to get references: %w", err)
-		}
+		references := g.Table.GetReference(tableID)
 
 		codeReferences := make([]*code.TableReference, 0, len(references))
 		for _, reference := range codeReferences {
@@ -126,12 +118,15 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 			References:          codeReferences,
 		}
 
-		fileWriter, err := g.Writer.FileWriterGenerator(ctx, &progressChans, rootPath)
+		fileWriter, err := g.Writer.FileWriterGenerator(ctx, &progressChs, path.Join(rootPath, tableDetail.ID))
 		if err != nil {
 			return fmt.Errorf("failed to generate file writer: %w", err)
 		}
 
-		g.codeTable.Generate(ctx, &codeTableDetail, fileWriter)
+		err = g.codeTable.Generate(ctx, &codeTableDetail, fileWriter)
+		if err != nil {
+			return fmt.Errorf("failed to generate: %w", err)
+		}
 	}
 
 	if isPbOn {

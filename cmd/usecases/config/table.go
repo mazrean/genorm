@@ -6,9 +6,9 @@ import "github.com/mazrean/gopendb-generator/cmd/domain"
 
 // Table 設定ファイルのtableのinterface
 type Table interface {
-	GetAll() ([]*TableDetail, error)
-	GetColumns(tableID string) ([]*domain.Column, error)
-	GetReference(tableID string) ([]*TableReference, error)
+	GetAll() []*TableDetail
+	GetColumns(tableID string) []*domain.Column
+	GetReference(tableID string) []*TableReference
 }
 
 // TableDetail テーブルの詳細
