@@ -1,4 +1,4 @@
-package config
+package code
 
 //go:generate mockgen -source=$GOFILE -destination=mock_$GOPACKAGE/mock_$GOFILE
 
@@ -6,7 +6,7 @@ import (
 	"github.com/mazrean/gopendb-generator/cmd/domain"
 )
 
-// Config configの取得
+// Config コード生成のコンフィグ設定のinterface
 type Config interface {
-	Get() (*domain.Config, error)
+	Set(*domain.Config)
 }
