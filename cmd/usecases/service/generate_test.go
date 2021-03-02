@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"io"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -11,7 +10,6 @@ import (
 	"github.com/mazrean/gopendb-generator/cmd/usecases/code/mock_code"
 	"github.com/mazrean/gopendb-generator/cmd/usecases/config"
 	"github.com/mazrean/gopendb-generator/cmd/usecases/config/mock_config"
-	"github.com/mazrean/gopendb-generator/cmd/usecases/writer/mock_writer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,22 +42,20 @@ func TestGenerate(t *testing.T) {
 	table := mock_config.NewMockTable(ctrl)
 	codeConfig := mock_code.NewMockConfig(ctrl)
 	codeTable := mock_code.NewMockTable(ctrl)
-	writer := mock_writer.NewMockWriter(ctrl)
 
-	generate := NewGenerate(reader, conf, table, codeConfig, codeTable, writer)
+	generate := NewGenerate(reader, conf, table, codeConfig, codeTable)
 
 	type args struct {
 		yamlPath string
 		rootPath string
 	}
 	type mock struct {
-		readErr                error
-		config                 *domain.Config
-		tableDetails           []*config.TableDetail
-		columnsMap             map[string][]*domain.Column
-		referenceMap           map[string][]*config.TableReference
-		fileWriterGeneratorErr error
-		generateErr            error
+		readErr      error
+		config       *domain.Config
+		tableDetails []*config.TableDetail
+		columnsMap   map[string][]*domain.Column
+		referenceMap map[string][]*config.TableReference
+		generateErr  error
 	}
 	type expect struct {
 		isErr bool
@@ -153,38 +149,6 @@ func TestGenerate(t *testing.T) {
 				isErr: true,
 			},
 		},
-		{
-			description: "generate writer error",
-			args: args{
-				yamlPath: "/yamlpath",
-				rootPath: "/rootPath",
-			},
-			mock: mock{
-				config: &domain.Config{
-					DBMS:     domain.MySQL,
-					Version:  "8.0",
-					Database: "test",
-				},
-				tableDetails: []*config.TableDetail{
-					{
-						Table: &domain.Table{
-							ID: "test",
-						},
-						PrimaryKeyColumnIDs: []string{},
-					},
-				},
-				columnsMap: map[string][]*domain.Column{
-					"test": {},
-				},
-				referenceMap: map[string][]*config.TableReference{
-					"test": {},
-				},
-				fileWriterGeneratorErr: errors.New("generate writer error"),
-			},
-			expect: expect{
-				isErr: true,
-			},
-		},
 	}
 
 	for _, testCase := range testCases {
@@ -199,18 +163,10 @@ func TestGenerate(t *testing.T) {
 			for tableID, reference := range testCase.mock.referenceMap {
 				table.EXPECT().GetReference(tableID).Return(reference)
 			}
-			if testCase.mock.fileWriterGeneratorErr == nil && testCase.mock.generateErr == nil {
-				writer.EXPECT().FileWriterGenerator(gomock.Any(), gomock.Any(), gomock.Any()).Return(func(path string) (io.WriteCloser, error) {
-					return nil, nil
-				}, testCase.mock.fileWriterGeneratorErr).Times(len(testCase.mock.tableDetails))
+			if testCase.mock.generateErr == nil {
 				codeTable.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(testCase.mock.generateErr).Times(len(testCase.mock.tableDetails))
 			} else {
-				writer.EXPECT().FileWriterGenerator(gomock.Any(), gomock.Any(), gomock.Any()).Return(func(path string) (io.WriteCloser, error) {
-					return nil, nil
-				}, testCase.mock.fileWriterGeneratorErr).Times(1)
-				if testCase.mock.fileWriterGeneratorErr == nil {
-					codeTable.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(testCase.mock.generateErr).Times(1)
-				}
+				codeTable.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(testCase.mock.generateErr).Times(1)
 			}
 		}
 

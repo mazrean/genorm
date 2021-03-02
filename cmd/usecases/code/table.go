@@ -4,14 +4,13 @@ package code
 
 import (
 	"context"
-	"io"
 
 	"github.com/mazrean/gopendb-generator/cmd/domain"
 )
 
 // Table コード生成のtableのinterface
 type Table interface {
-	Generate(ctx context.Context, tableDetail *TableDetail, fileWriter func(path string) (io.WriteCloser, error)) error
+	Generate(ctx context.Context, progress *Progress, tableDetail *TableDetail) error
 }
 
 // TableDetail テーブルの詳細
@@ -27,4 +26,10 @@ type TableReference struct {
 	Column          *domain.Column
 	ReferenceTable  *domain.Table
 	ReferenceColumn *domain.Column
+}
+
+// Progress 進捗状況の伝達
+type Progress struct {
+	Total    chan<- struct{}
+	Progress chan<- struct{}
 }

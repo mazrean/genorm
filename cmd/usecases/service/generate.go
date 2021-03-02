@@ -3,11 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/mazrean/gopendb-generator/cmd/usecases/code"
 	"github.com/mazrean/gopendb-generator/cmd/usecases/config"
-	"github.com/mazrean/gopendb-generator/cmd/usecases/writer"
 )
 
 const (
@@ -21,18 +19,16 @@ type Generate struct {
 	config.Table
 	codeConfig code.Config
 	codeTable  code.Table
-	writer.Writer
 }
 
 // NewGenerate Generateのコンストラクタ
-func NewGenerate(cr config.Reader, cf config.Config, ct config.Table, cc code.Config, cdt code.Table, ww writer.Writer) *Generate {
+func NewGenerate(cr config.Reader, cf config.Config, ct config.Table, cc code.Config, cdt code.Table) *Generate {
 	return &Generate{
 		Reader:     cr,
 		Config:     cf,
 		Table:      ct,
 		codeConfig: cc,
 		codeTable:  cdt,
-		Writer:     ww,
 	}
 }
 
@@ -65,7 +61,7 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 
 	totalCh := make(chan struct{}, chBuf)
 	progressCh := make(chan struct{}, chBuf)
-	progressChs := writer.Progress{
+	progressChs := code.Progress{
 		Total:    totalCh,
 		Progress: progressCh,
 	}
@@ -118,12 +114,7 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 			References:          codeReferences,
 		}
 
-		fileWriter, err := g.Writer.FileWriterGenerator(ctx, &progressChs, path.Join(rootPath, tableDetail.ID))
-		if err != nil {
-			return fmt.Errorf("failed to generate file writer: %w", err)
-		}
-
-		err = g.codeTable.Generate(ctx, &codeTableDetail, fileWriter)
+		err = g.codeTable.Generate(ctx, &progressChs, &codeTableDetail)
 		if err != nil {
 			return fmt.Errorf("failed to generate: %w", err)
 		}
