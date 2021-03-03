@@ -6,15 +6,10 @@ import "github.com/mazrean/gopendb-generator/cmd/domain"
 
 // Table 設定ファイルのtableのinterface
 type Table interface {
-	GetAll() []*TableDetail
-	GetColumns(tableID string) []*domain.Column
-	GetReference(tableID string) []*TableReference
-}
-
-// TableDetail テーブルの詳細
-type TableDetail struct {
-	*domain.Table
-	PrimaryKeyColumnIDs []string
+	GetAll() []*domain.Table
+	GetPrimaryKeyNames(tableID string) ([]string, error)
+	GetColumns(tableID string) ([]*domain.Column, error)
+	GetReference(tableID string) ([]*TableReference, error)
 }
 
 // TableReference テーブルの外部キー制約

@@ -16,9 +16,9 @@ type Table interface {
 // TableDetail テーブルの詳細
 type TableDetail struct {
 	*domain.Table
-	PrimaryKeyColumnIDs []string
-	Columns             []*domain.Column
-	References          []*TableReference
+	PrimaryKeyColumnNames []string
+	Columns               []*domain.Column
+	References            []*TableReference
 }
 
 // TableReference テーブルの外部キー制約

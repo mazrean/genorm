@@ -54,7 +54,7 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 
 	g.codeConfig.Set(config)
 
-	tableDetails := g.Table.GetAll()
+	tables := g.Table.GetAll()
 
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -91,12 +91,21 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 		cancel()
 	}
 
-	for _, tableDetail := range tableDetails {
-		tableID := tableDetail.Table.ID
+	for _, table := range tables {
+		primaryKeyNames, err := g.Table.GetPrimaryKeyNames(table.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get primary keys(tableID: %s): %w", table.ID, err)
+		}
 
-		columns := g.Table.GetColumns(tableID)
+		columns, err := g.Table.GetColumns(table.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get columns(tableID: %s): %w", table.ID, err)
+		}
 
-		references := g.Table.GetReference(tableID)
+		references, err := g.Table.GetReference(table.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get references(tableID: %s): %w", table.ID, err)
+		}
 
 		codeReferences := make([]*code.TableReference, 0, len(references))
 		for _, reference := range codeReferences {
@@ -108,10 +117,10 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 		}
 
 		codeTableDetail := code.TableDetail{
-			Table:               tableDetail.Table,
-			PrimaryKeyColumnIDs: tableDetail.PrimaryKeyColumnIDs,
-			Columns:             columns,
-			References:          codeReferences,
+			Table:                 table,
+			PrimaryKeyColumnNames: primaryKeyNames,
+			Columns:               columns,
+			References:            codeReferences,
 		}
 
 		err = g.codeTable.Generate(ctx, &progressChs, &codeTableDetail)
