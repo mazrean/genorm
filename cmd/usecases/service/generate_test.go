@@ -50,12 +50,13 @@ func TestGenerate(t *testing.T) {
 		rootPath string
 	}
 	type mock struct {
-		readErr      error
-		config       *domain.Config
-		tableDetails []*config.TableDetail
-		columnsMap   map[string][]*domain.Column
-		referenceMap map[string][]*config.TableReference
-		generateErr  error
+		readErr           error
+		config            *domain.Config
+		tables            []*domain.Table
+		primaryKeyNameMap map[string][]string
+		columnsMap        map[string][]*domain.Column
+		referenceMap      map[string][]*config.TableReference
+		generateErr       error
 	}
 	type expect struct {
 		isErr bool
@@ -80,13 +81,13 @@ func TestGenerate(t *testing.T) {
 					Version:  "8.0",
 					Database: "test",
 				},
-				tableDetails: []*config.TableDetail{
+				tables: []*domain.Table{
 					{
-						Table: &domain.Table{
-							ID: "test",
-						},
-						PrimaryKeyColumnIDs: []string{},
+						ID: "test",
 					},
+				},
+				primaryKeyNameMap: map[string][]string{
+					"test": {},
 				},
 				columnsMap: map[string][]*domain.Column{
 					"test": {},
@@ -109,9 +110,10 @@ func TestGenerate(t *testing.T) {
 					Version:  "8.0",
 					Database: "test",
 				},
-				tableDetails: []*config.TableDetail{},
-				columnsMap:   map[string][]*domain.Column{},
-				referenceMap: map[string][]*config.TableReference{},
+				tables:            []*domain.Table{},
+				primaryKeyNameMap: map[string][]string{},
+				columnsMap:        map[string][]*domain.Column{},
+				referenceMap:      map[string][]*config.TableReference{},
 			},
 			expect: expect{
 				isErr: true,
@@ -129,13 +131,13 @@ func TestGenerate(t *testing.T) {
 					Version:  "8.0",
 					Database: "test",
 				},
-				tableDetails: []*config.TableDetail{
+				tables: []*domain.Table{
 					{
-						Table: &domain.Table{
-							ID: "test",
-						},
-						PrimaryKeyColumnIDs: []string{},
+						ID: "test",
 					},
+				},
+				primaryKeyNameMap: map[string][]string{
+					"test": {},
 				},
 				columnsMap: map[string][]*domain.Column{
 					"test": {},
@@ -156,15 +158,18 @@ func TestGenerate(t *testing.T) {
 		if testCase.mock.readErr == nil {
 			conf.EXPECT().Get().Return(testCase.mock.config, nil)
 			codeConfig.EXPECT().Set(testCase.mock.config).Return()
-			table.EXPECT().GetAll().Return(testCase.mock.tableDetails)
+			table.EXPECT().GetAll().Return(testCase.mock.tables)
+			for tableID, primaryKeyNames := range testCase.mock.primaryKeyNameMap {
+				table.EXPECT().GetPrimaryKeyNames(tableID).Return(primaryKeyNames, nil)
+			}
 			for tableID, columns := range testCase.mock.columnsMap {
-				table.EXPECT().GetColumns(tableID).Return(columns)
+				table.EXPECT().GetColumns(tableID).Return(columns, nil)
 			}
 			for tableID, reference := range testCase.mock.referenceMap {
-				table.EXPECT().GetReference(tableID).Return(reference)
+				table.EXPECT().GetReference(tableID).Return(reference, nil)
 			}
 			if testCase.mock.generateErr == nil {
-				codeTable.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(testCase.mock.generateErr).Times(len(testCase.mock.tableDetails))
+				codeTable.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(testCase.mock.generateErr).Times(len(testCase.mock.tables))
 			} else {
 				codeTable.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(testCase.mock.generateErr).Times(1)
 			}
