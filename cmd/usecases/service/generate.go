@@ -117,10 +117,10 @@ func (g *Generate) Service(ctx context.Context, yamlPath string, rootPath string
 		}
 
 		codeTableDetail := code.TableDetail{
-			Table:               table,
-			PrimaryKeyColumnIDs: primaryKeyNames,
-			Columns:             columns,
-			References:          codeReferences,
+			Table:                 table,
+			PrimaryKeyColumnNames: primaryKeyNames,
+			Columns:               columns,
+			References:            codeReferences,
 		}
 
 		err = g.codeTable.Generate(ctx, &progressChs, &codeTableDetail)
