@@ -1,15 +1,22 @@
 package genorm
 
 type Table interface {
+	SQLTableName() string
+}
+
+type BasicTable interface {
+	Table
 	TableName() string
 }
 
 type JoinedTable interface {
 	Table
-	BaseTables() []Table
+	BaseTables() []BasicTable
 	Relations() []Relation
 	SetRelation(base Column, ref Column, relationType RelationType)
 }
+
+type TableColumns[T Table] uint16
 
 type Column interface {
 	TableName() string
