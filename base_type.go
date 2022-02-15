@@ -16,7 +16,9 @@ type JoinedTable interface {
 	SetRelation(base Column, ref Column, relationType RelationType)
 }
 
-type TableColumns[_ TableBase] string
+type TableColumns[T TableBase] interface {
+	TableColumnName(T) string
+}
 
 type Column interface {
 	TableName() string

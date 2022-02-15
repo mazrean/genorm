@@ -199,7 +199,7 @@ func (bc *BasicColumn[Type]) iValue() (val any, err error) {
 }
 
 type RelationalColumn[Type ColumnType, BaseColumn Column, RefColumn Column, _ JoinedTable] struct {
-	Column BasicColumn[Type]
+	BasicColumn[Type]
 }
 
 func (r RelationalColumn[_, BaseColumn, RefColumn, JoinedTable]) Join() JoinedTable {
