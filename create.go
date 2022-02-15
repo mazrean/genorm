@@ -10,15 +10,14 @@ import (
 )
 
 type CreateContext[T TableBase] struct {
-	table  T
+	*Context[T]
 	values []T
 	fields []TableColumns[T]
-	errs   []error
 }
 
-func newCreateContext[T TableBase](table T, tableBases ...T) *CreateContext[T] {
+func newCreateContext[T TableBase](ctx *Context[T], tableBases ...T) *CreateContext[T] {
 	return &CreateContext[T]{
-		table:  table,
+		Context: ctx,
 		values: tableBases,
 		fields: nil,
 	}
@@ -26,11 +25,11 @@ func newCreateContext[T TableBase](table T, tableBases ...T) *CreateContext[T] {
 
 func (c *CreateContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *CreateContext[TableBase] {
 	if c.fields != nil {
-		c.errs = append(c.errs, errors.New("fields already set"))
+		c.addError(errors.New("fields already set"))
 		return c
 	}
 	if len(fields) == 0 {
-		c.errs = append(c.errs, errors.New("no fields"))
+		c.addError(errors.New("no fields"))
 		return c
 	}
 
@@ -38,7 +37,7 @@ func (c *CreateContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *Cr
 	fieldMap := make(map[TableColumns[TableBase]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
-			c.errs = append(c.errs, errors.New("duplicate field"))
+			c.addError(errors.New("duplicate field"))
 			return c
 		}
 
@@ -51,8 +50,9 @@ func (c *CreateContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *Cr
 }
 
 func (c *CreateContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
-	if len(c.errs) != 0 {
-		return 0, c.errs[0]
+	errs := c.Errors()
+	if len(errs) != 0 {
+		return 0, errs[0]
 	}
 
 	query, args, err := c.buildQuery()
@@ -73,9 +73,10 @@ func (c *CreateContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) (r
 	return rowsAffected, nil
 }
 
-func (c *CreateContext[TableBase]) Dot(db *sql.DB) (rowsAffected int64, err error) {
-	if len(c.errs) != 0 {
-		return 0, c.errs[0]
+func (c *CreateContext[TableBase]) Do(db *sql.DB) (rowsAffected int64, err error) {
+	errs := c.Errors()
+	if len(errs) != 0 {
+		return 0, errs[0]
 	}
 
 	query, args, err := c.buildQuery()

@@ -1,15 +1,15 @@
 package genorm
 
 type TableContext[T TableBase] struct {
-	table T
+	*Context[T]
 }
 
 func Table[T TableBase](table T) *TableContext[T] {
 	return &TableContext[T]{
-		table: table,
+		Context: newContext(table),
 	}
 }
 
 func (tc *TableContext[TableBase]) Create(tableBases ...TableBase) *CreateContext[TableBase] {
-	return newCreateContext(tc.table, tableBases...)
+	return newCreateContext(tc.Context, tableBases...)
 }
