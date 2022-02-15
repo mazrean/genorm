@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type ColumnField interface {
+	sql.Scanner
+	iValue() (val any, err error)
+}
+
 type ColumnType interface {
 	bool |
 		int | int8 | int16 | int32 | int64 |
@@ -14,11 +19,10 @@ type ColumnType interface {
 		string | time.Time | []byte
 }
 
-var ErrEmptyColumn = errors.New("empty column")
-
 type BasicColumn[Type ColumnType] struct {
-	Valid bool
-	Val   Type
+	IsNull bool
+	Valid  bool
+	Val    Type
 }
 
 func (c *BasicColumn[Type]) Scan(src interface{}) error {
@@ -173,12 +177,25 @@ func (c *BasicColumn[Type]) Scan(src interface{}) error {
 	return nil
 }
 
+var (
+	ErrNullValue   = errors.New("null value")
+	ErrEmptyColumn = errors.New("empty column")
+)
+
 func (bc *BasicColumn[Type]) Value() (val Type, err error) {
+	if bc.IsNull {
+		return val, ErrNullValue
+	}
+
 	if bc.Valid {
 		return val, ErrEmptyColumn
 	}
 
 	return bc.Val, nil
+}
+
+func (bc *BasicColumn[Type]) iValue() (val any, err error) {
+	return bc.Value()
 }
 
 type RelationalColumn[Type ColumnType, BaseColumn Column, RefColumn Column, _ JoinedTable] struct {
