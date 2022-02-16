@@ -18,8 +18,8 @@ type CreateContext[T TableBase] struct {
 func newCreateContext[T TableBase](ctx *Context[T], tableBases ...T) *CreateContext[T] {
 	return &CreateContext[T]{
 		Context: ctx,
-		values: tableBases,
-		fields: nil,
+		values:  tableBases,
+		fields:  nil,
 	}
 }
 
@@ -126,9 +126,9 @@ func (c *CreateContext[TableBase]) basicTableBuildQuery(basicTable BasicTable) (
 				sb.WriteString(", ")
 			}
 
-			sb.WriteString(field.TableColumnName(c.table))
+			sb.WriteString(field.ColumnName())
 
-			fields = append(fields, field.TableColumnName(c.table))
+			fields = append(fields, field.ColumnName())
 		}
 	}
 	sb.WriteString(") VALUES ")
@@ -181,9 +181,9 @@ func (c *CreateContext[TableBase]) joinedTableBuildQuery(joinedTable JoinedTable
 				sb.WriteString(", ")
 			}
 
-			sb.WriteString(field.TableColumnName(c.table))
+			sb.WriteString(field.ColumnName())
 
-			fields = append(fields, field.TableColumnName(c.table))
+			fields = append(fields, field.ColumnName())
 		}
 	}
 	sb.WriteString(") VALUES ")
