@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -118,7 +117,7 @@ func (c *CreateContext[TableBase]) basicTableBuildQuery(basicTable BasicTable) (
 	var fields []string
 	sb.WriteString(" (")
 	if c.fields == nil {
-		fields = c.basicTableFields(basicTable)
+		fields = basicTable.ColumnNames()
 		sb.WriteString(strings.Join(fields, ", "))
 	} else {
 		for i, field := range c.fields {
@@ -144,11 +143,9 @@ func (c *CreateContext[TableBase]) basicTableBuildQuery(basicTable BasicTable) (
 			return "", nil, errors.New("failed to cast value to basic table")
 		}
 
-		fieldValueMap, err := c.basicTableFieldValueMap(basicTable)
-		if err != nil {
-			return "", nil, fmt.Errorf("basic table field map: %w", err)
-		}
+		fieldValueMap := basicTable.ColumnMap()
 
+		var err error
 		sb, args, err = c.buildValueList(sb, args, fields, fieldValueMap)
 		if err != nil {
 			return "", nil, fmt.Errorf("build value list: %w", err)
@@ -172,7 +169,7 @@ func (c *CreateContext[TableBase]) joinedTableBuildQuery(joinedTable JoinedTable
 	if c.fields == nil {
 		fields = []string{}
 		for _, basicTable := range basicTables {
-			fields = append(fields, c.basicTableFields(basicTable)...)
+			fields = append(fields, basicTable.ColumnNames()...)
 		}
 		sb.WriteString(strings.Join(fields, ", "))
 	} else {
@@ -203,10 +200,7 @@ func (c *CreateContext[TableBase]) joinedTableBuildQuery(joinedTable JoinedTable
 
 		fieldValueMap := make(map[string]any)
 		for _, basicTable := range basicTables {
-			basicTableFieldValueMap, err := c.basicTableFieldValueMap(basicTable)
-			if err != nil {
-				return "", nil, fmt.Errorf("basic table field map: %w", err)
-			}
+			basicTableFieldValueMap := basicTable.ColumnMap()
 
 			for k, v := range basicTableFieldValueMap {
 				if _, ok := fieldValueMap[k]; ok {
@@ -259,35 +253,4 @@ func (c *CreateContext[TableBase]) buildValueList(sb strings.Builder, args []any
 	sb.WriteString(")")
 
 	return sb, args, nil
-}
-
-func (c *CreateContext[TableBase]) basicTableFields(basicTable BasicTable) []string {
-	fields := make([]string, 0, len(basicTable.ColumnNames()))
-	for _, field := range basicTable.ColumnNames() {
-		fields = append(fields, fmt.Sprintf("%s.%s", basicTable.TableName(), field))
-	}
-
-	return fields
-}
-
-func (c *CreateContext[TableBase]) basicTableFieldValueMap(basicTable BasicTable) (map[string]any, error) {
-	t := reflect.TypeOf(basicTable)
-	v := reflect.ValueOf(basicTable)
-
-	if t.Kind() != reflect.Struct {
-		return nil, errors.New("value is not a struct")
-	}
-
-	fieldMap := make(map[string]any)
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		columnName, ok := field.Tag.Lookup("genorm")
-		if !ok {
-			return nil, errors.New("genorm tag not found")
-		}
-
-		fieldMap[fmt.Sprintf("%s.%s", basicTable.TableName(), columnName)] = v.Field(i).Interface()
-	}
-
-	return fieldMap, nil
 }

@@ -11,6 +11,7 @@ type TableBase interface {
 type BasicTable interface {
 	TableBase
 	ColumnNames() []string
+	ColumnMap() map[string]any
 }
 
 type JoinedTable interface {
