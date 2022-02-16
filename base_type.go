@@ -24,6 +24,12 @@ type JoinedTable interface {
 
 type Expr interface {
 	Expr() (string, []any)
+	Errors() []error
+}
+
+type NullableExpr interface {
+	Expr
+	IsNull() bool
 }
 
 type TableExpr[T TableBase] interface {
@@ -42,12 +48,18 @@ type TypedTableExpr[T TableBase, S ExprType] interface {
 	TypedExpr[S]
 }
 
+type NullableTypedTableExpr[T TableBase, S ExprType] interface {
+	NullableExpr
+	TableExpr[T]
+	TypedExpr[S]
+}
+
 type ExprType interface {
 	bool |
 		int | int8 | int16 | int32 | int64 |
 		uint | uint8 | uint16 | uint32 | uint64 |
 		float32 | float64 |
-		string | time.Time | []byte
+		string | time.Time
 }
 
 // Column types
