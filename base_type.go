@@ -31,15 +31,23 @@ type TableExpr[T TableBase] interface {
 	TableExpr(T) (string, []any)
 }
 
-type TypedExpr[T ColumnType] interface {
+type TypedExpr[T ExprType] interface {
 	Expr
 	TypedExpr(T) (string, []any)
 }
 
-type TypedTableExpr[T TableBase, S ColumnType] interface {
+type TypedTableExpr[T TableBase, S ExprType] interface {
 	Expr
 	TableExpr[T]
 	TypedExpr[S]
+}
+
+type ExprType interface {
+	bool |
+		int | int8 | int16 | int32 | int64 |
+		uint | uint8 | uint16 | uint32 | uint64 |
+		float32 | float64 |
+		string | time.Time | []byte
 }
 
 // Column types
@@ -55,22 +63,14 @@ type TableColumns[T TableBase] interface {
 	TableExpr[T]
 }
 
-type TypedColumns[S ColumnType] interface {
+type TypedColumns[S ExprType] interface {
 	Column
 	TypedExpr[S]
 }
 
-type TypedTableColumns[T TableBase, S ColumnType] interface {
+type TypedTableColumns[T TableBase, S ExprType] interface {
 	TableColumns[T]
 	TypedColumns[S]
-}
-
-type ColumnType interface {
-	bool |
-		int | int8 | int16 | int32 | int64 |
-		uint | uint8 | uint16 | uint32 | uint64 |
-		float32 | float64 |
-		string | time.Time | []byte
 }
 
 // Relation types

@@ -11,7 +11,7 @@ type ColumnField interface {
 	iValue() (val any, err error)
 }
 
-type BasicColumn[Type ColumnType] struct {
+type BasicColumn[Type ExprType] struct {
 	IsNull bool
 	Valid  bool
 	Val    Type
@@ -190,7 +190,7 @@ func (bc *BasicColumn[Type]) iValue() (val any, err error) {
 	return bc.Value()
 }
 
-type RelationalColumn[Type ColumnType, BaseColumn Column, RefColumn Column, _ JoinedTable] struct {
+type RelationalColumn[Type ExprType, BaseColumn Column, RefColumn Column, _ JoinedTable] struct {
 	BasicColumn[Type]
 }
 
