@@ -1,8 +1,8 @@
 package genorm
 
 type Context[T TableBase] struct {
-	table  T
-	errs   []error
+	table T
+	errs  []error
 }
 
 func newContext[T TableBase](table T) *Context[T] {
