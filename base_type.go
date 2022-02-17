@@ -5,14 +5,21 @@ import "time"
 // Table types
 
 type TableBase interface {
-	TableName() string
+	/*
+		TableID
+		BasicTable: `table_name`
+		JoinTable: ex) `table_name1` JOIN `table_name2` ON `table_name1`.`id` = `table_name2`.`id`
+	*/
+	TableID() string
+	Columns() []Column
+	// ColumnMap key: `table_name`.`column_name`
+	ColumnMap() map[string]ColumnField
 }
 
 type BasicTable interface {
 	TableBase
-	Columns() []Column
-	// ColumnMap key: `table_name`.`column_name`
-	ColumnMap() map[string]ColumnField
+	// TableName `table_name`
+	TableName() string
 }
 
 type JoinedTable interface {
