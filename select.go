@@ -1,6 +1,8 @@
 package genorm
 
-import "errors"
+import (
+	"errors"
+)
 
 type SelectContext[T TableBase] struct {
 	*Context[T]
@@ -15,9 +17,9 @@ type SelectContext[T TableBase] struct {
 	lockType        LockType
 }
 
-func newSelectContext[T TableBase](ctx *Context[T]) *SelectContext[T] {
+func NewSelectContext[T TableBase](table T) *SelectContext[T] {
 	return &SelectContext[T]{
-		Context: ctx,
+		Context: newContext(table),
 	}
 }
 

@@ -10,8 +10,9 @@ type TableBase interface {
 
 type BasicTable interface {
 	TableBase
-	ColumnNames() []string
-	ColumnMap() map[string]any
+	Columns() []Column
+	// ColumnMap key: `table_name`.`column_name`
+	ColumnMap() map[string]ColumnField
 }
 
 type JoinedTable interface {
@@ -67,7 +68,11 @@ type ExprType interface {
 
 type Column interface {
 	Expr
+	// ColumnID `table_name`.`column_name`
+	ColumnID() string
+	// TableName `table_name`
 	TableName() string
+	// ColumnName `column_name`
 	ColumnName() string
 }
 

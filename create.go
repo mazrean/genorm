@@ -8,13 +8,22 @@ import (
 	"strings"
 )
 
-type CreateContext[T TableBase] struct {
+type CreateContext[T BasicTable] struct {
 	*Context[T]
 	values []T
 	fields []TableColumns[T]
 }
 
-func newCreateContext[T TableBase](ctx *Context[T], tableBases ...T) *CreateContext[T] {
+func NewCreateContext[T BasicTable](table T, tableBases ...T) *CreateContext[T] {
+	ctx := newContext(table)
+	if len(tableBases) == 0 {
+		ctx.addError(errors.New("no insert values"))
+
+		return &CreateContext[T]{
+			Context: ctx,
+		}
+	}
+
 	return &CreateContext[T]{
 		Context: ctx,
 		values:  tableBases,
@@ -22,7 +31,7 @@ func newCreateContext[T TableBase](ctx *Context[T], tableBases ...T) *CreateCont
 	}
 }
 
-func (c *CreateContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *CreateContext[TableBase] {
+func (c *CreateContext[BasicTable]) Fields(fields ...TableColumns[BasicTable]) *CreateContext[BasicTable] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -33,7 +42,7 @@ func (c *CreateContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *Cr
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[TableColumns[TableBase]]struct{}, len(fields))
+	fieldMap := make(map[TableColumns[BasicTable]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -48,7 +57,7 @@ func (c *CreateContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *Cr
 	return c
 }
 
-func (c *CreateContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *CreateContext[BasicTable]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -72,42 +81,11 @@ func (c *CreateContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) (r
 	return rowsAffected, nil
 }
 
-func (c *CreateContext[TableBase]) Do(db *sql.DB) (rowsAffected int64, err error) {
-	errs := c.Errors()
-	if len(errs) != 0 {
-		return 0, errs[0]
-	}
-
-	query, args, err := c.buildQuery()
-	if err != nil {
-		return 0, fmt.Errorf("build query: %w", err)
-	}
-
-	result, err := db.Exec(query, args...)
-	if err != nil {
-		return 0, fmt.Errorf("exec: %w", err)
-	}
-
-	rowsAffected, err = result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("rows affected: %w", err)
-	}
-
-	return rowsAffected, nil
+func (c *CreateContext[BasicTable]) Do(db *sql.DB) (rowsAffected int64, err error) {
+	return c.DoContext(context.Background(), db)
 }
 
-func (c *CreateContext[TableBase]) buildQuery() (string, []any, error) {
-	var v interface{} = c.table
-	if basicTable, ok := v.(BasicTable); ok {
-		return c.basicTableBuildQuery(basicTable)
-	} else if joinedTable, ok := v.(JoinedTable); ok {
-		return c.joinedTableBuildQuery(joinedTable)
-	}
-
-	return "", nil, errors.New("invalid table")
-}
-
-func (c *CreateContext[TableBase]) basicTableBuildQuery(basicTable BasicTable) (string, []any, error) {
+func (c *CreateContext[BasicTable]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := strings.Builder{}
@@ -115,21 +93,21 @@ func (c *CreateContext[TableBase]) basicTableBuildQuery(basicTable BasicTable) (
 	sb.WriteString(c.table.TableName())
 
 	var fields []string
-	sb.WriteString(" (")
 	if c.fields == nil {
-		fields = basicTable.ColumnNames()
-		sb.WriteString(strings.Join(fields, ", "))
+		columns := c.table.Columns()
+		fields = make([]string, 0, len(columns))
+		for _, column := range columns {
+			fields = append(fields, column.ColumnName())
+		}
 	} else {
-		for i, field := range c.fields {
-			if i != 0 {
-				sb.WriteString(", ")
-			}
-
-			sb.WriteString(field.ColumnName())
-
+		fields = make([]string, 0, len(c.fields))
+		for _, field := range c.fields {
 			fields = append(fields, field.ColumnName())
 		}
 	}
+
+	sb.WriteString(" (")
+	sb.WriteString(strings.Join(fields, ", "))
 	sb.WriteString(") VALUES ")
 
 	for i, value := range c.values {
@@ -143,10 +121,8 @@ func (c *CreateContext[TableBase]) basicTableBuildQuery(basicTable BasicTable) (
 			return "", nil, errors.New("failed to cast value to basic table")
 		}
 
-		fieldValueMap := basicTable.ColumnMap()
-
 		var err error
-		sb, args, err = c.buildValueList(sb, args, fields, fieldValueMap)
+		sb, args, err = c.buildValueList(sb, args, fields, basicTable.ColumnMap())
 		if err != nil {
 			return "", nil, fmt.Errorf("build value list: %w", err)
 		}
@@ -155,87 +131,16 @@ func (c *CreateContext[TableBase]) basicTableBuildQuery(basicTable BasicTable) (
 	return sb.String(), args, nil
 }
 
-func (c *CreateContext[TableBase]) joinedTableBuildQuery(joinedTable JoinedTable) (string, []any, error) {
-	args := []any{}
-
-	basicTables := joinedTable.BaseTables()
-
-	sb := strings.Builder{}
-	sb.WriteString("INSERT INTO ")
-	sb.WriteString(c.table.TableName())
-
-	var fields []string
-	sb.WriteString(" (")
-	if c.fields == nil {
-		fields = []string{}
-		for _, basicTable := range basicTables {
-			fields = append(fields, basicTable.ColumnNames()...)
-		}
-		sb.WriteString(strings.Join(fields, ", "))
-	} else {
-		for i, field := range c.fields {
-			if i != 0 {
-				sb.WriteString(", ")
-			}
-
-			sb.WriteString(field.ColumnName())
-
-			fields = append(fields, field.ColumnName())
-		}
-	}
-	sb.WriteString(") VALUES ")
-
-	for i, value := range c.values {
-		if i != 0 {
-			sb.WriteString(", ")
-		}
-
-		var val any = value
-		joinedTable, ok := val.(JoinedTable)
-		if !ok {
-			return "", nil, errors.New("failed to cast value to joined table")
-		}
-
-		basicTables := joinedTable.BaseTables()
-
-		fieldValueMap := make(map[string]any)
-		for _, basicTable := range basicTables {
-			basicTableFieldValueMap := basicTable.ColumnMap()
-
-			for k, v := range basicTableFieldValueMap {
-				if _, ok := fieldValueMap[k]; ok {
-					return "", nil, fmt.Errorf("duplicate field: %s", k)
-				}
-
-				fieldValueMap[k] = v
-			}
-		}
-
-		var err error
-		sb, args, err = c.buildValueList(sb, args, fields, fieldValueMap)
-		if err != nil {
-			return "", nil, fmt.Errorf("build value list: %w", err)
-		}
-	}
-
-	return sb.String(), args, nil
-}
-
-func (c *CreateContext[TableBase]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]any) (strings.Builder, []any, error) {
+func (c *CreateContext[TableBase]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnField) (strings.Builder, []any, error) {
 	sb.WriteString("(")
 	for i, columnName := range fields {
 		if i != 0 {
 			sb.WriteString(", ")
 		}
 
-		iField, ok := fieldValueMap[columnName]
+		columnField, ok := fieldValueMap[columnName]
 		if !ok {
 			return sb, nil, errors.New("field not found")
-		}
-
-		columnField, ok := iField.(ColumnField)
-		if !ok {
-			return sb, nil, errors.New("invalid field type")
 		}
 
 		fieldValue, err := columnField.iValue()
