@@ -1,7 +1,10 @@
 package genorm
 
 import (
+	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 )
 
 type SelectContext[T TableBase] struct {
@@ -180,4 +183,68 @@ func (c *SelectContext[TableBase]) Lock(lockType LockType) *SelectContext[TableB
 	c.lockType = lockType
 
 	return c
+}
+
+func (c *SelectContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) ([]TableBase, error) {
+	errs := c.Errors()
+	if len(errs) != 0 {
+		return nil, errs[0]
+	}
+
+	columnAliasMap, query, args, err := c.buildQuery()
+	if err != nil {
+		return nil, fmt.Errorf("build query: %w", err)
+	}
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query: %w", err)
+	}
+	defer rows.Close()
+
+	resultColumns, err := rows.Columns()
+
+	tables := []TableBase{}
+	for rows.Next() {
+		var table TableBase
+
+		var v any = table
+		var columnMap map[string]ColumnField
+		if basicTable, ok := v.(BasicTable); ok {
+			columnMap = basicTable.ColumnMap()
+		} else if joinedTable, ok := v.(JoinedTable); ok {
+			columnMap = map[string]ColumnField{}
+			for _, basicTable := range joinedTable.BaseTables() {
+				basicColumnMap := basicTable.ColumnMap()
+				for columnID, field := range basicColumnMap {
+					columnMap[columnID] = field
+				}
+			}
+		} else {
+			return nil, fmt.Errorf("invalid table type: %T", v)
+		}
+
+		dests := make([]any, 0, len(resultColumns))
+		for _, columnAlias := range resultColumns {
+			columnField, ok := columnMap[columnAliasMap[columnAlias]]
+			if !ok {
+				return nil, fmt.Errorf("column %s not found", columnAlias)
+			}
+
+			dests = append(dests, columnField)
+		}
+
+		err := rows.Scan(dests...)
+		if err != nil {
+			return nil, fmt.Errorf("scan: %w", err)
+		}
+
+		tables = append(tables, table)
+	}
+
+	return tables, nil
+}
+
+func (c *SelectContext[TableBase]) Do(db *sql.DB) ([]TableBase, error) {
+	return c.DoContext(context.Background(), db)
 }
