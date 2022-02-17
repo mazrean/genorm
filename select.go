@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type SelectContext[T TableBase] struct {
@@ -247,4 +248,104 @@ func (c *SelectContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) ([
 
 func (c *SelectContext[TableBase]) Do(db *sql.DB) ([]TableBase, error) {
 	return c.DoContext(context.Background(), db)
+}
+
+func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []any, error) {
+	columnAliasMap := map[string]string{}
+	sb := strings.Builder{}
+	args := []any{}
+
+	sb.WriteString("SELECT ")
+
+	if c.distinct {
+		sb.WriteString("DISTINCT ")
+	}
+
+	var fields []string
+	if len(c.fields) == 0 {
+		c.table.Columns()
+	} else {
+		fields = make([]string, 0, len(c.fields))
+		for _, field := range c.fields {
+			fields = append(fields, field.ColumnID())
+		}
+	}
+
+	sb.WriteString(strings.Join(fields, ", "))
+
+	sb.WriteString(" FROM ")
+	sb.WriteString(c.table.TableID())
+
+	if c.whereCondition != nil {
+		sb.WriteString(" WHERE ")
+
+		whereQuery, whereArgs := c.whereCondition.Expr()
+		sb.WriteString(whereQuery)
+		args = append(args, whereArgs...)
+	}
+
+	if len(c.groupExpr) != 0 {
+		sb.WriteString(" GROUP BY ")
+
+		groupQueries := make([]string, 0, len(c.groupExpr))
+		for _, groupExpr := range c.groupExpr {
+			groupQuery, groupArgs := groupExpr.Expr()
+
+			groupQueries = append(groupQueries, groupQuery)
+			args = append(args, groupArgs...)
+		}
+
+		sb.WriteString(strings.Join(groupQueries, ", "))
+	}
+
+	if c.havingCondition != nil {
+		sb.WriteString(" HAVING ")
+
+		havingQuery, havingArgs := c.havingCondition.Expr()
+		sb.WriteString(havingQuery)
+		args = append(args, havingArgs...)
+	}
+
+	if len(c.orderExprs) != 0 {
+		sb.WriteString(" ORDER BY ")
+
+		orderQueries := make([]string, 0, len(c.orderExprs))
+		for _, orderItem := range c.orderExprs {
+			orderQuery, orderArgs := orderItem.expr.Expr()
+
+			var directionQuery string
+			switch orderItem.direction {
+			case Asc:
+				directionQuery = "ASC"
+			case Desc:
+				directionQuery = "DESC"
+			default:
+				return nil, "", nil, fmt.Errorf("invalid order direction: %d", orderItem.direction)
+			}
+
+			orderQueries = append(orderQueries, fmt.Sprintf("%s %s", orderQuery, directionQuery))
+			args = append(args, orderArgs...)
+		}
+
+		sb.WriteString(strings.Join(orderQueries, ", "))
+	}
+
+	if c.limit != 0 {
+		sb.WriteString(fmt.Sprintf(" LIMIT %d", c.limit))
+	}
+
+	if c.offset != 0 {
+		sb.WriteString(fmt.Sprintf(" OFFSET %d", c.offset))
+	}
+
+	if c.lockType != none {
+		switch c.lockType {
+		case ForUpdate:
+			sb.WriteString(" FOR UPDATE")
+		case ForShare:
+			sb.WriteString(" FOR SHARE")
+		}
+	}
+
+	return columnAliasMap, sb.String(), args, nil
 }
