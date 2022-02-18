@@ -14,9 +14,9 @@ type SelectContext[T Table] struct {
 	*Context[T]
 	distinct        bool
 	fields          []genorm.TableColumns[T]
-	whereCondition  genorm.TypedTableExpr[T, bool]
+	whereCondition  conditionClause[T]
 	groupExpr       []genorm.TableExpr[T]
-	havingCondition genorm.TypedTableExpr[T, bool]
+	havingCondition conditionClause[T]
 	orderExprs      []orderItem[T]
 	limit           uint64
 	offset          uint64
@@ -87,16 +87,10 @@ func (c *SelectContext[TableBase]) Fields(fields ...genorm.TableColumns[TableBas
 }
 
 func (c *SelectContext[TableBase]) Where(condition genorm.TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
-	if c.whereCondition != nil {
-		c.addError(errors.New("where conditions already set"))
-		return c
+	err := c.whereCondition.set(condition)
+	if err != nil {
+		c.addError(fmt.Errorf("where condition: %w", err))
 	}
-	if condition == nil {
-		c.addError(errors.New("empty where condition"))
-		return c
-	}
-
-	c.whereCondition = condition
 
 	return c
 }
@@ -113,16 +107,10 @@ func (c *SelectContext[TableBase]) GroupBy(exprs ...genorm.TableExpr[TableBase])
 }
 
 func (c *SelectContext[TableBase]) Having(condition genorm.TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
-	if c.havingCondition != nil {
-		c.addError(errors.New("having conditions already set"))
-		return c
+	err := c.havingCondition.set(condition)
+	if err != nil {
+		c.addError(fmt.Errorf("having condition: %w", err))
 	}
-	if condition == nil {
-		c.addError(errors.New("empty having condition"))
-		return c
-	}
-
-	c.havingCondition = condition
 
 	return c
 }
@@ -276,10 +264,13 @@ func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []an
 	sb.WriteString(" FROM ")
 	sb.WriteString(c.table.SQLTableName())
 
-	if c.whereCondition != nil {
-		sb.WriteString(" WHERE ")
+	if c.whereCondition.exists() {
+		whereQuery, whereArgs, err := c.whereCondition.getExpr()
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("where condition: %w", err)
+		}
 
-		whereQuery, whereArgs := c.whereCondition.Expr()
+		sb.WriteString(" WHERE ")
 		sb.WriteString(whereQuery)
 		args = append(args, whereArgs...)
 	}
@@ -298,10 +289,13 @@ func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []an
 		sb.WriteString(strings.Join(groupQueries, ", "))
 	}
 
-	if c.havingCondition != nil {
-		sb.WriteString(" HAVING ")
+	if c.havingCondition.exists() {
+		havingQuery, havingArgs, err := c.havingCondition.getExpr()
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("having condition: %w", err)
+		}
 
-		havingQuery, havingArgs := c.havingCondition.Expr()
+		sb.WriteString(" HAVING ")
 		sb.WriteString(havingQuery)
 		args = append(args, havingArgs...)
 	}
