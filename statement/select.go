@@ -248,21 +248,30 @@ func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []an
 		sb.WriteString("DISTINCT ")
 	}
 
-	var fields []string
+	var columns []genorm.Column
 	if len(c.fields) == 0 {
-		columns := c.table.Columns()
-		for _, column := range columns {
-			columnAliasMap[column.ColumnName()] = column.ColumnName()
-			fields = append(fields, column.SQLColumnName())
-		}
+		columns = c.table.Columns()
 	} else {
-		fields = make([]string, 0, len(c.fields))
+		columns = make([]genorm.Column, 0, len(c.fields))
 		for _, field := range c.fields {
-			fields = append(fields, field.SQLColumnName())
+			columns = append(columns, field)
 		}
 	}
 
-	sb.WriteString(strings.Join(fields, ", "))
+	selectExprs := make([]string, 0, len(columns))
+	for _, column := range columns {
+		var alias string
+		i := 0
+		for ok := false; ok; _, ok = columnAliasMap[alias] {
+			alias = fmt.Sprintf("%s_%s_%d", column.TableName(), column.ColumnName(), i)
+			i++
+		}
+
+		columnAliasMap[alias] = column.SQLColumnName()
+		selectExprs = append(selectExprs, fmt.Sprintf("%s AS %s", column.SQLColumnName(), alias))
+	}
+
+	sb.WriteString(strings.Join(selectExprs, ", "))
 
 	sb.WriteString(" FROM ")
 	sb.WriteString(c.table.SQLTableName())
