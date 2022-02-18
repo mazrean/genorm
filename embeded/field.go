@@ -4,20 +4,18 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"github.com/mazrean/genorm"
+	"github.com/mazrean/genorm/statement"
 )
 
-type ColumnField interface {
-	sql.Scanner
-	iValue() (val any, err error)
-}
-
-type BasicColumn[Type ExprType] struct {
+type ColumnField[Type genorm.ExprType] struct {
 	IsNull bool
 	Valid  bool
 	Val    Type
 }
 
-func (c *BasicColumn[Type]) Scan(src interface{}) error {
+func (c *ColumnField[Type]) Scan(src interface{}) error {
 	if src == nil {
 		c.Valid = false
 		return nil
@@ -169,63 +167,74 @@ func (c *BasicColumn[Type]) Scan(src interface{}) error {
 	return nil
 }
 
-var (
-	ErrNullValue   = errors.New("null value")
-	ErrEmptyColumn = errors.New("empty column")
-)
-
-func (bc *BasicColumn[Type]) Value() (val Type, err error) {
+func (bc *ColumnField[Type]) Value() (val Type, err error) {
 	if bc.IsNull {
-		return val, ErrNullValue
+		return val, statement.ErrNullValue
 	}
 
 	if bc.Valid {
-		return val, ErrEmptyColumn
+		return val, statement.ErrEmptyColumn
 	}
 
 	return bc.Val, nil
 }
 
-func (bc *BasicColumn[Type]) iValue() (val any, err error) {
+func (bc *ColumnField[Type]) iValue() (val any, err error) {
 	return bc.Value()
 }
 
-type RelationalColumn[Type ExprType, BaseColumn Column, RefColumn Column, _ JoinedTable] struct {
-	BasicColumn[Type]
-}
+type RelationField[BaseTable Table, RefTable Table, _ JoinedTable] struct{}
 
-func (r RelationalColumn[_, BaseColumn, RefColumn, JoinedTable]) Join() JoinedTable {
+func (r RelationField[BaseTable, RefTable, JoinedTable]) Join(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
 	var (
-		baseColumn  BaseColumn
-		refColumn   RefColumn
+		baseTable   BaseTable
+		refTable    RefTable
 		joinedTable JoinedTable
 	)
 
-	joinedTable.SetRelation(baseColumn, refColumn, Join{})
+	relation, err := newRelation(join, baseTable, refTable, expr)
+	if err != nil {
+		joinedTable.AddError(err)
+		return joinedTable
+	}
+
+	joinedTable.SetRelation(relation)
 
 	return joinedTable
 }
 
-func (r RelationalColumn[_, BaseColumn, RefColumn, JoinedTable]) LeftJoin() JoinedTable {
+func (r RelationField[BaseTable, RefTable, JoinedTable]) LeftJoin(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
 	var (
-		baseColumn  BaseColumn
-		refColumn   RefColumn
+		baseTable   BaseTable
+		refTable    RefTable
 		joinedTable JoinedTable
 	)
 
-	joinedTable.SetRelation(baseColumn, refColumn, LeftJoin{})
+	relation, err := newRelation(leftJoin, baseTable, refTable, expr)
+	if err != nil {
+		joinedTable.AddError(err)
+		return joinedTable
+	}
+
+	joinedTable.SetRelation(relation)
 
 	return joinedTable
 }
 
-func (r RelationalColumn[_, BaseColumn, RefColumn, JoinedTable]) RightJoin() JoinedTable {
+func (r RelationField[BaseTable, RefTable, JoinedTable]) RightJoin(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
 	var (
-		baseColumn  BaseColumn
-		refColumn   RefColumn
+		baseTable   BaseTable
+		refTable    RefTable
 		joinedTable JoinedTable
 	)
 
-	joinedTable.SetRelation(baseColumn, refColumn, RightJoin{})
+	relation, err := newRelation(rightJoin, baseTable, refTable, expr)
+	if err != nil {
+		joinedTable.AddError(err)
+		return joinedTable
+	}
+
+	joinedTable.SetRelation(relation)
 
 	return joinedTable
 }

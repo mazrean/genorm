@@ -1,3 +1,3 @@
-module github.com/mazrean/gopendb-generator
+module github.com/mazrean/genorm
 
-go 1.15
+go 1.18

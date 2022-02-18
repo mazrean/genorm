@@ -1,4 +1,4 @@
-package genorm
+package statement
 
 import (
 	"context"
@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mazrean/genorm"
 )
 
 type CreateContext[T BasicTable] struct {
 	*Context[T]
 	values []T
-	fields []TableColumns[T]
+	fields []genorm.TableColumns[T]
 }
 
 func NewCreateContext[T BasicTable](table T, tableBases ...T) *CreateContext[T] {
@@ -31,7 +33,7 @@ func NewCreateContext[T BasicTable](table T, tableBases ...T) *CreateContext[T] 
 	}
 }
 
-func (c *CreateContext[BasicTable]) Fields(fields ...TableColumns[BasicTable]) *CreateContext[BasicTable] {
+func (c *CreateContext[BasicTable]) Fields(fields ...genorm.TableColumns[BasicTable]) *CreateContext[BasicTable] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -42,7 +44,7 @@ func (c *CreateContext[BasicTable]) Fields(fields ...TableColumns[BasicTable]) *
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[TableColumns[BasicTable]]struct{}, len(fields))
+	fieldMap := make(map[genorm.TableColumns[BasicTable]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))

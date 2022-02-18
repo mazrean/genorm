@@ -1,11 +1,11 @@
-package genorm
+package statement
 
-type Context[T TableBase] struct {
+type Context[T Table] struct {
 	table T
 	errs  []error
 }
 
-func newContext[T TableBase](table T) *Context[T] {
+func newContext[T Table](table T) *Context[T] {
 	return &Context[T]{
 		table: table,
 	}

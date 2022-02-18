@@ -1,4 +1,4 @@
-package genorm
+package statement
 
 import (
 	"context"
@@ -6,29 +6,31 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mazrean/genorm"
 )
 
-type SelectContext[T TableBase] struct {
+type SelectContext[T Table] struct {
 	*Context[T]
 	distinct        bool
-	fields          []TableColumns[T]
-	whereCondition  TypedTableExpr[T, bool]
-	groupExpr       []TableExpr[T]
-	havingCondition TypedTableExpr[T, bool]
+	fields          []genorm.TableColumns[T]
+	whereCondition  genorm.TypedTableExpr[T, bool]
+	groupExpr       []genorm.TableExpr[T]
+	havingCondition genorm.TypedTableExpr[T, bool]
 	orderExprs      []orderItem[T]
 	limit           uint64
 	offset          uint64
 	lockType        LockType
 }
 
-func NewSelectContext[T TableBase](table T) *SelectContext[T] {
+func NewSelectContext[T Table](table T) *SelectContext[T] {
 	return &SelectContext[T]{
 		Context: newContext(table),
 	}
 }
 
-type orderItem[T TableBase] struct {
-	expr      TableExpr[T]
+type orderItem[T Table] struct {
+	expr      genorm.TableExpr[T]
 	direction OrderDirection
 }
 
@@ -58,7 +60,7 @@ func (c *SelectContext[TableBase]) Distinct() *SelectContext[TableBase] {
 	return c
 }
 
-func (c *SelectContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *SelectContext[TableBase] {
+func (c *SelectContext[TableBase]) Fields(fields ...genorm.TableColumns[TableBase]) *SelectContext[TableBase] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -69,7 +71,7 @@ func (c *SelectContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *Se
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[TableColumns[TableBase]]struct{}, len(fields))
+	fieldMap := make(map[genorm.TableColumns[TableBase]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -84,7 +86,7 @@ func (c *SelectContext[TableBase]) Fields(fields ...TableColumns[TableBase]) *Se
 	return c
 }
 
-func (c *SelectContext[TableBase]) Where(condition TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
+func (c *SelectContext[TableBase]) Where(condition genorm.TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
 	if c.whereCondition != nil {
 		c.addError(errors.New("where conditions already set"))
 		return c
@@ -99,7 +101,7 @@ func (c *SelectContext[TableBase]) Where(condition TypedTableExpr[TableBase, boo
 	return c
 }
 
-func (c *SelectContext[TableBase]) GroupBy(exprs ...TableExpr[TableBase]) *SelectContext[TableBase] {
+func (c *SelectContext[TableBase]) GroupBy(exprs ...genorm.TableExpr[TableBase]) *SelectContext[TableBase] {
 	if len(exprs) == 0 {
 		c.addError(errors.New("no group expr"))
 		return c
@@ -110,7 +112,7 @@ func (c *SelectContext[TableBase]) GroupBy(exprs ...TableExpr[TableBase]) *Selec
 	return c
 }
 
-func (c *SelectContext[TableBase]) Having(condition TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
+func (c *SelectContext[TableBase]) Having(condition genorm.TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
 	if c.havingCondition != nil {
 		c.addError(errors.New("having conditions already set"))
 		return c
@@ -125,7 +127,7 @@ func (c *SelectContext[TableBase]) Having(condition TypedTableExpr[TableBase, bo
 	return c
 }
 
-func (c *SelectContext[TableBase]) OrderBy(direction OrderDirection, expr TableExpr[TableBase]) *SelectContext[TableBase] {
+func (c *SelectContext[TableBase]) OrderBy(direction OrderDirection, expr genorm.TableExpr[TableBase]) *SelectContext[TableBase] {
 	if expr == nil {
 		c.addError(errors.New("empty order expr"))
 		return c
@@ -208,22 +210,7 @@ func (c *SelectContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) ([
 	tables := []TableBase{}
 	for rows.Next() {
 		var table TableBase
-
-		var v any = table
-		var columnMap map[string]ColumnField
-		if basicTable, ok := v.(BasicTable); ok {
-			columnMap = basicTable.ColumnMap()
-		} else if joinedTable, ok := v.(JoinedTable); ok {
-			columnMap = map[string]ColumnField{}
-			for _, basicTable := range joinedTable.BaseTables() {
-				basicColumnMap := basicTable.ColumnMap()
-				for columnID, field := range basicColumnMap {
-					columnMap[columnID] = field
-				}
-			}
-		} else {
-			return nil, fmt.Errorf("invalid table type: %T", v)
-		}
+		columnMap := table.ColumnMap()
 
 		dests := make([]any, 0, len(resultColumns))
 		for _, columnAlias := range resultColumns {
@@ -263,18 +250,22 @@ func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []an
 
 	var fields []string
 	if len(c.fields) == 0 {
-		c.table.Columns()
+		columns := c.table.Columns()
+		for _, column := range columns {
+			columnAliasMap[column.ColumnName()] = column.ColumnName()
+			fields = append(fields, column.SQLColumnName())
+		}
 	} else {
 		fields = make([]string, 0, len(c.fields))
 		for _, field := range c.fields {
-			fields = append(fields, field.ColumnID())
+			fields = append(fields, field.SQLColumnName())
 		}
 	}
 
 	sb.WriteString(strings.Join(fields, ", "))
 
 	sb.WriteString(" FROM ")
-	sb.WriteString(c.table.TableID())
+	sb.WriteString(c.table.SQLTableName())
 
 	if c.whereCondition != nil {
 		sb.WriteString(" WHERE ")

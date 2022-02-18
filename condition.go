@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func And[T TableBase](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
+func And[T Table](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -22,7 +22,7 @@ func And[T TableBase](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, boo
 	}
 }
 
-func Or[T TableBase](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
+func Or[T Table](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -39,7 +39,7 @@ func Or[T TableBase](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, bool
 	}
 }
 
-func Xor[T TableBase](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
+func Xor[T Table](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -56,7 +56,7 @@ func Xor[T TableBase](expr1 TypedTableExpr[T, bool], expr2 TypedTableExpr[T, boo
 	}
 }
 
-func Not[T TableBase](expr TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
+func Not[T Table](expr TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -71,7 +71,7 @@ func Not[T TableBase](expr TypedTableExpr[T, bool]) TypedTableExpr[T, bool] {
 	}
 }
 
-func Eq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func Eq[T Table, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -88,7 +88,7 @@ func Eq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExp
 	}
 }
 
-func EqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
+func EqWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -103,7 +103,7 @@ func EqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S)
 	}
 }
 
-func Neq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func Neq[T Table, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -120,7 +120,7 @@ func Neq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableEx
 	}
 }
 
-func NeqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
+func NeqWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -135,7 +135,7 @@ func NeqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S
 	}
 }
 
-func Leq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func Leq[T Table, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -152,7 +152,7 @@ func Leq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableEx
 	}
 }
 
-func LeqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
+func LeqWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -167,7 +167,7 @@ func LeqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S
 	}
 }
 
-func Geq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func Geq[T Table, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -184,7 +184,7 @@ func Geq[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableEx
 	}
 }
 
-func GeqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
+func GeqWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -199,7 +199,7 @@ func GeqWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S
 	}
 }
 
-func Lt[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func Lt[T Table, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -216,7 +216,7 @@ func Lt[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExp
 	}
 }
 
-func LtWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
+func LtWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -231,7 +231,7 @@ func LtWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S)
 	}
 }
 
-func Gt[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func Gt[T Table, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs1 := expr1.Errors()
 	errs2 := expr2.Errors()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -248,7 +248,7 @@ func Gt[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], expr2 TypedTableExp
 	}
 }
 
-func GtWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
+func GtWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constant S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -263,7 +263,7 @@ func GtWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constant S)
 	}
 }
 
-func IsNull[T TableBase, S ExprType](expr NullableTypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func IsNull[T Table, S ExprType](expr NullableTypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -278,7 +278,7 @@ func IsNull[T TableBase, S ExprType](expr NullableTypedTableExpr[T, S]) TypedTab
 	}
 }
 
-func IsNotNull[T TableBase, S ExprType](expr NullableTypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func IsNotNull[T Table, S ExprType](expr NullableTypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -293,7 +293,7 @@ func IsNotNull[T TableBase, S ExprType](expr NullableTypedTableExpr[T, S]) Typed
 	}
 }
 
-func In[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], exprs ...TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func In[T Table, S ExprType](expr1 TypedTableExpr[T, S], exprs ...TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs := []error{}
 
 	errs1 := expr1.Errors()
@@ -330,7 +330,7 @@ func In[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], exprs ...TypedTable
 	}
 }
 
-func InWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constants ...S) TypedTableExpr[T, bool] {
+func InWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constants ...S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
@@ -350,7 +350,7 @@ func InWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constants .
 	}
 }
 
-func NotIn[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], exprs ...TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
+func NotIn[T Table, S ExprType](expr1 TypedTableExpr[T, S], exprs ...TypedTableExpr[T, S]) TypedTableExpr[T, bool] {
 	errs := []error{}
 
 	errs1 := expr1.Errors()
@@ -387,7 +387,7 @@ func NotIn[T TableBase, S ExprType](expr1 TypedTableExpr[T, S], exprs ...TypedTa
 	}
 }
 
-func NotInWithConst[T TableBase, S ExprType](expr TypedTableExpr[T, S], constants ...S) TypedTableExpr[T, bool] {
+func NotInWithConst[T Table, S ExprType](expr TypedTableExpr[T, S], constants ...S) TypedTableExpr[T, bool] {
 	errs := expr.Errors()
 	if len(errs) != 0 {
 		return &ExprStruct[T, bool]{
