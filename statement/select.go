@@ -19,7 +19,7 @@ type SelectContext[T Table] struct {
 	havingCondition whereConditionClause[T]
 	order           orderClause[T]
 	limit           limitClause
-	offset          uint64
+	offset          offsetClause
 	lockType        LockType
 }
 
@@ -125,12 +125,10 @@ func (c *SelectContext[TableBase]) Limit(limit uint64) *SelectContext[TableBase]
 }
 
 func (c *SelectContext[TableBase]) Offset(offset uint64) *SelectContext[TableBase] {
-	if c.offset != 0 {
-		c.addError(errors.New("offset already set"))
-		return c
+	err := c.offset.set(offset)
+	if err != nil {
+		c.addError(fmt.Errorf("offset: %w", err))
 	}
-
-	c.offset = offset
 
 	return c
 }
@@ -297,8 +295,15 @@ func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []an
 		args = append(args, limitArgs...)
 	}
 
-	if c.offset != 0 {
-		sb.WriteString(fmt.Sprintf(" OFFSET %d", c.offset))
+	if c.offset.exists() {
+		offsetQuery, offsetArgs, err := c.offset.getExpr()
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("offset: %w", err)
+		}
+
+		sb.WriteString(" ")
+		sb.WriteString(offsetQuery)
+		args = append(args, offsetArgs...)
 	}
 
 	if c.lockType != none {

@@ -116,3 +116,28 @@ func (l *limitClause) exists() bool {
 func (l *limitClause) getExpr() (string, []any, error) {
 	return fmt.Sprintf("LIMIT %d", l.limit), nil, nil
 }
+
+type offsetClause struct {
+	offset uint64
+}
+
+func (o *offsetClause) set(offset uint64) error {
+	if o.offset != 0 {
+		return errors.New("offset already set")
+	}
+	if offset == 0 {
+		return errors.New("invalid offset")
+	}
+
+	o.offset = offset
+
+	return nil
+}
+
+func (o *offsetClause) exists() bool {
+	return o.offset != 0
+}
+
+func (o *offsetClause) getExpr() (string, []any, error) {
+	return fmt.Sprintf("OFFSET %d", o.offset), nil, nil
+}
