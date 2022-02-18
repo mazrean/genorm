@@ -91,3 +91,28 @@ func (c *orderClause[Table]) getExpr() (string, []any, error) {
 
 	return fmt.Sprintf("ORDER BY %s", strings.Join(orderQueries, ", ")), nil, nil
 }
+
+type limitClause struct {
+	limit uint64
+}
+
+func (l *limitClause) set(limit uint64) error {
+	if l.limit != 0 {
+		return errors.New("limit already set")
+	}
+	if limit == 0 {
+		return errors.New("invalid limit")
+	}
+
+	l.limit = limit
+
+	return nil
+}
+
+func (l *limitClause) exists() bool {
+	return l.limit != 0
+}
+
+func (l *limitClause) getExpr() (string, []any, error) {
+	return fmt.Sprintf("LIMIT %d", l.limit), nil, nil
+}

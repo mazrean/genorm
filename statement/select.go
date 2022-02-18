@@ -18,7 +18,7 @@ type SelectContext[T Table] struct {
 	groupExpr       []genorm.TableExpr[T]
 	havingCondition whereConditionClause[T]
 	order           orderClause[T]
-	limit           uint64
+	limit           limitClause
 	offset          uint64
 	lockType        LockType
 }
@@ -116,16 +116,10 @@ func (c *SelectContext[TableBase]) OrderBy(direction OrderDirection, expr genorm
 }
 
 func (c *SelectContext[TableBase]) Limit(limit uint64) *SelectContext[TableBase] {
-	if c.limit != 0 {
-		c.addError(errors.New("limit already set"))
-		return c
+	err := c.limit.set(limit)
+	if err != nil {
+		c.addError(fmt.Errorf("limit: %w", err))
 	}
-	if limit == 0 {
-		c.addError(errors.New("invalid limit"))
-		return c
-	}
-
-	c.limit = limit
 
 	return c
 }
@@ -292,8 +286,15 @@ func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []an
 		args = append(args, orderArgs...)
 	}
 
-	if c.limit != 0 {
-		sb.WriteString(fmt.Sprintf(" LIMIT %d", c.limit))
+	if c.limit.exists() {
+		limitQuery, limitArgs, err := c.limit.getExpr()
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("limit: %w", err)
+		}
+
+		sb.WriteString(" ")
+		sb.WriteString(limitQuery)
+		args = append(args, limitArgs...)
 	}
 
 	if c.offset != 0 {
