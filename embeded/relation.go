@@ -8,6 +8,72 @@ import (
 	"github.com/mazrean/genorm"
 )
 
+type RelationContext[BaseTable Table, RefTable Table, _ JoinedTable] struct {
+	baseTable BaseTable
+	refTable  RefTable
+}
+
+func NewRelationContext[S Table, T Table, U JoinedTable](baseTable S, refTable T) *RelationContext[S, T, U] {
+	return &RelationContext[S, T, U]{
+		baseTable: baseTable,
+		refTable:  refTable,
+	}
+}
+
+func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
+	var (
+		baseTable   BaseTable
+		refTable    RefTable
+		joinedTable JoinedTable
+	)
+
+	relation, err := newRelation(join, baseTable, refTable, expr)
+	if err != nil {
+		joinedTable.AddError(err)
+		return joinedTable
+	}
+
+	joinedTable.SetRelation(relation)
+
+	return joinedTable
+}
+
+func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
+	var (
+		baseTable   BaseTable
+		refTable    RefTable
+		joinedTable JoinedTable
+	)
+
+	relation, err := newRelation(leftJoin, baseTable, refTable, expr)
+	if err != nil {
+		joinedTable.AddError(err)
+		return joinedTable
+	}
+
+	joinedTable.SetRelation(relation)
+
+	return joinedTable
+}
+
+func (r *RelationContext[BaseTable, RefTable, JoinedTable]) RightJoin(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
+	var (
+		baseTable   BaseTable
+		refTable    RefTable
+		joinedTable JoinedTable
+	)
+
+	relation, err := newRelation(rightJoin, baseTable, refTable, expr)
+	if err != nil {
+		joinedTable.AddError(err)
+		return joinedTable
+	}
+
+	joinedTable.SetRelation(relation)
+
+	return joinedTable
+}
+
 type Relation struct {
 	relationType RelationType
 	baseTable    Table
