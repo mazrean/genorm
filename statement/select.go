@@ -14,10 +14,10 @@ type SelectContext[T Table] struct {
 	*Context[T]
 	distinct        bool
 	fields          []genorm.TableColumns[T]
-	whereCondition  conditionClause[T]
+	whereCondition  whereConditionClause[T]
 	groupExpr       []genorm.TableExpr[T]
-	havingCondition conditionClause[T]
-	orderExprs      []orderItem[T]
+	havingCondition whereConditionClause[T]
+	order           orderClause[T]
 	limit           uint64
 	offset          uint64
 	lockType        LockType
@@ -28,18 +28,6 @@ func NewSelectContext[T Table](table T) *SelectContext[T] {
 		Context: newContext(table),
 	}
 }
-
-type orderItem[T Table] struct {
-	expr      genorm.TableExpr[T]
-	direction OrderDirection
-}
-
-type OrderDirection uint8
-
-const (
-	Asc OrderDirection = iota + 1
-	Desc
-)
 
 type LockType uint8
 
@@ -116,20 +104,13 @@ func (c *SelectContext[TableBase]) Having(condition genorm.TypedTableExpr[TableB
 }
 
 func (c *SelectContext[TableBase]) OrderBy(direction OrderDirection, expr genorm.TableExpr[TableBase]) *SelectContext[TableBase] {
-	if expr == nil {
-		c.addError(errors.New("empty order expr"))
-		return c
-	}
-
-	if direction != Asc && direction != Desc {
-		c.addError(errors.New("invalid order direction"))
-		return c
-	}
-
-	c.orderExprs = append(c.orderExprs, orderItem[TableBase]{
+	err := c.order.add(orderItem[TableBase]{
 		expr:      expr,
 		direction: direction,
 	})
+	if err != nil {
+		c.addError(fmt.Errorf("order by: %w", err))
+	}
 
 	return c
 }
@@ -300,28 +281,15 @@ func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []an
 		args = append(args, havingArgs...)
 	}
 
-	if len(c.orderExprs) != 0 {
-		sb.WriteString(" ORDER BY ")
-
-		orderQueries := make([]string, 0, len(c.orderExprs))
-		for _, orderItem := range c.orderExprs {
-			orderQuery, orderArgs := orderItem.expr.Expr()
-
-			var directionQuery string
-			switch orderItem.direction {
-			case Asc:
-				directionQuery = "ASC"
-			case Desc:
-				directionQuery = "DESC"
-			default:
-				return nil, "", nil, fmt.Errorf("invalid order direction: %d", orderItem.direction)
-			}
-
-			orderQueries = append(orderQueries, fmt.Sprintf("%s %s", orderQuery, directionQuery))
-			args = append(args, orderArgs...)
+	if c.order.exists() {
+		orderQuery, orderArgs, err := c.order.getExpr()
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("order: %w", err)
 		}
 
-		sb.WriteString(strings.Join(orderQueries, ", "))
+		sb.WriteString(" ")
+		sb.WriteString(orderQuery)
+		args = append(args, orderArgs...)
 	}
 
 	if c.limit != 0 {
