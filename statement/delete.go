@@ -24,7 +24,7 @@ func NewDeleteContext[T BasicTable](table T) *DeleteContext[T] {
 	}
 }
 
-func (c *DeleteContext[TableBase]) Where(condition genorm.TypedTableExpr[TableBase, bool]) *DeleteContext[TableBase] {
+func (c *DeleteContext[Table]) Where(condition genorm.TypedTableExpr[Table, bool]) *DeleteContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -33,8 +33,8 @@ func (c *DeleteContext[TableBase]) Where(condition genorm.TypedTableExpr[TableBa
 	return c
 }
 
-func (c *DeleteContext[TableBase]) OrderBy(direction OrderDirection, expr genorm.TableExpr[TableBase]) *DeleteContext[TableBase] {
-	err := c.order.add(orderItem[TableBase]{
+func (c *DeleteContext[Table]) OrderBy(direction OrderDirection, expr genorm.TableExpr[Table]) *DeleteContext[Table] {
+	err := c.order.add(orderItem[Table]{
 		expr:      expr,
 		direction: direction,
 	})
@@ -45,7 +45,7 @@ func (c *DeleteContext[TableBase]) OrderBy(direction OrderDirection, expr genorm
 	return c
 }
 
-func (c *DeleteContext[TableBase]) Limit(limit uint64) *DeleteContext[TableBase] {
+func (c *DeleteContext[Table]) Limit(limit uint64) *DeleteContext[Table] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -54,7 +54,7 @@ func (c *DeleteContext[TableBase]) Limit(limit uint64) *DeleteContext[TableBase]
 	return c
 }
 
-func (c *DeleteContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *DeleteContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -78,11 +78,11 @@ func (c *DeleteContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) (r
 	return rowsAffected, nil
 }
 
-func (c *DeleteContext[TableBase]) Do(db *sql.DB) (rowsAffected int64, err error) {
+func (c *DeleteContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
 	return c.DoContext(context.Background(), db)
 }
 
-func (c *DeleteContext[BasicTable]) buildQuery() (string, []any, error) {
+func (c *DeleteContext[Table]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := strings.Builder{}

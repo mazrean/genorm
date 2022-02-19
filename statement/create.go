@@ -33,7 +33,7 @@ func NewCreateContext[T BasicTable](table T, tableBases ...T) *CreateContext[T] 
 	}
 }
 
-func (c *CreateContext[BasicTable]) Fields(fields ...genorm.TableColumns[BasicTable]) *CreateContext[BasicTable] {
+func (c *CreateContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *CreateContext[Table] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -44,7 +44,7 @@ func (c *CreateContext[BasicTable]) Fields(fields ...genorm.TableColumns[BasicTa
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[genorm.TableColumns[BasicTable]]struct{}, len(fields))
+	fieldMap := make(map[genorm.TableColumns[Table]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -59,7 +59,7 @@ func (c *CreateContext[BasicTable]) Fields(fields ...genorm.TableColumns[BasicTa
 	return c
 }
 
-func (c *CreateContext[BasicTable]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *CreateContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -83,11 +83,11 @@ func (c *CreateContext[BasicTable]) DoContext(ctx context.Context, db *sql.DB) (
 	return rowsAffected, nil
 }
 
-func (c *CreateContext[BasicTable]) Do(db *sql.DB) (rowsAffected int64, err error) {
+func (c *CreateContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
 	return c.DoContext(context.Background(), db)
 }
 
-func (c *CreateContext[BasicTable]) buildQuery() (string, []any, error) {
+func (c *CreateContext[Table]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := strings.Builder{}
@@ -118,7 +118,7 @@ func (c *CreateContext[BasicTable]) buildQuery() (string, []any, error) {
 		}
 
 		var val any = value
-		basicTable, ok := val.(BasicTable)
+		basicTable, ok := val.(Table)
 		if !ok {
 			return "", nil, errors.New("failed to cast value to basic table")
 		}
@@ -133,7 +133,7 @@ func (c *CreateContext[BasicTable]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *CreateContext[TableBase]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnField) (strings.Builder, []any, error) {
+func (c *CreateContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnField) (strings.Builder, []any, error) {
 	sb.WriteString("(")
 	for i, columnName := range fields {
 		if i != 0 {

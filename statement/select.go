@@ -37,7 +37,7 @@ const (
 	ForShare
 )
 
-func (c *SelectContext[TableBase]) Distinct() *SelectContext[TableBase] {
+func (c *SelectContext[Table]) Distinct() *SelectContext[Table] {
 	if c.distinct {
 		c.addError(errors.New("distinct already set"))
 		return c
@@ -48,7 +48,7 @@ func (c *SelectContext[TableBase]) Distinct() *SelectContext[TableBase] {
 	return c
 }
 
-func (c *SelectContext[TableBase]) Fields(fields ...genorm.TableColumns[TableBase]) *SelectContext[TableBase] {
+func (c *SelectContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *SelectContext[Table] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -59,7 +59,7 @@ func (c *SelectContext[TableBase]) Fields(fields ...genorm.TableColumns[TableBas
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[genorm.TableColumns[TableBase]]struct{}, len(fields))
+	fieldMap := make(map[genorm.TableColumns[Table]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -74,7 +74,7 @@ func (c *SelectContext[TableBase]) Fields(fields ...genorm.TableColumns[TableBas
 	return c
 }
 
-func (c *SelectContext[TableBase]) Where(condition genorm.TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
+func (c *SelectContext[Table]) Where(condition genorm.TypedTableExpr[Table, bool]) *SelectContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -83,7 +83,7 @@ func (c *SelectContext[TableBase]) Where(condition genorm.TypedTableExpr[TableBa
 	return c
 }
 
-func (c *SelectContext[TableBase]) GroupBy(exprs ...genorm.TableExpr[TableBase]) *SelectContext[TableBase] {
+func (c *SelectContext[Table]) GroupBy(exprs ...genorm.TableExpr[Table]) *SelectContext[Table] {
 	if len(exprs) == 0 {
 		c.addError(errors.New("no group expr"))
 		return c
@@ -94,7 +94,7 @@ func (c *SelectContext[TableBase]) GroupBy(exprs ...genorm.TableExpr[TableBase])
 	return c
 }
 
-func (c *SelectContext[TableBase]) Having(condition genorm.TypedTableExpr[TableBase, bool]) *SelectContext[TableBase] {
+func (c *SelectContext[Table]) Having(condition genorm.TypedTableExpr[Table, bool]) *SelectContext[Table] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("having condition: %w", err))
@@ -103,8 +103,8 @@ func (c *SelectContext[TableBase]) Having(condition genorm.TypedTableExpr[TableB
 	return c
 }
 
-func (c *SelectContext[TableBase]) OrderBy(direction OrderDirection, expr genorm.TableExpr[TableBase]) *SelectContext[TableBase] {
-	err := c.order.add(orderItem[TableBase]{
+func (c *SelectContext[Table]) OrderBy(direction OrderDirection, expr genorm.TableExpr[Table]) *SelectContext[Table] {
+	err := c.order.add(orderItem[Table]{
 		expr:      expr,
 		direction: direction,
 	})
@@ -115,7 +115,7 @@ func (c *SelectContext[TableBase]) OrderBy(direction OrderDirection, expr genorm
 	return c
 }
 
-func (c *SelectContext[TableBase]) Limit(limit uint64) *SelectContext[TableBase] {
+func (c *SelectContext[Table]) Limit(limit uint64) *SelectContext[Table] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -124,7 +124,7 @@ func (c *SelectContext[TableBase]) Limit(limit uint64) *SelectContext[TableBase]
 	return c
 }
 
-func (c *SelectContext[TableBase]) Offset(offset uint64) *SelectContext[TableBase] {
+func (c *SelectContext[Table]) Offset(offset uint64) *SelectContext[Table] {
 	err := c.offset.set(offset)
 	if err != nil {
 		c.addError(fmt.Errorf("offset: %w", err))
@@ -133,7 +133,7 @@ func (c *SelectContext[TableBase]) Offset(offset uint64) *SelectContext[TableBas
 	return c
 }
 
-func (c *SelectContext[TableBase]) Lock(lockType LockType) *SelectContext[TableBase] {
+func (c *SelectContext[Table]) Lock(lockType LockType) *SelectContext[Table] {
 	if c.lockType != none {
 		c.addError(errors.New("lock already set"))
 		return c
@@ -149,7 +149,7 @@ func (c *SelectContext[TableBase]) Lock(lockType LockType) *SelectContext[TableB
 	return c
 }
 
-func (c *SelectContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) ([]TableBase, error) {
+func (c *SelectContext[Table]) DoContext(ctx context.Context, db *sql.DB) ([]Table, error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return nil, errs[0]
@@ -168,9 +168,9 @@ func (c *SelectContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) ([
 
 	resultColumns, err := rows.Columns()
 
-	tables := []TableBase{}
+	tables := []Table{}
 	for rows.Next() {
-		var table TableBase
+		var table Table
 		columnMap := table.ColumnMap()
 
 		dests := make([]any, 0, len(resultColumns))
@@ -194,11 +194,11 @@ func (c *SelectContext[TableBase]) DoContext(ctx context.Context, db *sql.DB) ([
 	return tables, nil
 }
 
-func (c *SelectContext[TableBase]) Do(db *sql.DB) ([]TableBase, error) {
+func (c *SelectContext[Table]) Do(db *sql.DB) ([]Table, error) {
 	return c.DoContext(context.Background(), db)
 }
 
-func (c *SelectContext[TableBase]) buildQuery() (map[string]string, string, []any, error) {
+func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []any, error) {
 	columnAliasMap := map[string]string{}
 	sb := strings.Builder{}
 	args := []any{}
