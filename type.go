@@ -2,27 +2,38 @@ package genorm
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"time"
-
-	"github.com/mazrean/genorm"
-	"github.com/mazrean/genorm/statement"
 )
 
-type ColumnField[Type genorm.ExprType] struct {
-	IsNull bool
-	Valid  bool
-	Val    Type
+type ExprType interface {
+	sql.Scanner
+	driver.Valuer
 }
 
-func (c *ColumnField[Type]) Scan(src interface{}) error {
-	if src == nil {
-		c.Valid = false
-		return nil
-	}
-	c.Valid = true
+type ExprPrimitive interface {
+	bool |
+		int | int8 | int16 | int32 | int64 |
+		uint | uint8 | uint16 | uint32 | uint64 |
+		float32 | float64 |
+		string | time.Time
+}
 
-	var dest any = c.Val
+type WrappedPrimitive[T ExprPrimitive] struct {
+	valid bool
+	val   T
+}
+
+func Wrap[T ExprPrimitive](val T) *WrappedPrimitive[T] {
+	return &WrappedPrimitive[T]{
+		valid: true,
+		val:   val,
+	}
+}
+
+func (wp *WrappedPrimitive[Type]) Scan(src any) error {
+	var dest any = wp.val
 	switch dest.(type) {
 	case bool:
 		nb := sql.NullBool{}
@@ -32,7 +43,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = nb.Valid
+		wp.valid = nb.Valid
 		dest = nb.Bool
 	case int8:
 		ni := sql.NullInt16{}
@@ -42,7 +53,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ni.Valid
+		wp.valid = ni.Valid
 		dest = int8(ni.Int16)
 	case int16:
 		ns := sql.NullInt16{}
@@ -52,7 +63,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ns.Valid
+		wp.valid = ns.Valid
 		dest = ns.Int16
 	case int32:
 		ns := sql.NullInt32{}
@@ -62,7 +73,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ns.Valid
+		wp.valid = ns.Valid
 		dest = ns.Int32
 	case int, int64:
 		ni := sql.NullInt64{}
@@ -72,7 +83,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ni.Valid
+		wp.valid = ni.Valid
 		dest = ni.Int64
 	case byte: // uint8
 		nb := sql.NullByte{}
@@ -82,7 +93,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = nb.Valid
+		wp.valid = nb.Valid
 		dest = nb.Byte
 	case uint16:
 		ns := sql.NullInt32{}
@@ -92,7 +103,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ns.Valid
+		wp.valid = ns.Valid
 		dest = uint16(ns.Int32)
 	case uint32:
 		ns := sql.NullInt64{}
@@ -102,7 +113,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ns.Valid
+		wp.valid = ns.Valid
 		dest = uint32(ns.Int64)
 	case uint64:
 		ni := sql.NullInt64{}
@@ -112,7 +123,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ni.Valid
+		wp.valid = ni.Valid
 		dest = uint64(ni.Int64)
 	case float32:
 		nf := sql.NullFloat64{}
@@ -122,7 +133,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = nf.Valid
+		wp.valid = nf.Valid
 		dest = float32(nf.Float64)
 	case float64:
 		nf := sql.NullFloat64{}
@@ -132,7 +143,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = nf.Valid
+		wp.valid = nf.Valid
 		dest = nf.Float64
 	case string:
 		ns := sql.NullString{}
@@ -142,7 +153,7 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = ns.Valid
+		wp.valid = ns.Valid
 		dest = ns.String
 	case time.Time:
 		nt := sql.NullTime{}
@@ -152,14 +163,14 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 			return err
 		}
 
-		c.Valid = nt.Valid
+		wp.valid = nt.Valid
 		dest = nt.Time
 	default:
 		return errors.New("unsupported type")
 	}
 
 	var ok bool
-	c.Val, ok = dest.(Type)
+	wp.val, ok = dest.(Type)
 	if !ok {
 		return errors.New("failed to convert")
 	}
@@ -167,18 +178,14 @@ func (c *ColumnField[Type]) Scan(src interface{}) error {
 	return nil
 }
 
-func (bc *ColumnField[Type]) Value() (val Type, err error) {
-	if bc.IsNull {
-		return val, statement.ErrNullValue
+func (wp *WrappedPrimitive[_]) Value() (driver.Value, error) {
+	if !wp.valid {
+		return nil, nil
 	}
 
-	if bc.Valid {
-		return val, statement.ErrEmptyColumn
-	}
-
-	return bc.Val, nil
+	return wp.val, nil
 }
 
-func (bc *ColumnField[Type]) iValue() (val any, err error) {
-	return bc.Value()
+func (wp *WrappedPrimitive[Type]) Val() (Type, bool) {
+	return wp.val, wp.valid
 }

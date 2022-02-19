@@ -74,7 +74,9 @@ func (c *SelectContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *Sel
 	return c
 }
 
-func (c *SelectContext[Table]) Where(condition genorm.TypedTableExpr[Table, bool]) *SelectContext[Table] {
+func (c *SelectContext[Table]) Where(
+	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+) *SelectContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -94,7 +96,9 @@ func (c *SelectContext[Table]) GroupBy(exprs ...genorm.TableExpr[Table]) *Select
 	return c
 }
 
-func (c *SelectContext[Table]) Having(condition genorm.TypedTableExpr[Table, bool]) *SelectContext[Table] {
+func (c *SelectContext[Table]) Having(
+	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+) *SelectContext[Table] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("having condition: %w", err))

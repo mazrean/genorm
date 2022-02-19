@@ -9,10 +9,10 @@ import (
 )
 
 type whereConditionClause[T Table] struct {
-	condition genorm.TypedTableExpr[T, bool]
+	condition genorm.TypedTableExpr[T, *genorm.WrappedPrimitive[bool]]
 }
 
-func (c *whereConditionClause[Table]) set(condition genorm.TypedTableExpr[Table, bool]) error {
+func (c *whereConditionClause[Table]) set(condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]]) error {
 	if c.condition != nil {
 		return errors.New("where conditions already set")
 	}
