@@ -333,7 +333,7 @@ func In[T Table, S ExprType](
 	}
 
 	queries := []string{}
-	args := []interface{}{}
+	args := []ExprType{}
 	for _, expr := range exprs {
 		query, args2, errs2 := expr.Expr()
 		if len(errs2) != 0 {
@@ -389,7 +389,7 @@ func NotIn[T Table, S ExprType](
 	}
 
 	queries := []string{}
-	args := []interface{}{}
+	args := []ExprType{}
 	for _, expr := range exprs {
 		query, args2, errs2 := expr.Expr()
 		if len(errs2) != 0 {

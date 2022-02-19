@@ -120,9 +120,14 @@ func (c *UpdateContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsA
 		return 0, errs[0]
 	}
 
-	query, args, err := c.buildQuery()
+	query, exprArgs, err := c.buildQuery()
 	if err != nil {
 		return 0, fmt.Errorf("build query: %w", err)
+	}
+
+	args := make([]any, 0, len(exprArgs))
+	for _, arg := range exprArgs {
+		args = append(args, arg)
 	}
 
 	result, err := db.ExecContext(ctx, query, args...)
@@ -142,8 +147,8 @@ func (c *UpdateContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
 	return c.DoContext(context.Background(), db)
 }
 
-func (c *UpdateContext[Table]) buildQuery() (string, []any, error) {
-	args := []any{}
+func (c *UpdateContext[Table]) buildQuery() (string, []genorm.ExprType, error) {
+	args := []genorm.ExprType{}
 
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE ")

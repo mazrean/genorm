@@ -100,9 +100,9 @@ func newRelation(relationType RelationType, baseTable, refTable Table, expr geno
 	}, nil
 }
 
-func (r *Relation) JoinedTableName() (string, []any, error) {
+func (r *Relation) JoinedTableName() (string, []genorm.ExprType, error) {
 	sb := strings.Builder{}
-	args := []any{}
+	args := []genorm.ExprType{}
 
 	sb.WriteString("(")
 
