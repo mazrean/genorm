@@ -144,8 +144,21 @@ func (c *UpdateContext[Table]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := strings.Builder{}
-	sb.WriteString("DELETE FROM ")
+	sb.WriteString("UPDATE ")
 	sb.WriteString(c.table.SQLTableName())
+
+	if len(c.assignmentMap) == 0 {
+		return "", nil, errors.New("no assignment")
+	}
+
+	sb.WriteString(" SET ")
+	assignments := make([]string, 0, len(c.assignmentMap))
+	for column, expr := range c.assignmentMap {
+		assignmentQuery, assignmentArgs := expr.Expr()
+		assignments = append(assignments, fmt.Sprintf("%s = %s", column.SQLColumnName(), assignmentQuery))
+		args = append(args, assignmentArgs...)
+	}
+	sb.WriteString(strings.Join(assignments, ", "))
 
 	if c.whereCondition.exists() {
 		whereQuery, whereArgs, err := c.whereCondition.getExpr()
