@@ -136,11 +136,11 @@ func (c *UpdateContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsA
 	return rowsAffected, nil
 }
 
-func (c *UpdateContext[TableBase]) Do(db *sql.DB) (rowsAffected int64, err error) {
+func (c *UpdateContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
 	return c.DoContext(context.Background(), db)
 }
 
-func (c *UpdateContext[BasicTable]) buildQuery() (string, []any, error) {
+func (c *UpdateContext[Table]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := strings.Builder{}
