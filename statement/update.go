@@ -82,7 +82,9 @@ func (c *UpdateContext[Table]) MapAssign(assignMap map[genorm.TableColumns[Table
 	return c
 }
 
-func (c *UpdateContext[Table]) Where(condition genorm.TypedTableExpr[Table, bool]) *UpdateContext[Table] {
+func (c *UpdateContext[Table]) Where(
+	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+) *UpdateContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))

@@ -133,7 +133,7 @@ func (c *CreateContext[Table]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *CreateContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnField) (strings.Builder, []any, error) {
+func (c *CreateContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ExprType) (strings.Builder, []any, error) {
 	sb.WriteString("(")
 	for i, columnName := range fields {
 		if i != 0 {
@@ -145,12 +145,12 @@ func (c *CreateContext[Table]) buildValueList(sb strings.Builder, args []any, fi
 			return sb, nil, errors.New("field not found")
 		}
 
-		fieldValue, err := columnField.iValue()
-		if err != nil && !errors.Is(err, ErrNullValue) {
+		fieldValue, err := columnField.Value()
+		if err != nil {
 			return sb, nil, fmt.Errorf("failed to get field value: %w", err)
 		}
 
-		if errors.Is(err, ErrNullValue) {
+		if fieldValue == nil {
 			sb.WriteString("NULL")
 		} else {
 			sb.WriteString("?")
