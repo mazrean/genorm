@@ -156,7 +156,11 @@ func (c *UpdateContext[Table]) buildQuery() (string, []any, error) {
 	sb.WriteString(" SET ")
 	assignments := make([]string, 0, len(c.assignmentMap))
 	for column, expr := range c.assignmentMap {
-		assignmentQuery, assignmentArgs := expr.Expr()
+		assignmentQuery, assignmentArgs, errs := expr.Expr()
+		if len(errs) != 0 {
+			return "", nil, errs[0]
+		}
+
 		assignments = append(assignments, fmt.Sprintf("%s = %s", column.SQLColumnName(), assignmentQuery))
 		args = append(args, assignmentArgs...)
 	}

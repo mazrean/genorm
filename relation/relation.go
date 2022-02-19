@@ -106,7 +106,11 @@ func (r *Relation) JoinedTableName() (string, []any, error) {
 
 	sb.WriteString("(")
 
-	baseTableQuery, baseTableArgs := r.baseTable.Expr()
+	baseTableQuery, baseTableArgs, errs := r.baseTable.Expr()
+	if len(errs) != 0 {
+		return "", nil, errs[0]
+	}
+
 	sb.WriteString(baseTableQuery)
 	args = append(args, baseTableArgs...)
 
@@ -125,14 +129,22 @@ func (r *Relation) JoinedTableName() (string, []any, error) {
 		return "", nil, errors.New("unsupported relation type")
 	}
 
-	refTableQuery, refTableArgs := r.refTable.Expr()
+	refTableQuery, refTableArgs, errs := r.refTable.Expr()
+	if len(errs) != 0 {
+		return "", nil, errs[0]
+	}
+
 	sb.WriteString(refTableQuery)
 	args = append(args, refTableArgs...)
 
 	if r.onExpr != nil {
 		sb.WriteString(" ON ")
 
-		onExprQuery, onExprArgs := r.onExpr.Expr()
+		onExprQuery, onExprArgs, errs := r.onExpr.Expr()
+		if len(errs) != 0 {
+			return "", nil, errs[0]
+		}
+
 		sb.WriteString(onExprQuery)
 		args = append(args, onExprArgs...)
 	}

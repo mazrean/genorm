@@ -257,7 +257,10 @@ func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []any, e
 
 		groupQueries := make([]string, 0, len(c.groupExpr))
 		for _, groupExpr := range c.groupExpr {
-			groupQuery, groupArgs := groupExpr.Expr()
+			groupQuery, groupArgs, errs := groupExpr.Expr()
+			if len(errs) != 0 {
+				return nil, "", nil, errs[0]
+			}
 
 			groupQueries = append(groupQueries, groupQuery)
 			args = append(args, groupArgs...)
