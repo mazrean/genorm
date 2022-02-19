@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// Logical Operators
+
 func And[T Table](
 	expr1 TypedTableExpr[T, *WrappedPrimitive[bool]],
 	expr2 TypedTableExpr[T, *WrappedPrimitive[bool]],
@@ -74,6 +76,8 @@ func Not[T Table](
 		args:  args,
 	}
 }
+
+// Comparison Operators
 
 func Eq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
