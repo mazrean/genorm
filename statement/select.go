@@ -159,9 +159,14 @@ func (c *SelectContext[Table]) DoContext(ctx context.Context, db *sql.DB) ([]Tab
 		return nil, errs[0]
 	}
 
-	columnAliasMap, query, args, err := c.buildQuery()
+	columnAliasMap, query, exprArgs, err := c.buildQuery()
 	if err != nil {
 		return nil, fmt.Errorf("build query: %w", err)
+	}
+
+	args := make([]any, 0, len(exprArgs))
+	for _, arg := range exprArgs {
+		args = append(args, arg)
 	}
 
 	rows, err := db.QueryContext(ctx, query, args...)
@@ -202,10 +207,10 @@ func (c *SelectContext[Table]) Do(db *sql.DB) ([]Table, error) {
 	return c.DoContext(context.Background(), db)
 }
 
-func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []any, error) {
+func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm.ExprType, error) {
 	columnAliasMap := map[string]string{}
 	sb := strings.Builder{}
-	args := []any{}
+	args := []genorm.ExprType{}
 
 	sb.WriteString("SELECT ")
 

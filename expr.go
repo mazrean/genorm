@@ -1,7 +1,7 @@
 package genorm
 
 type Expr interface {
-	Expr() (string, []any, []error)
+	Expr() (string, []ExprType, []error)
 }
 
 type NullableExpr interface {
@@ -11,12 +11,12 @@ type NullableExpr interface {
 
 type TableExpr[T Table] interface {
 	Expr
-	TableExpr(T) (string, []any, []error)
+	TableExpr(T) (string, []ExprType, []error)
 }
 
 type TypedExpr[T ExprType] interface {
 	Expr
-	TypedExpr(T) (string, []any, []error)
+	TypedExpr(T) (string, []ExprType, []error)
 }
 
 type TypedTableExpr[T Table, S ExprType] interface {
@@ -33,18 +33,18 @@ type NullableTypedTableExpr[T Table, S ExprType] interface {
 
 type ExprStruct[T Table, S ExprType] struct {
 	query string
-	args  []any
+	args  []ExprType
 	errs  []error
 }
 
-func RawExpr[T Table, S ExprType](query string, args ...any) *ExprStruct[T, S] {
+func RawExpr[T Table, S ExprType](query string, args ...ExprType) *ExprStruct[T, S] {
 	return &ExprStruct[T, S]{
 		query: query,
 		args:  args,
 	}
 }
 
-func (es *ExprStruct[_, _]) Expr() (string, []any, []error) {
+func (es *ExprStruct[_, _]) Expr() (string, []ExprType, []error) {
 	if len(es.errs) != 0 {
 		return "", nil, es.errs
 	}
@@ -52,10 +52,10 @@ func (es *ExprStruct[_, _]) Expr() (string, []any, []error) {
 	return es.query, es.args, nil
 }
 
-func (es *ExprStruct[Table, _]) TableExpr(Table) (string, []any, []error) {
+func (es *ExprStruct[Table, _]) TableExpr(Table) (string, []ExprType, []error) {
 	return es.Expr()
 }
 
-func (es *ExprStruct[_, ExprType]) TypedExpr(ExprType) (string, []any, []error) {
+func (es *ExprStruct[_, Type]) TypedExpr(Type) (string, []ExprType, []error) {
 	return es.Expr()
 }

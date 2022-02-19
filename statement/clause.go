@@ -29,7 +29,7 @@ func (c *whereConditionClause[Table]) exists() bool {
 	return c.condition != nil
 }
 
-func (c *whereConditionClause[Table]) getExpr() (string, []any, error) {
+func (c *whereConditionClause[Table]) getExpr() (string, []genorm.ExprType, error) {
 	query, args, errs := c.condition.Expr()
 	if len(errs) != 0 {
 		return "", nil, errs[0]
@@ -72,8 +72,8 @@ func (c *orderClause[Table]) exists() bool {
 	return len(c.orderExprs) != 0
 }
 
-func (c *orderClause[Table]) getExpr() (string, []any, error) {
-	args := []any{}
+func (c *orderClause[Table]) getExpr() (string, []genorm.ExprType, error) {
+	args := []genorm.ExprType{}
 	orderQueries := make([]string, 0, len(c.orderExprs))
 	for _, orderItem := range c.orderExprs {
 		orderQuery, orderArgs, errs := orderItem.expr.Expr()
@@ -119,7 +119,7 @@ func (l *limitClause) exists() bool {
 	return l.limit != 0
 }
 
-func (l *limitClause) getExpr() (string, []any, error) {
+func (l *limitClause) getExpr() (string, []genorm.ExprType, error) {
 	return fmt.Sprintf("LIMIT %d", l.limit), nil, nil
 }
 
@@ -144,6 +144,6 @@ func (o *offsetClause) exists() bool {
 	return o.offset != 0
 }
 
-func (o *offsetClause) getExpr() (string, []any, error) {
+func (o *offsetClause) getExpr() (string, []genorm.ExprType, error) {
 	return fmt.Sprintf("OFFSET %d", o.offset), nil, nil
 }
