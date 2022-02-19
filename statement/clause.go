@@ -30,7 +30,10 @@ func (c *whereConditionClause[Table]) exists() bool {
 }
 
 func (c *whereConditionClause[Table]) getExpr() (string, []any, error) {
-	query, args := c.condition.Expr()
+	query, args, errs := c.condition.Expr()
+	if len(errs) != 0 {
+		return "", nil, errs[0]
+	}
 
 	return query, args, nil
 }
@@ -73,7 +76,10 @@ func (c *orderClause[Table]) getExpr() (string, []any, error) {
 	args := []any{}
 	orderQueries := make([]string, 0, len(c.orderExprs))
 	for _, orderItem := range c.orderExprs {
-		orderQuery, orderArgs := orderItem.expr.Expr()
+		orderQuery, orderArgs, errs := orderItem.expr.Expr()
+		if len(errs) != 0 {
+			return "", nil, errs[0]
+		}
 
 		var directionQuery string
 		switch orderItem.direction {
