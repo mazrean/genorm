@@ -20,7 +20,9 @@ func NewRelationContext[S Table, T Table, U JoinedTable](baseTable S, refTable T
 	}
 }
 
-func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
+func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(
+	expr genorm.TypedTableExpr[JoinedTable, *genorm.WrappedPrimitive[bool]],
+) JoinedTable {
 	var (
 		baseTable   BaseTable
 		refTable    RefTable
@@ -38,7 +40,9 @@ func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(expr genorm.Typ
 	return joinedTable
 }
 
-func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
+func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(
+	expr genorm.TypedTableExpr[JoinedTable, *genorm.WrappedPrimitive[bool]],
+) JoinedTable {
 	var (
 		baseTable   BaseTable
 		refTable    RefTable
@@ -56,7 +60,9 @@ func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(expr genorm
 	return joinedTable
 }
 
-func (r *RelationContext[BaseTable, RefTable, JoinedTable]) RightJoin(expr genorm.TypedTableExpr[JoinedTable, bool]) JoinedTable {
+func (r *RelationContext[BaseTable, RefTable, JoinedTable]) RightJoin(
+	expr genorm.TypedTableExpr[JoinedTable, *genorm.WrappedPrimitive[bool]],
+) JoinedTable {
 	var (
 		baseTable   BaseTable
 		refTable    RefTable
