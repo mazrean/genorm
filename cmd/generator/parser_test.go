@@ -528,3 +528,92 @@ func TestParseStructType(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckRefType(t *testing.T) {
+	fieldExpr1, err := parser.ParseExpr("string")
+	if err != nil {
+		t.Fatalf("failed to parse field expr: %v", err)
+	}
+
+	fieldExpr2, err := parser.ParseExpr("uuid.UUID")
+	if err != nil {
+		t.Fatalf("failed to parse field expr: %v", err)
+	}
+
+	fieldExpr3, err := parser.ParseExpr("genorm.Table")
+	if err != nil {
+		t.Fatalf("failed to parse field expr: %v", err)
+	}
+
+	fieldExpr4, err := parser.ParseExpr("uuid.UUID[Table]")
+	if err != nil {
+		t.Fatalf("failed to parse field expr: %v", err)
+	}
+
+	fieldExpr5, err := parser.ParseExpr("genorm.Table[Table]")
+	if err != nil {
+		t.Fatalf("failed to parse field expr: %v", err)
+	}
+
+	fieldExpr6, err := parser.ParseExpr("string[Table]")
+	if err != nil {
+		t.Fatalf("failed to parse field expr: %v", err)
+	}
+
+	refExpr, err := parser.ParseExpr("genorm.Ref[Table]")
+	if err != nil {
+		t.Fatalf("failed to parse field expr: %v", err)
+	}
+
+	tests := []struct {
+		description string
+		e           ast.Expr
+		tableName   string
+		isRef       bool
+	}{
+		{
+			description: "string -> not ref",
+			e:           fieldExpr1,
+		},
+		{
+			description: "uuid.UUID -> not ref",
+			e:           fieldExpr2,
+		},
+		{
+			description: "genorm type -> not ref",
+			e:           fieldExpr3,
+		},
+		{
+			description: "uuid.UUID[Table] -> not ref",
+			e:           fieldExpr4,
+		},
+		{
+			description: "genorm type(with type param) -> not ref",
+			e:           fieldExpr5,
+		},
+		{
+			description: "string[Table] -> not ref",
+			e:           fieldExpr6,
+		},
+		{
+			description: "genorm.Ref[Table] -> ref",
+			e:           refExpr,
+			tableName:   "Table",
+			isRef:       true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			tableName, isRef := checkRefType(test.e)
+
+			if isRef != test.isRef {
+				t.Fatalf("isRef is not match(expected: %t, actual: %t)", test.isRef, isRef)
+			}
+
+			if tableName != test.tableName {
+				t.Fatalf("table name is not match(expected: %s, actual: %s)", test.tableName, tableName)
+			}
+		})
+	}
+}
