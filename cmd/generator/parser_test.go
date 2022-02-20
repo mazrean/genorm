@@ -3,6 +3,7 @@ package generator
 import (
 	"go/ast"
 	"go/parser"
+	"go/token"
 	"testing"
 )
 
@@ -253,6 +254,275 @@ func TestParseGenDecl(t *testing.T) {
 
 				if len(table.RefTables) != len(test.tables[i].RefTables) {
 					t.Fatalf("ref table length is not match")
+				}
+			}
+		})
+	}
+}
+
+func TestParseStructType(t *testing.T) {
+	t.Parallel()
+
+	fieldType := ast.NewIdent("string")
+	refType := &ast.IndexExpr{
+		X: &ast.SelectorExpr{
+			X:   ast.NewIdent("genorm"),
+			Sel: ast.NewIdent("Ref"),
+		},
+		Index: &ast.Ident{
+			Name: "Table",
+		},
+	}
+
+	tests := []struct {
+		description string
+		name        string
+		s           *ast.StructType
+		table       *ParserTable
+		err         bool
+	}{
+		{
+			description: "normal struct type -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+							},
+							Type: fieldType,
+						},
+					},
+				},
+			},
+			table: &ParserTable{
+				StructName: "a",
+				Columns: []*ParserColumn{
+					{
+						Name:      "s",
+						FieldName: "s",
+						Type:      fieldType,
+					},
+				},
+				RefTables: []*ParserRefTable{},
+			},
+		},
+		{
+			description: "struct type(tag exist) -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+							},
+							Type: fieldType,
+							Tag: &ast.BasicLit{
+								Kind:  token.STRING,
+								Value: "genorm:\"t\"",
+							},
+						},
+					},
+				},
+			},
+			table: &ParserTable{
+				StructName: "a",
+				Columns: []*ParserColumn{
+					{
+						Name:      "t",
+						FieldName: "s",
+						Type:      fieldType,
+					},
+				},
+				RefTables: []*ParserRefTable{},
+			},
+		},
+		{
+			description: "struct type(ref exist) -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+							},
+							Type: refType,
+						},
+					},
+				},
+			},
+			table: &ParserTable{
+				StructName: "a",
+				Columns:    []*ParserColumn{},
+				RefTables: []*ParserRefTable{
+					{
+						FieldName:  "s",
+						StructName: "Table",
+					},
+				},
+			},
+		},
+		{
+			description: "struct type(multi column) -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+							},
+							Type: fieldType,
+						},
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("t"),
+							},
+							Type: fieldType,
+						},
+					},
+				},
+			},
+			table: &ParserTable{
+				StructName: "a",
+				Columns: []*ParserColumn{
+					{
+						Name:      "s",
+						FieldName: "s",
+						Type:      fieldType,
+					},
+					{
+						Name:      "t",
+						FieldName: "t",
+						Type:      fieldType,
+					},
+				},
+				RefTables: []*ParserRefTable{},
+			},
+		},
+		{
+			description: "struct type(multi name field) -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+								ast.NewIdent("t"),
+							},
+							Type: fieldType,
+						},
+					},
+				},
+			},
+			table: &ParserTable{
+				StructName: "a",
+				Columns: []*ParserColumn{
+					{
+						Name:      "s",
+						FieldName: "s",
+						Type:      fieldType,
+					},
+					{
+						Name:      "t",
+						FieldName: "t",
+						Type:      fieldType,
+					},
+				},
+				RefTables: []*ParserRefTable{},
+			},
+		},
+		{
+			description: "struct type(multi name ref exist) -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+								ast.NewIdent("t"),
+							},
+							Type: refType,
+						},
+					},
+				},
+			},
+			table: &ParserTable{
+				StructName: "a",
+				Columns:    []*ParserColumn{},
+				RefTables: []*ParserRefTable{
+					{
+						FieldName:  "s",
+						StructName: "Table",
+					},
+					{
+						FieldName:  "t",
+						StructName: "Table",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			table, err := parseStructType(test.name, test.s)
+			if err != nil {
+				if !test.err {
+					t.Fatalf("failed to parse struct type: %v", err)
+				}
+				return
+			}
+
+			if test.err {
+				t.Fatalf("expected error but got no error")
+			}
+
+			if table == nil {
+				if test.table != nil {
+					t.Fatalf("expected table but got nil")
+				}
+				return
+			}
+
+			if table.StructName != test.table.StructName {
+				t.Fatalf("struct name is not match")
+			}
+
+			if len(table.Columns) != len(test.table.Columns) {
+				t.Fatalf("column length is not match")
+			}
+
+			for j, column := range table.Columns {
+				if column.Name != test.table.Columns[j].Name {
+					t.Fatalf("column name is not match(expected: %s, actual: %s)", test.table.Columns[j].Name, column.Name)
+				}
+
+				if column.FieldName != test.table.Columns[j].FieldName {
+					t.Fatalf("column field name is not match(expected: %s, actual: %s)", test.table.Columns[j].FieldName, column.FieldName)
+				}
+
+				if column.Type != test.table.Columns[j].Type {
+					t.Fatalf("column type is not match(expected: %s, actual: %s)", test.table.Columns[j].Type, column.Type)
+				}
+			}
+
+			if len(table.RefTables) != len(test.table.RefTables) {
+				t.Fatalf("ref table length is not match")
+			}
+
+			for j, refTable := range table.RefTables {
+				if refTable.FieldName != test.table.RefTables[j].FieldName {
+					t.Fatalf("ref table field name is not match(expected: %s, actual: %s)", test.table.RefTables[j].FieldName, refTable.FieldName)
+				}
+
+				if refTable.StructName != test.table.RefTables[j].StructName {
+					t.Fatalf("ref table struct name is not match(expected: %s, actual: %s)", test.table.RefTables[j].StructName, refTable.StructName)
 				}
 			}
 		})
