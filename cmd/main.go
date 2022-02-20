@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/mazrean/genorm/cmd/generator"
 )
@@ -22,13 +21,15 @@ var (
 	source          string
 	destination     string
 	packageName     string
+	moduleName      string
 )
 
 func init() {
 	flag.BoolVar(&showVersionInfo, "version", false, "If true, output version information.")
 	flag.StringVar(&source, "source", "", "The source file to parse.")
 	flag.StringVar(&destination, "destination", "", "The destination file to write.")
-	flag.StringVar(&packageName, "package", "", "The package name to use.")
+	flag.StringVar(&packageName, "package", "", "The root package name to use.")
+	flag.StringVar(&moduleName, "module", "", "The root module name to use.")
 }
 
 func main() {
@@ -47,13 +48,19 @@ func main() {
 	}
 	defer src.Close()
 
-	dst, err := openDestination(destination)
+	dst, err := destinationDir(destination)
 	if err != nil {
 		panic(err)
 	}
-	defer dst.Close()
 
-	err = generator.Generate(packageName, src, dst)
+	if len(packageName) == 0 {
+		panic("package name is required")
+	}
+	if len(moduleName) == 0 {
+		panic("module name is required")
+	}
+
+	err = generator.Generate(packageName, moduleName, dst, src)
 	if err != nil {
 		panic(err)
 	}
@@ -84,28 +91,15 @@ func openSource(source string) (io.ReadCloser, error) {
 	return file, nil
 }
 
-func openDestination(destination string) (io.WriteCloser, error) {
+func destinationDir(destination string) (string, error) {
 	if len(destination) == 0 {
-		return os.Stdout, nil
+		return "", errors.New("Destination directory path is required.")
 	}
 
-	destinationDir := filepath.Dir(destination)
-	_, err := os.Stat(destinationDir)
-	if err != nil && errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("failed to get destination directory info: %w", err)
-	}
-
-	if errors.Is(err, os.ErrNotExist) {
-		err := os.MkdirAll(destinationDir, os.ModePerm)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create destination directory: %w", err)
-		}
-	}
-
-	file, err := os.Create(destination)
+	err := os.MkdirAll(destination, os.ModePerm)
 	if err != nil {
-		return nil, fmt.Errorf("create destination: %w", err)
+		return "", fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
-	return file, nil
+	return destination, nil
 }
