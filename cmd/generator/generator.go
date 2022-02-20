@@ -4,6 +4,6 @@ import (
 	"io"
 )
 
-func Generate(packageName string, src io.Reader, dst io.Writer) error {
+func Generate(packageName string, moduleName string, destinationDir string, src io.Reader) error {
 	return nil
 }
