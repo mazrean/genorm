@@ -18,9 +18,14 @@ func Generate(packageName string, moduleName string, destinationDir string, src 
 		return fmt.Errorf("parse source: %w", err)
 	}
 
-	_, err = parse(f)
+	parserTables, err := parse(f)
 	if err != nil {
 		return fmt.Errorf("parse: %w", err)
+	}
+
+	_, _, err = convert(parserTables, config.JoinNum)
+	if err != nil {
+		return fmt.Errorf("convert: %w", err)
 	}
 
 	return nil
