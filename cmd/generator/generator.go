@@ -7,7 +7,11 @@ import (
 	"io"
 )
 
-func Generate(packageName string, moduleName string, destinationDir string, src io.Reader) error {
+type Config struct {
+	JoinNum int
+}
+
+func Generate(packageName string, moduleName string, destinationDir string, src io.Reader, config Config) error {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", src, parser.Mode(0))
 	if err != nil {
