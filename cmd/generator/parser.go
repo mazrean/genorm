@@ -24,13 +24,6 @@ type ParserRefTable struct {
 	StructName string
 }
 
-type methodType int8
-
-const (
-	methodTypeIdentifier methodType = iota + 1
-	methodTypeStar
-)
-
 type ParserColumn struct {
 	Name      string
 	FieldName string
