@@ -2,6 +2,7 @@ package generator
 
 import (
 	"go/ast"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -170,15 +171,15 @@ func TestTablesHash(t *testing.T) {
 
 	tests := []struct {
 		description string
-		joinedTable *generateJoinedTable
+		joinedTable *converterJoinedTable
 		tableLength int
 		hash        int64
 	}{
 		{
 			description: "simple",
-			joinedTable: &generateJoinedTable{
+			joinedTable: &converterJoinedTable{
 				hash: -1,
-				tables: map[int]*generateTable{
+				tables: map[int]*converterTable{
 					1: {},
 				},
 			},
@@ -187,9 +188,9 @@ func TestTablesHash(t *testing.T) {
 		},
 		{
 			description: "id: 0",
-			joinedTable: &generateJoinedTable{
+			joinedTable: &converterJoinedTable{
 				hash: -1,
-				tables: map[int]*generateTable{
+				tables: map[int]*converterTable{
 					0: {},
 				},
 			},
@@ -198,9 +199,9 @@ func TestTablesHash(t *testing.T) {
 		},
 		{
 			description: "multiple",
-			joinedTable: &generateJoinedTable{
+			joinedTable: &converterJoinedTable{
 				hash: -1,
-				tables: map[int]*generateTable{
+				tables: map[int]*converterTable{
 					1: {},
 					3: {},
 				},
@@ -210,16 +211,16 @@ func TestTablesHash(t *testing.T) {
 		},
 		{
 			description: "length: 0",
-			joinedTable: &generateJoinedTable{
+			joinedTable: &converterJoinedTable{
 				hash:   -1,
-				tables: map[int]*generateTable{},
+				tables: map[int]*converterTable{},
 			},
 			tableLength: 0,
 			hash:        0,
 		},
 		{
 			description: "use cache",
-			joinedTable: &generateJoinedTable{
+			joinedTable: &converterJoinedTable{
 				hash: 50,
 			},
 			tableLength: 10,
@@ -230,6 +231,313 @@ func TestTablesHash(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			assert.Equal(t, test.hash, test.joinedTable.tablesHash(test.tableLength))
+		})
+	}
+}
+
+func TestConvertJoinedTables(t *testing.T) {
+	t.Parallel()
+
+	typeIdent1 := ast.NewIdent("int64")
+	funcDecl := &ast.FuncDecl{
+		Name: ast.NewIdent("GetID"),
+	}
+
+	messageTable := &Table{
+		StructName: "Message",
+		Columns: []*Column{
+			{
+				Name:      "id",
+				FieldName: "ID",
+				Type:      typeIdent1,
+			},
+		},
+		Methods:         []*Method{},
+		RefTables:       []*RefTable{},
+		RefJoinedTables: []*RefJoinedTable{},
+	}
+	userTable := &Table{
+		StructName: "User",
+		Columns: []*Column{
+			{
+				Name:      "id",
+				FieldName: "ID",
+				Type:      typeIdent1,
+			},
+		},
+		Methods: []*Method{
+			{
+				Type: methodTypeIdentifier,
+				Decl: funcDecl,
+			},
+		},
+		RefTables: []*RefTable{
+			{
+				Table: messageTable,
+			},
+		},
+		RefJoinedTables: []*RefJoinedTable{},
+	}
+
+	messageOptionTable2 := &Table{
+		StructName: "MessageOption",
+		Columns: []*Column{
+			{
+				Name:      "id",
+				FieldName: "ID",
+				Type:      typeIdent1,
+			},
+		},
+		Methods:         []*Method{},
+		RefTables:       []*RefTable{},
+		RefJoinedTables: []*RefJoinedTable{},
+	}
+	messageTable2 := &Table{
+		StructName: "Message",
+		Columns: []*Column{
+			{
+				Name:      "id",
+				FieldName: "ID",
+				Type:      typeIdent1,
+			},
+		},
+		Methods: []*Method{},
+		RefTables: []*RefTable{
+			{
+				Table: messageOptionTable2,
+			},
+		},
+		RefJoinedTables: []*RefJoinedTable{},
+	}
+	userTable2 := &Table{
+		StructName: "User",
+		Columns: []*Column{
+			{
+				Name:      "id",
+				FieldName: "ID",
+				Type:      typeIdent1,
+			},
+		},
+		Methods: []*Method{
+			{
+				Type: methodTypeIdentifier,
+				Decl: funcDecl,
+			},
+		},
+		RefTables: []*RefTable{
+			{
+				Table: messageTable2,
+			},
+		},
+		RefJoinedTables: []*RefJoinedTable{
+			{
+				Table: &JoinedTable{
+					Tables:          []*Table{messageTable2, messageOptionTable2},
+					RefTables:       []*RefTable{},
+					RefJoinedTables: []*RefJoinedTable{},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		description        string
+		tables             []*Table
+		expectTables       []*Table
+		expectJoinedTables []*JoinedTable
+		joinNum            int
+		err                bool
+	}{
+		{
+			description: "simple",
+			joinNum:     5,
+			tables: []*Table{
+				{
+					StructName: "User",
+					Columns: []*Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*Method{
+						{
+							Type: methodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+				},
+			},
+			expectTables: []*Table{
+				{
+					StructName: "User",
+					Columns: []*Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*Method{
+						{
+							Type: methodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+					RefTables:       []*RefTable{},
+					RefJoinedTables: []*RefJoinedTable{},
+				},
+			},
+			expectJoinedTables: []*JoinedTable{},
+		},
+		{
+			description: "join",
+			joinNum:     5,
+			tables: []*Table{
+				{
+					StructName: "User",
+					Columns: []*Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*Method{
+						{
+							Type: methodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+					RefTables: []*RefTable{
+						{
+							Table: messageTable,
+						},
+					},
+				},
+				messageTable,
+			},
+			expectTables: []*Table{
+				userTable,
+				messageTable,
+			},
+			expectJoinedTables: []*JoinedTable{
+				{
+					Tables:          []*Table{messageTable, userTable},
+					RefTables:       []*RefTable{},
+					RefJoinedTables: []*RefJoinedTable{},
+				},
+			},
+		},
+		{
+			description: "no join",
+			joinNum:     1,
+			tables: []*Table{
+				{
+					StructName: "User",
+					Columns: []*Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*Method{
+						{
+							Type: methodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+					RefTables: []*RefTable{
+						{
+							Table: messageTable,
+						},
+					},
+				},
+				messageTable,
+			},
+			expectTables: []*Table{
+				userTable,
+				messageTable,
+			},
+			expectJoinedTables: []*JoinedTable{},
+		},
+		{
+			description: "multiple join",
+			joinNum:     5,
+			tables: []*Table{
+				{
+					StructName: "User",
+					Columns: []*Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*Method{
+						{
+							Type: methodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+					RefTables: []*RefTable{
+						{
+							Table: messageTable2,
+						},
+					},
+				},
+				messageTable2,
+				messageOptionTable2,
+			},
+			expectTables: []*Table{
+				userTable2,
+				messageTable2,
+				messageOptionTable2,
+			},
+			expectJoinedTables: []*JoinedTable{
+				{
+					Tables: []*Table{messageTable2, userTable2},
+					RefTables: []*RefTable{
+						{
+							Table: messageOptionTable2,
+						},
+					},
+					RefJoinedTables: []*RefJoinedTable{},
+				},
+				{
+					Tables:          []*Table{messageTable2, messageOptionTable2},
+					RefTables:       []*RefTable{},
+					RefJoinedTables: []*RefJoinedTable{},
+				},
+				{
+					Tables:          []*Table{messageTable2, messageOptionTable2, userTable2},
+					RefTables:       []*RefTable{},
+					RefJoinedTables: []*RefJoinedTable{},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			tables, joinedTables, err := convertJoinedTables(test.tables, test.joinNum)
+			if err != nil {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			assert.ElementsMatch(t, test.expectTables, tables)
+
+			for _, joinedTable := range joinedTables {
+				sort.Slice(joinedTable.Tables, func(i, j int) bool {
+					return joinedTable.Tables[i].StructName < joinedTable.Tables[j].StructName
+				})
+			}
+			assert.ElementsMatch(t, test.expectJoinedTables, joinedTables)
 		})
 	}
 }
