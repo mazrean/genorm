@@ -22,6 +22,7 @@ var (
 	destination     string
 	packageName     string
 	moduleName      string
+	joinNum         int
 )
 
 func init() {
@@ -30,6 +31,7 @@ func init() {
 	flag.StringVar(&destination, "destination", "", "The destination file to write.")
 	flag.StringVar(&packageName, "package", "", "The root package name to use.")
 	flag.StringVar(&moduleName, "module", "", "The root module name to use.")
+	flag.IntVar(&joinNum, "join-num", 5, "The number of joins to generate.")
 }
 
 func main() {
@@ -60,7 +62,9 @@ func main() {
 		panic("module name is required")
 	}
 
-	err = generator.Generate(packageName, moduleName, dst, src)
+	err = generator.Generate(packageName, moduleName, dst, src, generator.Config{
+		JoinNum: joinNum,
+	})
 	if err != nil {
 		panic(err)
 	}
