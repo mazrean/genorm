@@ -164,3 +164,72 @@ func TestConvertTables(t *testing.T) {
 		})
 	}
 }
+
+func TestTablesHash(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		joinedTable *generateJoinedTable
+		tableLength int
+		hash        int64
+	}{
+		{
+			description: "simple",
+			joinedTable: &generateJoinedTable{
+				hash: -1,
+				tables: map[int]*generateTable{
+					1: {},
+				},
+			},
+			tableLength: 2,
+			hash:        1,
+		},
+		{
+			description: "id: 0",
+			joinedTable: &generateJoinedTable{
+				hash: -1,
+				tables: map[int]*generateTable{
+					0: {},
+				},
+			},
+			tableLength: 2,
+			hash:        0,
+		},
+		{
+			description: "multiple",
+			joinedTable: &generateJoinedTable{
+				hash: -1,
+				tables: map[int]*generateTable{
+					1: {},
+					3: {},
+				},
+			},
+			tableLength: 4,
+			hash:        13,
+		},
+		{
+			description: "length: 0",
+			joinedTable: &generateJoinedTable{
+				hash:   -1,
+				tables: map[int]*generateTable{},
+			},
+			tableLength: 0,
+			hash:        0,
+		},
+		{
+			description: "use cache",
+			joinedTable: &generateJoinedTable{
+				hash: 50,
+			},
+			tableLength: 10,
+			hash:        50,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			assert.Equal(t, test.hash, test.joinedTable.tablesHash(test.tableLength))
+		})
+	}
+}
