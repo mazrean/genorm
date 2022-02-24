@@ -8,6 +8,10 @@ import (
 )
 
 type ExprType interface {
+	driver.Valuer
+}
+
+type ColumnFieldExprType interface {
 	sql.Scanner
 	driver.Valuer
 }
@@ -25,8 +29,8 @@ type WrappedPrimitive[T ExprPrimitive] struct {
 	val   T
 }
 
-func Wrap[T ExprPrimitive](val T) *WrappedPrimitive[T] {
-	return &WrappedPrimitive[T]{
+func Wrap[T ExprPrimitive](val T) WrappedPrimitive[T] {
+	return WrappedPrimitive[T]{
 		valid: true,
 		val:   val,
 	}
@@ -178,7 +182,7 @@ func (wp *WrappedPrimitive[Type]) Scan(src any) error {
 	return nil
 }
 
-func (wp *WrappedPrimitive[_]) Value() (driver.Value, error) {
+func (wp WrappedPrimitive[_]) Value() (driver.Value, error) {
 	if !wp.valid {
 		return nil, nil
 	}
@@ -186,6 +190,6 @@ func (wp *WrappedPrimitive[_]) Value() (driver.Value, error) {
 	return wp.val, nil
 }
 
-func (wp *WrappedPrimitive[Type]) Val() (Type, bool) {
+func (wp WrappedPrimitive[Type]) Val() (Type, bool) {
 	return wp.val, wp.valid
 }

@@ -133,7 +133,7 @@ func (c *CreateContext[Table]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *CreateContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ExprType) (strings.Builder, []any, error) {
+func (c *CreateContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ColumnFieldExprType) (strings.Builder, []any, error) {
 	sb.WriteString("(")
 	for i, columnName := range fields {
 		if i != 0 {
