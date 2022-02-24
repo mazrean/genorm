@@ -10,6 +10,83 @@ import (
 	"path/filepath"
 )
 
+const (
+	genormImport = `"github.com/mazrean/genorm"`
+	fmtImport    = `"fmt"`
+)
+
+var (
+	genormIdent = ast.NewIdent("genorm")
+	fmtIdent = ast.NewIdent("fmt")
+)
+
+func codegen(packageName string, modulePath string, destinationDir string, baseAst *ast.File, tables []*Table, joinedTables []*JoinedTable) error {
+	dir, err := newDirectory(destinationDir, packageName, modulePath)
+	if err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	importDecls := codegenImportDecls(baseAst)
+
+	return nil
+}
+
+func codegenImportDecls(baseAst *ast.File) []ast.Decl {
+	importDecls := []ast.Decl{}
+	haveGenorm := false
+	haveFmt := false
+	for _, decl := range baseAst.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl == nil || genDecl.Tok != token.IMPORT || len(genDecl.Specs) == 0 {
+			continue
+		}
+
+		for _, spec := range genDecl.Specs {
+			importSpec, ok := spec.(*ast.ImportSpec)
+			if !ok || importSpec == nil {
+				continue
+			}
+
+			if importSpec.Name != nil {
+				switch importSpec.Path.Value {
+				case genormImport:
+					genormIdent = importSpec.Name
+				case fmtImport:
+					fmtIdent = importSpec.Name
+				}
+			}
+		}
+
+		if !haveGenorm {
+			genDecl.Specs = append(genDecl.Specs, &ast.ImportSpec{
+				Name: genormIdent,
+				Path: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: genormImport,
+				},
+			})
+
+			haveGenorm = true
+		}
+
+		if !haveFmt {
+			genDecl.Specs = append(genDecl.Specs, &ast.ImportSpec{
+				Name: fmtIdent,
+				Path: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: fmtImport,
+				},
+			})
+
+			haveFmt = true	
+		}
+
+		importDecls = append(importDecls, genDecl)
+	}
+
+	return importDecls
+}
+
 type directory struct {
 	path        string
 	packageName string
