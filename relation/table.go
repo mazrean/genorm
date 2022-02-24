@@ -6,7 +6,6 @@ import (
 
 type Table interface {
 	genorm.Table
-	AddError(err error)
 }
 
 type BasicTable interface {

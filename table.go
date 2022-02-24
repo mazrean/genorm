@@ -4,6 +4,7 @@ type Table interface {
 	Expr
 	SQLTableName() string
 	Columns() []Column
+	GetErrors() []error
 }
 
 type BasicTable interface {
@@ -15,4 +16,5 @@ type BasicTable interface {
 type JoinedTable interface {
 	Table
 	BaseTables() []BasicTable
+	AddError(error)
 }
