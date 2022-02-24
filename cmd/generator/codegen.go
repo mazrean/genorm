@@ -18,7 +18,7 @@ const (
 
 var (
 	genormIdent = ast.NewIdent("genorm")
-	fmtIdent = ast.NewIdent("fmt")
+	fmtIdent    = ast.NewIdent("fmt")
 )
 
 func codegen(packageName string, modulePath string, destinationDir string, baseAst *ast.File, tables []*Table, joinedTables []*JoinedTable) error {
@@ -79,7 +79,7 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 				},
 			})
 
-			haveFmt = true	
+			haveFmt = true
 		}
 
 		importDecls = append(importDecls, genDecl)
@@ -171,7 +171,7 @@ func codegenMainTableDecl(table *Table) []ast.Decl {
 	columnMapKeyValueExprs := make([]ast.Expr, 0, len(table.Columns))
 	for i := range table.Columns {
 		columnMapKeyValueExprs = append(columnMapKeyValueExprs, &ast.KeyValueExpr{
-			Key:   &ast.CallExpr{
+			Key: &ast.CallExpr{
 				Fun: &ast.SelectorExpr{
 					X:   columnExprs[i],
 					Sel: ast.NewIdent("SQLColumnName"),
@@ -299,6 +299,8 @@ func codegenMainTableDecl(table *Table) []ast.Decl {
 		},
 	})
 
+	tableDecls = append(tableDecls, columnDecls...)
+
 	return tableDecls
 }
 
@@ -332,13 +334,13 @@ func codegenFieldTypeExpr(columnTypeExpr ast.Expr) ast.Expr {
 }
 
 func codegenMainColumnDecl(table *Table, column *Column) (ast.Expr, []ast.Decl) {
-	lowerTableName := strings.ToLower(table.StructName[0:1])+table.StructName[1:]
-	columnTypeIdent := ast.NewIdent(lowerTableName+column.FieldName)
-	columnVarIdent := ast.NewIdent(table.StructName+column.FieldName)
+	lowerTableName := strings.ToLower(table.StructName[0:1]) + table.StructName[1:]
+	columnTypeIdent := ast.NewIdent(lowerTableName + column.FieldName)
+	columnVarIdent := ast.NewIdent(table.StructName + column.FieldName)
 
 	tableStructPointerType := &ast.UnaryExpr{
 		Op: token.AND,
-		X: ast.NewIdent(fmt.Sprintf("%sTable", table.StructName)),
+		X:  ast.NewIdent(fmt.Sprintf("%sTable", table.StructName)),
 	}
 
 	recvIdent := ast.NewIdent("c")
@@ -630,7 +632,57 @@ func codegenMainColumnDecl(table *Table, column *Column) (ast.Expr, []ast.Decl) 
 			Specs: []ast.Spec{
 				&ast.ValueSpec{
 					Names: []*ast.Ident{columnVarIdent},
-					Type: columnTypeIdent,
+					Type:  columnTypeIdent,
+					Values: []ast.Expr{
+						&ast.CompositeLit{
+							Type: columnTypeIdent,
+						},
+					},
+				},
+			},
+		}, &ast.FuncDecl{
+			Recv: &ast.FieldList{
+				List: []*ast.Field{
+					&ast.Field{
+						Names: []*ast.Ident{recvIdent},
+						Type: &ast.StarExpr{
+							X: columnTypeIdent,
+						},
+					},
+				},
+			},
+			Name: tableGetErrors,
+			Type: &ast.FuncType{
+				Results: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Type: &ast.ArrayType{
+								Elt: ast.NewIdent("error"),
+							},
+						},
+					},
+				},
+			},
+			Body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					&ast.ReturnStmt{
+						Results: []ast.Expr{
+							&ast.CallExpr{
+								Fun: &ast.SelectorExpr{
+									X:   recvIdent,
+									Sel: exprExprIdent,
+								},
+							},
+						},
+					},
+				},
+			},
+		}, &ast.GenDecl{
+			Tok: token.VAR,
+			Specs: []ast.Spec{
+				&ast.ValueSpec{
+					Names: []*ast.Ident{columnVarIdent},
+					Type:  columnTypeIdent,
 					Values: []ast.Expr{
 						&ast.CompositeLit{
 							Type: columnTypeIdent,
