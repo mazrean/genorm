@@ -50,9 +50,8 @@ func main() {
 	}
 	defer src.Close()
 
-	dst, err := destinationDir(destination)
-	if err != nil {
-		panic(err)
+	if len(destination) == 0 {
+		panic("Destination directory path is required.")
 	}
 
 	if len(packageName) == 0 {
@@ -62,7 +61,7 @@ func main() {
 		panic("module name is required")
 	}
 
-	err = generator.Generate(packageName, moduleName, dst, src, generator.Config{
+	err = generator.Generate(packageName, moduleName, destination, src, generator.Config{
 		JoinNum: joinNum,
 	})
 	if err != nil {
@@ -93,17 +92,4 @@ func openSource(source string) (io.ReadCloser, error) {
 	}
 
 	return file, nil
-}
-
-func destinationDir(destination string) (string, error) {
-	if len(destination) == 0 {
-		return "", errors.New("Destination directory path is required.")
-	}
-
-	err := os.MkdirAll(destination, os.ModePerm)
-	if err != nil {
-		return "", fmt.Errorf("failed to create destination directory: %w", err)
-	}
-
-	return destination, nil
 }

@@ -1,4 +1,4 @@
-package genorm
+package relation
 
 import (
 	"errors"

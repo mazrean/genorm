@@ -1,18 +1,15 @@
-package generator
+package convert
 
 import (
 	"errors"
 	"fmt"
 	"math"
 	"sort"
+
+	"github.com/mazrean/genorm/cmd/generator/types"
 )
 
-func convert(parserTables []*ParserTable, joinNum int) ([]*Table, []*JoinedTable, error) {
-	tables, err := convertTables(parserTables)
-	if err != nil {
-		return nil, nil, fmt.Errorf("convert tables: %w", err)
-	}
-
+func Convert(tables []*types.Table, joinNum int) ([]*types.Table, []*types.JoinedTable, error) {
 	tables, joinedTables, err := convertJoinedTables(tables, joinNum)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generate joined tables: %w", err)
@@ -21,70 +18,9 @@ func convert(parserTables []*ParserTable, joinNum int) ([]*Table, []*JoinedTable
 	return tables, joinedTables, nil
 }
 
-func convertTables(tables []*ParserTable) ([]*Table, error) {
-	type tablePair struct {
-		parser    *ParserTable
-		converted *Table
-	}
-
-	pairMap := make(map[string]*tablePair, len(tables))
-	for _, table := range tables {
-		pairMap[table.StructName] = &tablePair{
-			parser:    table,
-			converted: convertTable(table),
-		}
-	}
-
-	convertedTables := make([]*Table, 0, len(tables))
-	for _, pair := range pairMap {
-		refTables := make([]*RefTable, 0, len(pair.parser.RefTables))
-		for _, refParserTable := range pair.parser.RefTables {
-			refTable, ok := pairMap[refParserTable.StructName]
-			if !ok {
-				return nil, fmt.Errorf("ref table not found: %s", refParserTable.StructName)
-			}
-
-			refTables = append(refTables, &RefTable{
-				Table: refTable.converted,
-			})
-		}
-
-		pair.converted.RefTables = refTables
-
-		convertedTables = append(convertedTables, pair.converted)
-	}
-
-	return convertedTables, nil
-}
-
-func convertTable(table *ParserTable) *Table {
-	columns := make([]*Column, 0, len(table.Columns))
-	for _, column := range table.Columns {
-		columns = append(columns, &Column{
-			Name:      column.Name,
-			FieldName: column.FieldName,
-			Type:      column.Type,
-		})
-	}
-
-	methods := make([]*Method, 0, len(table.Methods))
-	for _, method := range table.Methods {
-		methods = append(methods, &Method{
-			Type: method.Type,
-			Decl: method.Decl,
-		})
-	}
-
-	return &Table{
-		StructName: table.StructName,
-		Columns:    columns,
-		Methods:    methods,
-	}
-}
-
 type converterTable struct {
 	id              int
-	table           *Table
+	table           *types.Table
 	refTables       map[int]*converterTable
 	refJoinedTables map[int64]*converterJoinedTable
 	joinTablesList  []map[int64]*converterJoinedTable
@@ -133,7 +69,7 @@ func (cjt *converterJoinedTable) tablesHash(tableNum int) int64 {
 	return joinedTableHash
 }
 
-func convertJoinedTables(tables []*Table, joinNum int) ([]*Table, []*JoinedTable, error) {
+func convertJoinedTables(tables []*types.Table, joinNum int) ([]*types.Table, []*types.JoinedTable, error) {
 	converterTables, err := tablesToConverterTables(tables, joinNum)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create generate tables: %w", err)
@@ -151,7 +87,7 @@ func convertJoinedTables(tables []*Table, joinNum int) ([]*Table, []*JoinedTable
 	return tables, joinedTables, nil
 }
 
-func tablesToConverterTables(tables []*Table, joinNum int) ([]*converterTable, error) {
+func tablesToConverterTables(tables []*types.Table, joinNum int) ([]*converterTable, error) {
 	converterTables := make([]*converterTable, 0, len(tables))
 	converterTableMap := make(map[string]*converterTable, len(tables))
 	for i, table := range tables {
@@ -423,65 +359,65 @@ func setJoinedTablesRefJoinedTable(joinedTableMap map[int64]*converterJoinedTabl
 	return joinedTableMap
 }
 
-func converterTableToTable(converterTables []*converterTable, generateJoinedTableMap map[int64]*converterJoinedTable) ([]*Table, []*JoinedTable, error) {
-	tableMap := make(map[int]*Table, len(converterTables))
+func converterTableToTable(converterTables []*converterTable, generateJoinedTableMap map[int64]*converterJoinedTable) ([]*types.Table, []*types.JoinedTable, error) {
+	tableMap := make(map[int]*types.Table, len(converterTables))
 	for _, converterTable := range converterTables {
-		tableMap[converterTable.id] = &Table{
+		tableMap[converterTable.id] = &types.Table{
 			StructName: converterTable.table.StructName,
 			Columns:    converterTable.table.Columns,
 			Methods:    converterTable.table.Methods,
 		}
 	}
 
-	joinedTableMap := make(map[int64]*JoinedTable, len(generateJoinedTableMap))
+	joinedTableMap := make(map[int64]*types.JoinedTable, len(generateJoinedTableMap))
 	for _, generateJoinedTable := range generateJoinedTableMap {
 		if len(generateJoinedTable.tables) < 2 {
 			continue
 		}
 
-		tables := make([]*Table, 0, len(converterTables))
+		tables := make([]*types.Table, 0, len(converterTables))
 		for _, table := range generateJoinedTable.tables {
 			tables = append(tables, tableMap[table.id])
 		}
 
-		refTables := make([]*RefTable, 0, len(generateJoinedTable.refTables))
+		refTables := make([]*types.RefTable, 0, len(generateJoinedTable.refTables))
 		for _, refTable := range generateJoinedTable.refTables {
 			table := tableMap[refTable.id]
-			refTables = append(refTables, &RefTable{
+			refTables = append(refTables, &types.RefTable{
 				Table: table,
 			})
 		}
 
-		joinedTableMap[generateJoinedTable.tablesHash(len(converterTables))] = &JoinedTable{
+		joinedTableMap[generateJoinedTable.tablesHash(len(converterTables))] = &types.JoinedTable{
 			Tables:    tables,
 			RefTables: refTables,
 		}
 	}
 
-	tables := make([]*Table, 0, len(converterTables))
+	tables := make([]*types.Table, 0, len(converterTables))
 	for _, converterTable := range converterTables {
 		table, ok := tableMap[converterTable.id]
 		if !ok {
 			return nil, nil, errors.New("converterTableToTable: table not found")
 		}
 
-		refTables := make([]*RefTable, 0, len(converterTable.refTables))
+		refTables := make([]*types.RefTable, 0, len(converterTable.refTables))
 		for _, refTable := range converterTable.refTables {
 			table := tableMap[refTable.id]
-			refTables = append(refTables, &RefTable{
+			refTables = append(refTables, &types.RefTable{
 				Table: table,
 			})
 		}
 		table.RefTables = refTables
 
-		refJoinedTables := make([]*RefJoinedTable, 0, len(converterTable.refJoinedTables))
+		refJoinedTables := make([]*types.RefJoinedTable, 0, len(converterTable.refJoinedTables))
 		for _, refJoinedTable := range converterTable.refJoinedTables {
 			if len(refJoinedTable.tables) < 2 {
 				continue
 			}
 
 			joinedTable := joinedTableMap[refJoinedTable.tablesHash(len(converterTables))]
-			refJoinedTables = append(refJoinedTables, &RefJoinedTable{
+			refJoinedTables = append(refJoinedTables, &types.RefJoinedTable{
 				Table: joinedTable,
 			})
 		}
@@ -490,7 +426,7 @@ func converterTableToTable(converterTables []*converterTable, generateJoinedTabl
 		tables = append(tables, table)
 	}
 
-	joinedTables := make([]*JoinedTable, 0, len(generateJoinedTableMap))
+	joinedTables := make([]*types.JoinedTable, 0, len(generateJoinedTableMap))
 	for _, generateJoinedTable := range generateJoinedTableMap {
 		if len(generateJoinedTable.tables) < 2 {
 			continue
@@ -501,14 +437,14 @@ func converterTableToTable(converterTables []*converterTable, generateJoinedTabl
 			return nil, nil, errors.New("converterTableToTable: joinedTable not found")
 		}
 
-		refJoinedTables := make([]*RefJoinedTable, 0, len(generateJoinedTable.refJoinedTables))
+		refJoinedTables := make([]*types.RefJoinedTable, 0, len(generateJoinedTable.refJoinedTables))
 		for _, refJoinedTable := range generateJoinedTable.refJoinedTables {
 			if len(refJoinedTable.tables) < 2 {
 				continue
 			}
 
 			joinedTable := joinedTableMap[refJoinedTable.tablesHash(len(converterTables))]
-			refJoinedTables = append(refJoinedTables, &RefJoinedTable{
+			refJoinedTables = append(refJoinedTables, &types.RefJoinedTable{
 				Table: joinedTable,
 			})
 		}

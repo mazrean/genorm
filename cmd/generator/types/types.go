@@ -1,4 +1,4 @@
-package generator
+package types
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ type Table struct {
 }
 
 type Method struct {
-	Type methodType
+	Type MethodType
 	Decl *ast.FuncDecl
 }
 
@@ -27,14 +27,14 @@ func (m *Method) SetStructName(structName string) error {
 		return errors.New("invalid method")
 	}
 	switch m.Type {
-	case methodTypeIdentifier:
+	case MethodTypeIdentifier:
 		ident, ok := m.Decl.Recv.List[0].Type.(*ast.Ident)
 		if !ok || ident == nil {
 			return errors.New("invalid method")
 		}
 
 		ident.Name = structName
-	case methodTypeStar:
+	case MethodTypeStar:
 		star, ok := m.Decl.Recv.List[0].Type.(*ast.StarExpr)
 		if !ok || star == nil {
 			return errors.New("invalid method")
@@ -59,11 +59,11 @@ type JoinedTable struct {
 	RefJoinedTables []*RefJoinedTable
 }
 
-type methodType int8
+type MethodType int8
 
 const (
-	methodTypeIdentifier methodType = iota + 1
-	methodTypeStar
+	MethodTypeIdentifier MethodType = iota + 1
+	MethodTypeStar
 )
 
 type RefTable struct {

@@ -244,7 +244,14 @@ func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm
 	sb.WriteString(strings.Join(selectExprs, ", "))
 
 	sb.WriteString(" FROM ")
-	sb.WriteString(c.table.SQLTableName())
+
+	tableQuery, tableArgs, errs := c.table.Expr()
+	if len(errs) != 0 {
+		return nil, "", nil, fmt.Errorf("table expr: %w", errs[0])
+	}
+
+	sb.WriteString(tableQuery)
+	args = append(args, tableArgs...)
 
 	if c.whereCondition.exists() {
 		whereQuery, whereArgs, err := c.whereCondition.getExpr()

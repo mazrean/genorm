@@ -1,4 +1,4 @@
-package genorm
+package relation
 
 import (
 	"github.com/mazrean/genorm"
