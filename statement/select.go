@@ -75,7 +75,7 @@ func (c *SelectContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *Sel
 }
 
 func (c *SelectContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
 ) *SelectContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
@@ -97,7 +97,7 @@ func (c *SelectContext[Table]) GroupBy(exprs ...genorm.TableExpr[Table]) *Select
 }
 
 func (c *SelectContext[Table]) Having(
-	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
 ) *SelectContext[Table] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
