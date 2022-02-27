@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -9,27 +10,80 @@ import (
 	"github.com/mazrean/genorm/cmd/generator/types"
 )
 
-func tableDecl(table *types.Table) []ast.Decl {
-	tableDecls := []ast.Decl{}
+type table struct {
+	table           *types.Table
+	name            string
+	structIdent     *ast.Ident
+	recvIdent       *ast.Ident
+	methods         []*method
+	columns         []*column
+	refTables       []*table
+	refJoinedTables []*joinedTable
+}
 
-	structName := fmt.Sprintf("%sTable", table.StructName)
-	structIdent := ast.NewIdent(structName)
-
-	fields := make([]*ast.Field, 0, len(table.Columns))
-	for _, column := range table.Columns {
-		fields = append(fields, &ast.Field{
-			Names: []*ast.Ident{
-				ast.NewIdent(column.FieldName),
-			},
-			Type: codegenFieldTypeExpr(column.Type),
-		})
+func newTable(tbl *types.Table) (*table, error) {
+	codegenTable := &table{
+		table:       tbl,
+		name:        tbl.StructName,
+		structIdent: ast.NewIdent(fmt.Sprintf("%sTable", tbl.StructName)),
+		recvIdent:   ast.NewIdent("t"),
 	}
 
-	tableDecls = append(tableDecls, &ast.GenDecl{
+	methods := make([]*method, 0, len(tbl.Methods))
+	for _, m := range tbl.Methods {
+		mthd, err := newMethod(codegenTable, m)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create method: %w", err)
+		}
+
+		methods = append(methods, mthd)
+	}
+	codegenTable.methods = methods
+
+	columns := make([]*column, 0, len(tbl.Columns))
+	for _, c := range tbl.Columns {
+		col := newColumn(codegenTable, c)
+
+		columns = append(columns, col)
+	}
+	codegenTable.columns = columns
+
+	return codegenTable, nil
+}
+
+func (tbl *table) lowerName() string {
+	return strings.ToLower(tbl.name[0:1]) + tbl.name[1:]
+}
+
+func (tbl *table) decl() []ast.Decl {
+	tableDecls := []ast.Decl{}
+
+	tableDecls = append(tableDecls, tbl.structDecl())
+
+	for _, method := range tbl.methods {
+		tableDecls = append(tableDecls, method.Decl)
+	}
+
+	tableDecls = append(tableDecls, tbl.exprDecl(), tbl.columnsDecl(), tbl.columnMapDecl(), tbl.getErrorsDecl())
+
+	for _, column := range tbl.columns {
+		tableDecls = append(tableDecls, column.decls()...)
+	}
+
+	return tableDecls
+}
+
+func (tbl *table) structDecl() ast.Decl {
+	fields := make([]*ast.Field, 0, len(tbl.columns))
+	for _, column := range tbl.columns {
+		fields = append(fields, column.field())
+	}
+
+	return &ast.GenDecl{
 		Tok: token.TYPE,
 		Specs: []ast.Spec{
 			&ast.TypeSpec{
-				Name: structIdent,
+				Name: tbl.structIdent,
 				Type: &ast.StructType{
 					Fields: &ast.FieldList{
 						List: fields,
@@ -37,49 +91,17 @@ func tableDecl(table *types.Table) []ast.Decl {
 				},
 			},
 		},
-	})
-
-	for _, method := range table.Methods {
-		method.SetStructName(structName)
-		tableDecls = append(tableDecls, method.Decl)
 	}
+}
 
-	columnExprs := make([]ast.Expr, 0, len(table.Columns))
-	columnDecls := make([]ast.Decl, 0, len(table.Columns))
-	for _, column := range table.Columns {
-		columnExpr, newColumnDecls := columnMainDecl(table, column)
-		columnExprs = append(columnExprs, columnExpr)
-		columnDecls = append(columnDecls, newColumnDecls...)
-	}
-
-	recvIdent := ast.NewIdent("t")
-
-	columnMapKeyValueExprs := make([]ast.Expr, 0, len(table.Columns))
-	for i := range table.Columns {
-		columnMapKeyValueExprs = append(columnMapKeyValueExprs, &ast.KeyValueExpr{
-			Key: &ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X:   columnExprs[i],
-					Sel: ast.NewIdent("SQLColumnName"),
-				},
-			},
-			Value: &ast.UnaryExpr{
-				Op: token.AND,
-				X: &ast.SelectorExpr{
-					X:   recvIdent,
-					Sel: ast.NewIdent(table.Columns[i].FieldName),
-				},
-			},
-		})
-	}
-
-	tableDecls = append(tableDecls, &ast.FuncDecl{
+func (tbl *table) exprDecl() ast.Decl {
+	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
 				&ast.Field{
-					Names: []*ast.Ident{recvIdent},
+					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
-						X: structIdent,
+						X: tbl.structIdent,
 					},
 				},
 			},
@@ -118,7 +140,7 @@ func tableDecl(table *types.Table) []ast.Decl {
 								},
 								&ast.CallExpr{
 									Fun: &ast.SelectorExpr{
-										X:   recvIdent,
+										X:   tbl.recvIdent,
 										Sel: basicTableTableNameIdent,
 									},
 								},
@@ -130,13 +152,22 @@ func tableDecl(table *types.Table) []ast.Decl {
 				},
 			},
 		},
-	}, &ast.FuncDecl{
+	}
+}
+
+func (tbl *table) columnsDecl() ast.Decl {
+	columnExprs := make([]ast.Expr, 0, len(tbl.columns))
+	for _, column := range tbl.columns {
+		columnExprs = append(columnExprs, column.varIdent)
+	}
+
+	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
 				&ast.Field{
-					Names: []*ast.Ident{recvIdent},
+					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
-						X: structIdent,
+						X: tbl.structIdent,
 					},
 				},
 			},
@@ -167,13 +198,36 @@ func tableDecl(table *types.Table) []ast.Decl {
 				},
 			},
 		},
-	}, &ast.FuncDecl{
+	}
+}
+
+func (tbl *table) columnMapDecl() ast.Decl {
+	columnMapKeyValueExprs := make([]ast.Expr, 0, len(tbl.columns))
+	for _, column := range tbl.columns {
+		columnMapKeyValueExprs = append(columnMapKeyValueExprs, &ast.KeyValueExpr{
+			Key: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   column.varIdent,
+					Sel: ast.NewIdent("SQLColumnName"),
+				},
+			},
+			Value: &ast.UnaryExpr{
+				Op: token.AND,
+				X: &ast.SelectorExpr{
+					X:   tbl.recvIdent,
+					Sel: column.fieldIdent,
+				},
+			},
+		})
+	}
+
+	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
 				&ast.Field{
-					Names: []*ast.Ident{recvIdent},
+					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
-						X: structIdent,
+						X: tbl.structIdent,
 					},
 				},
 			},
@@ -185,7 +239,7 @@ func tableDecl(table *types.Table) []ast.Decl {
 					&ast.Field{
 						Type: &ast.MapType{
 							Key:   ast.NewIdent("string"),
-							Value: exprTypeInterfaceTypeExpr,
+							Value: columnFieldExprTypeExpr,
 						},
 					},
 				},
@@ -206,18 +260,22 @@ func tableDecl(table *types.Table) []ast.Decl {
 				},
 			},
 		},
-	}, &ast.FuncDecl{
+	}
+}
+
+func (tbl *table) getErrorsDecl() ast.Decl {
+	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
 				&ast.Field{
-					Names: []*ast.Ident{recvIdent},
+					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
-						X: structIdent,
+						X: tbl.structIdent,
 					},
 				},
 			},
 		},
-		Name: tableGetErrors,
+		Name: tableGetErrorsIdent,
 		Type: &ast.FuncType{
 			Results: &ast.FieldList{
 				List: []*ast.Field{
@@ -236,335 +294,47 @@ func tableDecl(table *types.Table) []ast.Decl {
 				},
 			},
 		},
-	})
-
-	tableDecls = append(tableDecls, columnDecls...)
-
-	return tableDecls
+	}
 }
 
-func columnMainDecl(table *types.Table, column *types.Column) (ast.Expr, []ast.Decl) {
-	lowerTableName := strings.ToLower(table.StructName[0:1]) + table.StructName[1:]
-	columnTypeIdent := ast.NewIdent(lowerTableName + column.FieldName)
-	columnVarIdent := ast.NewIdent(table.StructName + column.FieldName)
+type method struct {
+	Type types.MethodType
+	Decl *ast.FuncDecl
+}
 
-	tableStructPointerType := &ast.UnaryExpr{
-		Op: token.AND,
-		X:  ast.NewIdent(fmt.Sprintf("%sTable", table.StructName)),
+func newMethod(tbl *table, m *types.Method) (*method, error) {
+	mthd := &method{
+		Type: m.Type,
+		Decl: m.Decl,
 	}
 
-	recvIdent := ast.NewIdent("c")
-	columnDecls := make([]ast.Decl, 0, len(table.Columns)*8)
-	for _, column := range table.Columns {
-		columnDecls = append(columnDecls, &ast.GenDecl{
-			Tok: token.TYPE,
-			Specs: []ast.Spec{
-				&ast.TypeSpec{
-					Name: columnTypeIdent,
-					Type: &ast.StructType{},
-				},
-			},
-		}, &ast.FuncDecl{
-			Recv: &ast.FieldList{
-				List: []*ast.Field{
-					&ast.Field{
-						Names: []*ast.Ident{recvIdent},
-						Type: &ast.StarExpr{
-							X: columnTypeIdent,
-						},
-					},
-				},
-			},
-			Name: exprExprIdent,
-			Type: &ast.FuncType{
-				Results: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: ast.NewIdent("string"),
-						},
-						{
-							Type: &ast.ArrayType{
-								Elt: exprTypeInterfaceTypeExpr,
-							},
-						},
-						{
-							Type: ast.NewIdent("error"),
-						},
-					},
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.CallExpr{
-								Fun: &ast.SelectorExpr{
-									X:   recvIdent,
-									Sel: columnSQLColumnsIdent,
-								},
-							},
-							ast.NewIdent("nil"),
-							ast.NewIdent("nil"),
-						},
-					},
-				},
-			},
-		}, &ast.FuncDecl{
-			Recv: &ast.FieldList{
-				List: []*ast.Field{
-					&ast.Field{
-						Names: []*ast.Ident{recvIdent},
-						Type: &ast.StarExpr{
-							X: columnTypeIdent,
-						},
-					},
-				},
-			},
-			Name: columnSQLColumnsIdent,
-			Type: &ast.FuncType{
-				Results: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: ast.NewIdent("string"),
-						},
-					},
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.CallExpr{
-								Fun: &ast.SelectorExpr{
-									X:   fmtIdent,
-									Sel: ast.NewIdent("Sprintf"),
-								},
-								Args: []ast.Expr{
-									&ast.BasicLit{
-										Kind:  token.STRING,
-										Value: "\"`%s`.`%s`\"",
-									},
-									&ast.CallExpr{
-										Fun: &ast.SelectorExpr{
-											X:   recvIdent,
-											Sel: columnTableNameIdent,
-										},
-									},
-									&ast.CallExpr{
-										Fun: &ast.SelectorExpr{
-											X:   recvIdent,
-											Sel: columnColumnNameIdent,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}, &ast.FuncDecl{
-			Recv: &ast.FieldList{
-				List: []*ast.Field{
-					&ast.Field{
-						Names: []*ast.Ident{recvIdent},
-						Type: &ast.StarExpr{
-							X: columnTypeIdent,
-						},
-					},
-				},
-			},
-			Name: columnTableNameIdent,
-			Type: &ast.FuncType{
-				Results: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: ast.NewIdent("string"),
-						},
-					},
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.CallExpr{
-								Fun: &ast.SelectorExpr{
-									X: &ast.CallExpr{
-										Fun: &ast.ParenExpr{
-											X: tableStructPointerType,
-										},
-										Args: []ast.Expr{
-											ast.NewIdent("nil"),
-										},
-									},
-									Sel: columnTableNameIdent,
-								},
-							},
-						},
-					},
-				},
-			},
-		}, &ast.FuncDecl{
-			Recv: &ast.FieldList{
-				List: []*ast.Field{
-					&ast.Field{
-						Names: []*ast.Ident{recvIdent},
-						Type: &ast.StarExpr{
-							X: columnTypeIdent,
-						},
-					},
-				},
-			},
-			Name: columnColumnNameIdent,
-			Type: &ast.FuncType{
-				Results: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: ast.NewIdent("string"),
-						},
-					},
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.BasicLit{
-								Kind:  token.STRING,
-								Value: fmt.Sprintf(`"%s"`, column.Name),
-							},
-						},
-					},
-				},
-			},
-		}, &ast.FuncDecl{
-			Recv: &ast.FieldList{
-				List: []*ast.Field{
-					&ast.Field{
-						Names: []*ast.Ident{recvIdent},
-						Type: &ast.StarExpr{
-							X: columnTypeIdent,
-						},
-					},
-				},
-			},
-			Name: tableExprTableExprIdent,
-			Type: &ast.FuncType{
-				Params: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: tableStructPointerType,
-						},
-					},
-				},
-				Results: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: ast.NewIdent("string"),
-						},
-						{
-							Type: &ast.ArrayType{
-								Elt: exprTypeInterfaceTypeExpr,
-							},
-						},
-						{
-							Type: ast.NewIdent("error"),
-						},
-					},
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.CallExpr{
-								Fun: &ast.SelectorExpr{
-									X:   recvIdent,
-									Sel: exprExprIdent,
-								},
-							},
-						},
-					},
-				},
-			},
-		}, &ast.FuncDecl{
-			Recv: &ast.FieldList{
-				List: []*ast.Field{
-					&ast.Field{
-						Names: []*ast.Ident{recvIdent},
-						Type: &ast.StarExpr{
-							X: columnTypeIdent,
-						},
-					},
-				},
-			},
-			Name: typedExprTypedExprIdent,
-			Type: &ast.FuncType{
-				Params: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: codegenFieldTypeExpr(column.Type),
-						},
-					},
-				},
-				Results: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Type: ast.NewIdent("string"),
-						},
-						{
-							Type: &ast.ArrayType{
-								Elt: exprTypeInterfaceTypeExpr,
-							},
-						},
-						{
-							Type: ast.NewIdent("error"),
-						},
-					},
-				},
-			},
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.ReturnStmt{
-						Results: []ast.Expr{
-							&ast.CallExpr{
-								Fun: &ast.SelectorExpr{
-									X:   recvIdent,
-									Sel: exprExprIdent,
-								},
-							},
-						},
-					},
-				},
-			},
-		}, &ast.GenDecl{
-			Tok: token.VAR,
-			Specs: []ast.Spec{
-				&ast.ValueSpec{
-					Names: []*ast.Ident{columnVarIdent},
-					Type:  columnTypeIdent,
-					Values: []ast.Expr{
-						&ast.CompositeLit{
-							Type: columnTypeIdent,
-						},
-					},
-				},
-			},
-		}, &ast.GenDecl{
-			Tok: token.VAR,
-			Specs: []ast.Spec{
-				&ast.ValueSpec{
-					Names: []*ast.Ident{columnVarIdent},
-					Type:  columnTypeIdent,
-					Values: []ast.Expr{
-						&ast.CompositeLit{
-							Type: columnTypeIdent,
-						},
-					},
-				},
-			},
-		})
+	if mthd.Decl == nil ||
+		mthd.Decl.Recv == nil ||
+		len(mthd.Decl.Recv.List) == 0 ||
+		mthd.Decl.Recv.List[0] == nil ||
+		mthd.Decl.Recv.List[0].Type == nil {
+		return nil, errors.New("invalid method")
+	}
+	switch mthd.Type {
+	case types.MethodTypeIdentifier:
+		mthd.Decl.Recv.List[0].Names = []*ast.Ident{
+			ast.NewIdent(tbl.structIdent.Name),
+		}
+		mthd.Decl.Recv.List[0].Type = tbl.structIdent
+	case types.MethodTypeStar:
+		mthd.Decl.Recv.List[0].Names = []*ast.Ident{
+			ast.NewIdent(tbl.structIdent.Name),
+		}
+
+		star, ok := mthd.Decl.Recv.List[0].Type.(*ast.StarExpr)
+		if !ok || star == nil {
+			return nil, errors.New("invalid method")
+		}
+
+		star.X = tbl.structIdent
+	default:
+		return nil, errors.New("unknown method type")
 	}
 
-	return columnVarIdent, columnDecls
+	return mthd, nil
 }
