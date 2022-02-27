@@ -135,7 +135,6 @@ func convertTable(table *parserTable) *types.Table {
 	}
 }
 
-
 func parseFuncDecl(f *ast.FuncDecl) (*parserMethod, bool, error) {
 	recv := f.Recv
 	if recv == nil {
