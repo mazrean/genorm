@@ -27,7 +27,8 @@ type joinedTable struct {
 }
 
 func newJoinedTable(jt *types.JoinedTable) *joinedTable {
-	structName := joinedTableName(jt)
+	name := joinedTableName(jt)
+	structName := name + "JoinedTable"
 	structIdent := ast.NewIdent(structName)
 
 	return &joinedTable{
@@ -36,12 +37,12 @@ func newJoinedTable(jt *types.JoinedTable) *joinedTable {
 		structIdent:          structIdent,
 		relationFieldIdent:   ast.NewIdent("relation"),
 		errsFieldIdent:       ast.NewIdent("errs"),
-		tablesInterfaceIdent: ast.NewIdent(structName + "Tables"),
+		tablesInterfaceIdent: ast.NewIdent(name + "Tables"),
 		recvIdent:            ast.NewIdent("jt"),
-		columnTypeIdent:      ast.NewIdent(structName + "ColumnType"),
+		columnTypeIdent:      ast.NewIdent(name + "ColumnType"),
 		columnTypeFieldIdent: ast.NewIdent("columnType"),
 		columnTypeRecvIdent:  ast.NewIdent("ct"),
-		columnParseFuncIdent: ast.NewIdent(structName + "Parse"),
+		columnParseFuncIdent: ast.NewIdent(name + "Parse"),
 	}
 }
 
@@ -53,9 +54,8 @@ func joinedTableName(jt *types.JoinedTable) string {
 	for _, table := range jt.Tables {
 		tableNames = append(tableNames, table.StructName)
 	}
-	structName := strings.Join(tableNames, "") + "JoinedTable"
 
-	return structName
+	return strings.Join(tableNames, "")
 }
 
 func (jt *joinedTable) decl() []ast.Decl {
@@ -67,6 +67,7 @@ func (jt *joinedTable) decl() []ast.Decl {
 		jt.baseTables(),
 		jt.getErrorsDecl(),
 		jt.addErrorDecl(),
+		jt.setRelationDecl(),
 		jt.tablesInterfaceDecl(),
 		jt.columnParseFuncDecl(),
 		jt.columnTypeDecl(),
@@ -468,6 +469,50 @@ func (jt *joinedTable) addErrorDecl() ast.Decl {
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+}
+
+func (jt *joinedTable) setRelationDecl() ast.Decl {
+	relationIdent := ast.NewIdent("relation")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{jt.recvIdent},
+					Type: &ast.StarExpr{
+						X: jt.structIdent,
+					},
+				},
+			},
+		},
+		Name: joinedTableSetRelationIdent,
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{relationIdent},
+						Type: &ast.StarExpr{
+							X: relationTypeExpr,
+						},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{
+						&ast.SelectorExpr{
+							X:   jt.recvIdent,
+							Sel: jt.relationFieldIdent,
+						},
+					},
+					Tok: token.ASSIGN,
+					Rhs: []ast.Expr{relationIdent},
 				},
 			},
 		},
