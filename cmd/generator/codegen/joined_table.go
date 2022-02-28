@@ -22,19 +22,12 @@ type joinedTable struct {
 	columnTypeRecvIdent  *ast.Ident
 	columnParseFuncIdent *ast.Ident
 	tables               []*table
-	refTables            []*table
-	refJoinedTables      []*joinedTable
+	refTables            []*refTable
+	refJoinedTables      []*refJoinedTable
 }
 
 func newJoinedTable(jt *types.JoinedTable) *joinedTable {
-	sort.SliceStable(jt.Tables, func(i, j int) bool {
-		return jt.Tables[i].StructName < jt.Tables[j].StructName
-	})
-	tableNames := make([]string, 0, len(jt.Tables))
-	for _, table := range jt.Tables {
-		tableNames = append(tableNames, table.StructName)
-	}
-	structName := strings.Join(tableNames, "") + "JoinedTable"
+	structName := joinedTableName(jt)
 	structIdent := ast.NewIdent(structName)
 
 	return &joinedTable{
@@ -43,16 +36,29 @@ func newJoinedTable(jt *types.JoinedTable) *joinedTable {
 		structIdent:          structIdent,
 		relationFieldIdent:   ast.NewIdent("relation"),
 		errsFieldIdent:       ast.NewIdent("errs"),
-		tablesInterfaceIdent: ast.NewIdent("Tables"),
+		tablesInterfaceIdent: ast.NewIdent(structName + "Tables"),
 		recvIdent:            ast.NewIdent("jt"),
-		columnTypeIdent:      ast.NewIdent("ColumnType"),
+		columnTypeIdent:      ast.NewIdent(structName + "ColumnType"),
 		columnTypeFieldIdent: ast.NewIdent("columnType"),
 		columnTypeRecvIdent:  ast.NewIdent("ct"),
-		columnParseFuncIdent: ast.NewIdent("parse"),
+		columnParseFuncIdent: ast.NewIdent(structName + "Parse"),
 	}
 }
 
-func (jt *joinedTable) decl(joinedTable *types.JoinedTable) []ast.Decl {
+func joinedTableName(jt *types.JoinedTable) string {
+	sort.SliceStable(jt.Tables, func(i, j int) bool {
+		return jt.Tables[i].StructName < jt.Tables[j].StructName
+	})
+	tableNames := make([]string, 0, len(jt.Tables))
+	for _, table := range jt.Tables {
+		tableNames = append(tableNames, table.StructName)
+	}
+	structName := strings.Join(tableNames, "") + "JoinedTable"
+
+	return structName
+}
+
+func (jt *joinedTable) decl() []ast.Decl {
 	return []ast.Decl{
 		jt.structDecl(),
 		jt.exprDecl(),
@@ -116,7 +122,7 @@ func (jt *joinedTable) exprDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{jt.recvIdent},
 					Type: &ast.StarExpr{
 						X: jt.structIdent,
@@ -137,7 +143,9 @@ func (jt *joinedTable) exprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},
@@ -173,7 +181,7 @@ func (jt *joinedTable) columnsDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{jt.recvIdent},
 					Type: &ast.StarExpr{
 						X: jt.structIdent,
@@ -185,7 +193,7 @@ func (jt *joinedTable) columnsDecl() ast.Decl {
 		Type: &ast.FuncType{
 			Results: &ast.FieldList{
 				List: []*ast.Field{
-					&ast.Field{
+					{
 						Type: &ast.ArrayType{
 							Elt: columnInterfaceTypeExpr,
 						},
@@ -233,7 +241,7 @@ func (jt *joinedTable) columnMapDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{jt.recvIdent},
 					Type: &ast.StarExpr{
 						X: jt.structIdent,
@@ -245,7 +253,7 @@ func (jt *joinedTable) columnMapDecl() ast.Decl {
 		Type: &ast.FuncType{
 			Results: &ast.FieldList{
 				List: []*ast.Field{
-					&ast.Field{
+					{
 						Type: &ast.MapType{
 							Key:   ast.NewIdent("string"),
 							Value: columnFieldExprTypeExpr,
@@ -267,7 +275,7 @@ func (jt *joinedTable) columnMapDecl() ast.Decl {
 									Value: columnFieldExprTypeExpr,
 								},
 							},
-							Elts: []ast.Expr{},
+							Elts: columnMapExprs,
 						},
 					},
 				},
@@ -337,7 +345,7 @@ func (jt *joinedTable) baseTables() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{jt.recvIdent},
 					Type: &ast.StarExpr{
 						X: jt.structIdent,
@@ -378,7 +386,7 @@ func (jt *joinedTable) getErrorsDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{jt.recvIdent},
 					Type: &ast.StarExpr{
 						X: jt.structIdent,
@@ -419,7 +427,7 @@ func (jt *joinedTable) addErrorDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{jt.recvIdent},
 					Type: &ast.StarExpr{
 						X: jt.structIdent,
@@ -498,6 +506,9 @@ func (jt *joinedTable) tablesInterfaceDecl() ast.Decl {
 							{
 								Type: interfaceFieldType,
 							},
+							{
+								Type: tableTypeExpr,
+							},
 						},
 					},
 				},
@@ -550,7 +561,13 @@ func (jt *joinedTable) columnParseFuncDecl() ast.Decl {
 				&ast.ReturnStmt{
 					Results: []ast.Expr{
 						&ast.CompositeLit{
-							Type: jt.columnTypeIdent,
+							Type: &ast.IndexListExpr{
+								X: jt.columnTypeIdent,
+								Indices: []ast.Expr{
+									tableTypeParamIdent,
+									exprTypeParamIdent,
+								},
+							},
 							Elts: []ast.Expr{
 								&ast.KeyValueExpr{
 									Key:   jt.columnTypeFieldIdent,
@@ -627,7 +644,9 @@ func (jt *joinedTable) columnTypeExprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},
@@ -782,8 +801,6 @@ func (jt *joinedTable) columnTypeColumnNameDecl() ast.Decl {
 }
 
 func (jt *joinedTable) columnTypeTableExprDecl() ast.Decl {
-	tableTypeParamIdent := ast.NewIdent("T")
-
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
@@ -791,7 +808,7 @@ func (jt *joinedTable) columnTypeTableExprDecl() ast.Decl {
 					Names: []*ast.Ident{jt.columnTypeRecvIdent},
 					Type: &ast.IndexListExpr{
 						X:       jt.columnTypeIdent,
-						Indices: []ast.Expr{tableTypeParamIdent, ast.NewIdent("_")},
+						Indices: []ast.Expr{ast.NewIdent("_"), ast.NewIdent("_")},
 					},
 				},
 			},
@@ -801,7 +818,9 @@ func (jt *joinedTable) columnTypeTableExprDecl() ast.Decl {
 			Params: &ast.FieldList{
 				List: []*ast.Field{
 					{
-						Type: tableTypeParamIdent,
+						Type: &ast.StarExpr{
+							X: jt.structIdent,
+						},
 					},
 				},
 			},
@@ -816,7 +835,9 @@ func (jt *joinedTable) columnTypeTableExprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},
@@ -853,7 +874,7 @@ func (jt *joinedTable) columnTypeTypedExprDecl() ast.Decl {
 				},
 			},
 		},
-		Name: tableExprTableExprIdent,
+		Name: typedExprTypedExprIdent,
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{
 				List: []*ast.Field{
@@ -873,7 +894,9 @@ func (jt *joinedTable) columnTypeTypedExprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},

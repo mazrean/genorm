@@ -34,9 +34,7 @@ func (d *directory) addDirectory(name string, packageName string) (*directory, e
 }
 
 func (d *directory) addFile(name string) (*file, error) {
-	os.Create(filepath.Join(d.path, name))
-
-	return nil, nil
+	return newFile(filepath.Join(d.path, name), d.packageName)
 }
 
 type file struct {

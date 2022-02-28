@@ -85,7 +85,9 @@ func (clmn *column) structDecl() ast.Decl {
 		Specs: []ast.Spec{
 			&ast.TypeSpec{
 				Name: clmn.typeIdent,
-				Type: &ast.StructType{},
+				Type: &ast.StructType{
+					Fields: &ast.FieldList{},
+				},
 			},
 		},
 	}
@@ -114,7 +116,7 @@ func (clmn *column) exprDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{clmn.recvIdent},
 					Type:  clmn.typeIdent,
 				},
@@ -133,7 +135,9 @@ func (clmn *column) exprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},
@@ -161,7 +165,7 @@ func (clmn *column) sqlColumnsDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{clmn.recvIdent},
 					Type:  clmn.typeIdent,
 				},
@@ -216,7 +220,7 @@ func (clmn *column) tableNameDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{clmn.recvIdent},
 					Type:  clmn.typeIdent,
 				},
@@ -240,9 +244,8 @@ func (clmn *column) tableNameDecl() ast.Decl {
 							Fun: &ast.SelectorExpr{
 								X: &ast.CallExpr{
 									Fun: &ast.ParenExpr{
-										X: &ast.UnaryExpr{
-											Op: token.AND,
-											X:  clmn.table.structIdent,
+										X: &ast.StarExpr{
+											X: clmn.table.structIdent,
 										},
 									},
 									Args: []ast.Expr{
@@ -263,7 +266,7 @@ func (clmn *column) columnNameDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{clmn.recvIdent},
 					Type:  clmn.typeIdent,
 				},
@@ -298,11 +301,9 @@ func (clmn *column) tableExprDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{clmn.recvIdent},
-					Type: &ast.StarExpr{
-						X: clmn.typeIdent,
-					},
+					Type:  clmn.typeIdent,
 				},
 			},
 		},
@@ -311,9 +312,8 @@ func (clmn *column) tableExprDecl() ast.Decl {
 			Params: &ast.FieldList{
 				List: []*ast.Field{
 					{
-						Type: &ast.UnaryExpr{
-							Op: token.AND,
-							X:  clmn.table.structIdent,
+						Type: &ast.StarExpr{
+							X: clmn.table.structIdent,
 						},
 					},
 				},
@@ -329,7 +329,9 @@ func (clmn *column) tableExprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},
@@ -355,11 +357,9 @@ func (clmn *column) typeExprDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{clmn.recvIdent},
-					Type: &ast.StarExpr{
-						X: clmn.typeIdent,
-					},
+					Type:  clmn.typeIdent,
 				},
 			},
 		},
@@ -383,7 +383,9 @@ func (clmn *column) typeExprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},

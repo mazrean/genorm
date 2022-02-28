@@ -17,8 +17,8 @@ type table struct {
 	recvIdent       *ast.Ident
 	methods         []*method
 	columns         []*column
-	refTables       []*table
-	refJoinedTables []*joinedTable
+	refTables       []*refTable
+	refJoinedTables []*refJoinedTable
 }
 
 func newTable(tbl *types.Table) (*table, error) {
@@ -98,7 +98,7 @@ func (tbl *table) exprDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
 						X: tbl.structIdent,
@@ -119,7 +119,9 @@ func (tbl *table) exprDecl() ast.Decl {
 						},
 					},
 					{
-						Type: ast.NewIdent("error"),
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("error"),
+						},
 					},
 				},
 			},
@@ -164,7 +166,7 @@ func (tbl *table) columnsDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
 						X: tbl.structIdent,
@@ -176,7 +178,7 @@ func (tbl *table) columnsDecl() ast.Decl {
 		Type: &ast.FuncType{
 			Results: &ast.FieldList{
 				List: []*ast.Field{
-					&ast.Field{
+					{
 						Type: &ast.ArrayType{
 							Elt: columnInterfaceTypeExpr,
 						},
@@ -224,7 +226,7 @@ func (tbl *table) columnMapDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
 						X: tbl.structIdent,
@@ -236,7 +238,7 @@ func (tbl *table) columnMapDecl() ast.Decl {
 		Type: &ast.FuncType{
 			Results: &ast.FieldList{
 				List: []*ast.Field{
-					&ast.Field{
+					{
 						Type: &ast.MapType{
 							Key:   ast.NewIdent("string"),
 							Value: columnFieldExprTypeExpr,
@@ -252,7 +254,7 @@ func (tbl *table) columnMapDecl() ast.Decl {
 						&ast.CompositeLit{
 							Type: &ast.MapType{
 								Key:   ast.NewIdent("string"),
-								Value: exprTypeInterfaceTypeExpr,
+								Value: columnFieldExprTypeExpr,
 							},
 							Elts: columnMapKeyValueExprs,
 						},
@@ -267,7 +269,7 @@ func (tbl *table) getErrorsDecl() ast.Decl {
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: []*ast.Ident{tbl.recvIdent},
 					Type: &ast.StarExpr{
 						X: tbl.structIdent,

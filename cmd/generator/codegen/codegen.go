@@ -9,18 +9,25 @@ import (
 )
 
 const (
-	genormImport = `"github.com/mazrean/genorm"`
+	genormImport         = `"github.com/mazrean/genorm"`
 	genormRelationImport = `"github.com/mazrean/genorm/relation"`
-	fmtImport    = `"fmt"`
+	fmtImport            = `"fmt"`
 )
 
 var (
-	genormIdent = ast.NewIdent("genorm")
+	genormIdent         = ast.NewIdent("genorm")
 	genormRelationIdent = ast.NewIdent("relation")
-	fmtIdent    = ast.NewIdent("fmt")
+	fmtIdent            = ast.NewIdent("fmt")
 )
 
-func Codegen(packageName string, modulePath string, destinationDir string, baseAst *ast.File, tables []*types.Table, joinedTables []*types.JoinedTable) error {
+func Codegen(
+	packageName string,
+	modulePath string,
+	destinationDir string,
+	baseAst *ast.File,
+	tables []*types.Table,
+	joinedTables []*types.JoinedTable,
+) error {
 	dir, err := newDirectory(destinationDir, packageName, modulePath)
 	if err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
@@ -28,12 +35,23 @@ func Codegen(packageName string, modulePath string, destinationDir string, baseA
 
 	importDecls := codegenImportDecls(baseAst)
 
+	codegenTables, codegenJoinedTables, err := convert(tables, joinedTables)
+	if err != nil {
+		return fmt.Errorf("failed to convert tables: %w", err)
+	}
+
+	err = codegenMain(dir, importDecls, codegenTables, codegenJoinedTables)
+	if err != nil {
+		return fmt.Errorf("failed to codegen main: %w", err)
+	}
+
 	return nil
 }
 
 func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 	importDecls := []ast.Decl{}
 
+	haveImport := false
 	haveGenorm := false
 	haveFmt := false
 	haveGenormRelation := false
@@ -43,30 +61,35 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 			continue
 		}
 
+		haveImport = true
+
 		for _, spec := range genDecl.Specs {
 			importSpec, ok := spec.(*ast.ImportSpec)
 			if !ok || importSpec == nil {
 				continue
 			}
 
-			if importSpec.Name != nil {
-				switch importSpec.Path.Value {
-				case genormImport:
+			switch importSpec.Path.Value {
+			case genormImport:
+				if importSpec.Name != nil {
 					genormIdent = importSpec.Name
-					haveGenorm = true
-				case genormRelationImport:
-					genormRelationIdent = importSpec.Name
-					haveGenormRelation = true
-				case fmtImport:
-					fmtIdent = importSpec.Name
-					haveFmt = true
 				}
+				haveGenorm = true
+			case genormRelationImport:
+				if importSpec.Name != nil {
+					genormRelationIdent = importSpec.Name
+				}
+				haveGenormRelation = true
+			case fmtImport:
+				if importSpec.Name != nil {
+					fmtIdent = importSpec.Name
+				}
+				haveFmt = true
 			}
 		}
 
 		if !haveGenorm {
 			genDecl.Specs = append(genDecl.Specs, &ast.ImportSpec{
-				Name: genormIdent,
 				Path: &ast.BasicLit{
 					Kind:  token.STRING,
 					Value: genormImport,
@@ -78,7 +101,6 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 
 		if !haveGenormRelation {
 			genDecl.Specs = append(genDecl.Specs, &ast.ImportSpec{
-				Name: genormRelationIdent,
 				Path: &ast.BasicLit{
 					Kind:  token.STRING,
 					Value: genormRelationImport,
@@ -88,7 +110,6 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 
 		if !haveFmt {
 			genDecl.Specs = append(genDecl.Specs, &ast.ImportSpec{
-				Name: fmtIdent,
 				Path: &ast.BasicLit{
 					Kind:  token.STRING,
 					Value: fmtImport,
@@ -101,10 +122,124 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 		importDecls = append(importDecls, genDecl)
 	}
 
+	if !haveImport {
+		importDecls = append(importDecls, &ast.GenDecl{
+			Tok: token.IMPORT,
+			Specs: []ast.Spec{
+				&ast.ImportSpec{
+					Name: genormIdent,
+					Path: &ast.BasicLit{
+						Kind:  token.STRING,
+						Value: genormImport,
+					},
+				},
+				&ast.ImportSpec{
+					Name: genormRelationIdent,
+					Path: &ast.BasicLit{
+						Kind:  token.STRING,
+						Value: genormRelationImport,
+					},
+				},
+				&ast.ImportSpec{
+					Name: fmtIdent,
+					Path: &ast.BasicLit{
+						Kind:  token.STRING,
+						Value: fmtImport,
+					},
+				},
+			},
+		})
+	}
+
 	return importDecls
 }
 
-func codegenMain(dir *directory, importDecls []ast.Decl, tables []*types.Table, joinedTables []*types.JoinedTable) error {
+type refTable struct {
+	refTable    *table
+	joinedTable *joinedTable
+}
+
+type refJoinedTable struct {
+	refTable    *joinedTable
+	joinedTable *joinedTable
+}
+
+func convert(tables []*types.Table, joinedTables []*types.JoinedTable) ([]*table, []*joinedTable, error) {
+	tableMap := make(map[string]*table, len(tables))
+	codegenTables := make([]*table, 0, len(tables))
+	for _, table := range tables {
+		codegenTable, err := newTable(table)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create table(%s): %w", table.StructName, err)
+		}
+
+		tableMap[table.StructName] = codegenTable
+		codegenTables = append(codegenTables, codegenTable)
+	}
+
+	joinedTableMap := make(map[string]*joinedTable, len(joinedTables))
+	codegenJoinedTables := make([]*joinedTable, 0, len(joinedTables))
+	for _, joinedTable := range joinedTables {
+		codegenJoinedTable := newJoinedTable(joinedTable)
+
+		joinedTableMap[codegenJoinedTable.name] = codegenJoinedTable
+		codegenJoinedTables = append(codegenJoinedTables, codegenJoinedTable)
+	}
+
+	for _, typesTable := range tables {
+		codegenTable := tableMap[typesTable.StructName]
+
+		refTables := make([]*refTable, 0, len(typesTable.RefTables))
+		for _, typeRefTable := range typesTable.RefTables {
+			refTables = append(refTables, &refTable{
+				refTable:    tableMap[typeRefTable.Table.StructName],
+				joinedTable: joinedTableMap[joinedTableName(typeRefTable.JoinedTable)],
+			})
+		}
+		codegenTable.refTables = refTables
+
+		refJoinedTables := make([]*refJoinedTable, 0, len(typesTable.RefJoinedTables))
+		for _, typeRefJoinedTable := range typesTable.RefJoinedTables {
+			refJoinedTables = append(refJoinedTables, &refJoinedTable{
+				refTable:    joinedTableMap[joinedTableName(typeRefJoinedTable.Table)],
+				joinedTable: joinedTableMap[joinedTableName(typeRefJoinedTable.JoinedTable)],
+			})
+		}
+		codegenTable.refJoinedTables = refJoinedTables
+	}
+
+	for _, typesJoinedTable := range joinedTables {
+		codegenJoinedTable := joinedTableMap[joinedTableName(typesJoinedTable)]
+
+		tables := make([]*table, 0, len(typesJoinedTable.Tables))
+		for _, typeTable := range typesJoinedTable.Tables {
+			tables = append(tables, tableMap[typeTable.StructName])
+		}
+		codegenJoinedTable.tables = tables
+
+		refTables := make([]*refTable, 0, len(typesJoinedTable.RefTables))
+		for _, typeRefTable := range typesJoinedTable.RefTables {
+			refTables = append(refTables, &refTable{
+				refTable:    tableMap[typeRefTable.Table.StructName],
+				joinedTable: joinedTableMap[joinedTableName(typeRefTable.JoinedTable)],
+			})
+		}
+		codegenJoinedTable.refTables = refTables
+
+		refJoinedTables := make([]*refJoinedTable, 0, len(typesJoinedTable.RefJoinedTables))
+		for _, typeRefJoinedTable := range typesJoinedTable.RefJoinedTables {
+			refJoinedTables = append(refJoinedTables, &refJoinedTable{
+				refTable:    joinedTableMap[joinedTableName(typeRefJoinedTable.Table)],
+				joinedTable: joinedTableMap[joinedTableName(typeRefJoinedTable.JoinedTable)],
+			})
+		}
+		codegenJoinedTable.refJoinedTables = refJoinedTables
+	}
+
+	return codegenTables, codegenJoinedTables, nil
+}
+
+func codegenMain(dir *directory, importDecls []ast.Decl, tables []*table, joinedTables []*joinedTable) error {
 	f, err := dir.addFile("genorm.go")
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
@@ -115,59 +250,13 @@ func codegenMain(dir *directory, importDecls []ast.Decl, tables []*types.Table, 
 
 	astFile.Decls = append(astFile.Decls, importDecls...)
 
-	tableDecls, err := codegenMainTableDecls(tables)
-	if err != nil {
-		return fmt.Errorf("failed to codegen tables: %w", err)
-	}
-	astFile.Decls = append(astFile.Decls, tableDecls...)
-
-	joinedTableDecls := codegenMainJoinedTableDecls(joinedTables)
-	if err != nil {
-		return fmt.Errorf("failed to codegen joined tables: %w", err)
-	}
-	astFile.Decls = append(astFile.Decls, joinedTableDecls...)
-
-	return nil
-}
-
-func codegenMainTableDecls(tables []*types.Table) ([]ast.Decl, error) {
-	tableDecls := []ast.Decl{}
 	for _, table := range tables {
-		tableDecls = append(tableDecls, tableDecl(table)...)
+		astFile.Decls = append(astFile.Decls, table.decl()...)
 	}
 
-	return tableDecls, nil
-}
-
-func codegenFieldTypeExpr(columnTypeExpr ast.Expr) ast.Expr {
-	columnTypeIdentExpr, ok := columnTypeExpr.(*ast.Ident)
-	if ok {
-		switch columnTypeIdentExpr.Name {
-		case "bool",
-			"int", "int8", "int16", "int32", "int64",
-			"uint", "uint8", "uint16", "uint32", "uint64",
-			"float32", "float64",
-			"string":
-			return wrappedPrimitive(columnTypeExpr)
-		default:
-			return columnTypeExpr
-		}
+	for _, joinedTable := range joinedTables {
+		astFile.Decls = append(astFile.Decls, joinedTable.decl()...)
 	}
 
-	columnTypeSelectorExpr, ok := columnTypeExpr.(*ast.SelectorExpr)
-	if ok && columnTypeSelectorExpr != nil {
-		identExpr, ok := columnTypeSelectorExpr.X.(*ast.Ident)
-		if ok &&
-			identExpr != nil &&
-			identExpr.Name == "time" &&
-			columnTypeSelectorExpr.Sel.Name != "Time" {
-			return wrappedPrimitive(columnTypeExpr)
-		}
-	}
-
-	return columnTypeExpr
-}
-
-func codegenMainJoinedTableDecls(joinedTables []*types.JoinedTable) []ast.Decl {
 	return nil
 }

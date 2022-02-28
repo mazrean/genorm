@@ -15,7 +15,11 @@ var (
 	}
 	columnFieldExprTypeExpr = &ast.SelectorExpr{
 		X:   genormIdent,
-		Sel: ast.NewIdent("ColumnFieldExpr"),
+		Sel: ast.NewIdent("ColumnFieldExprType"),
+	}
+	tableTypeExpr = &ast.SelectorExpr{
+		X:   genormIdent,
+		Sel: ast.NewIdent("Table"),
 	}
 	basicTableTypeExpr = &ast.SelectorExpr{
 		X:   genormIdent,
@@ -49,8 +53,14 @@ func wrappedPrimitive(primitive ast.Expr) ast.Expr {
 }
 
 func typedTableColumn(tableType ast.Expr, exprType ast.Expr) ast.Expr {
-	return &ast.SelectorExpr{
-		X:   genormIdent,
-		Sel: ast.NewIdent("TypedTableColumn"),
+	return &ast.IndexListExpr{
+		X: &ast.SelectorExpr{
+			X:   genormIdent,
+			Sel: ast.NewIdent("TypedTableColumns"),
+		},
+		Indices: []ast.Expr{
+			tableType,
+			exprType,
+		},
 	}
 }
