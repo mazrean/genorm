@@ -52,6 +52,8 @@ func Parse(f *ast.File) ([]*types.Table, error) {
 			if isMethod {
 				methodMap[method.StructName] = append(methodMap[method.StructName], method)
 			}
+
+			continue
 		}
 
 		newTables, err := parseGenDecl(genDecl)
