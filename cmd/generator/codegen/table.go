@@ -60,6 +60,10 @@ func (tbl *table) decl() []ast.Decl {
 
 	tableDecls = append(tableDecls, tbl.structDecl())
 
+	for _, ref := range tbl.refTables {
+		tableDecls = append(tableDecls, tbl.tableJoinDecl(ref))
+	}
+
 	for _, method := range tbl.methods {
 		tableDecls = append(tableDecls, method.Decl)
 	}
@@ -293,6 +297,74 @@ func (tbl *table) getErrorsDecl() ast.Decl {
 			List: []ast.Stmt{
 				&ast.ReturnStmt{
 					Results: []ast.Expr{ast.NewIdent("nil")},
+				},
+			},
+		},
+	}
+}
+
+func (tbl *table) tableJoinDecl(ref *refTable) ast.Decl {
+	joinIdent := ast.NewIdent(ref.refTable.name)
+	refIdent := ast.NewIdent("ref")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{tbl.recvIdent},
+					Type: &ast.StarExpr{
+						X: tbl.structIdent,
+					},
+				},
+			},
+		},
+		Name: joinIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: relationContext(&ast.StarExpr{
+							X: tbl.structIdent,
+						}, &ast.StarExpr{
+							X: ref.refTable.structIdent,
+						}, &ast.StarExpr{
+							X: ref.joinedTable.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{refIdent},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						&ast.CompositeLit{
+							Type: ref.refTable.structIdent,
+							Elts: []ast.Expr{},
+						},
+					},
+				},
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: newRelationContext(&ast.StarExpr{
+								X: tbl.structIdent,
+							}, &ast.StarExpr{
+								X: ref.refTable.structIdent,
+							}, &ast.StarExpr{
+								X: ref.joinedTable.structIdent,
+							}),
+							Args: []ast.Expr{
+								tbl.recvIdent,
+								&ast.UnaryExpr{
+									Op: token.AND,
+									X:  refIdent,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
