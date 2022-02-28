@@ -31,11 +31,13 @@ const (
 )
 
 type RefTable struct {
-	Table *Table
+	Table       *Table
+	JoinedTable *JoinedTable
 }
 
 type RefJoinedTable struct {
-	Table *JoinedTable
+	Table       *JoinedTable
+	JoinedTable *JoinedTable
 }
 
 type Column struct {
