@@ -182,7 +182,7 @@ func convert(tables []*types.Table, joinedTables []*types.JoinedTable) ([]*table
 	for _, joinedTable := range joinedTables {
 		codegenJoinedTable := newJoinedTable(joinedTable)
 
-		joinedTableMap[codegenJoinedTable.name] = codegenJoinedTable
+		joinedTableMap[joinedTableName(joinedTable)] = codegenJoinedTable
 		codegenJoinedTables = append(codegenJoinedTables, codegenJoinedTable)
 	}
 
