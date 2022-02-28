@@ -114,12 +114,19 @@ func TestConvertJoinedTables(t *testing.T) {
 				Decl: funcDecl,
 			},
 		},
-		RefTables: []*types.RefTable{
-			{
-				Table: messageTable,
-			},
-		},
+		RefTables:       []*types.RefTable{},
 		RefJoinedTables: []*types.RefJoinedTable{},
+	}
+	userMessageJoinedTable := &types.JoinedTable{
+		Tables:          []*types.Table{messageTable, userTable},
+		RefTables:       []*types.RefTable{},
+		RefJoinedTables: []*types.RefJoinedTable{},
+	}
+	userTable.RefTables = []*types.RefTable{
+		{
+			Table:       messageTable,
+			JoinedTable: userMessageJoinedTable,
+		},
 	}
 
 	messageOptionTable2 := &types.Table{
@@ -144,12 +151,8 @@ func TestConvertJoinedTables(t *testing.T) {
 				Type:      typeIdent1,
 			},
 		},
-		Methods: []*types.Method{},
-		RefTables: []*types.RefTable{
-			{
-				Table: messageOptionTable2,
-			},
-		},
+		Methods:         []*types.Method{},
+		RefTables:       []*types.RefTable{},
 		RefJoinedTables: []*types.RefJoinedTable{},
 	}
 	userTable2 := &types.Table{
@@ -167,19 +170,45 @@ func TestConvertJoinedTables(t *testing.T) {
 				Decl: funcDecl,
 			},
 		},
+		RefTables:       []*types.RefTable{},
+		RefJoinedTables: []*types.RefJoinedTable{},
+	}
+	userMessageMessageOptionTable2 := &types.JoinedTable{
+		Tables:          []*types.Table{messageTable2, messageOptionTable2, userTable2},
+		RefTables:       []*types.RefTable{},
+		RefJoinedTables: []*types.RefJoinedTable{},
+	}
+	userMessageJoinedTable2 := &types.JoinedTable{
+		Tables: []*types.Table{messageTable2, userTable2},
 		RefTables: []*types.RefTable{
 			{
-				Table: messageTable2,
+				Table:       messageOptionTable2,
+				JoinedTable: userMessageMessageOptionTable2,
 			},
 		},
-		RefJoinedTables: []*types.RefJoinedTable{
-			{
-				Table: &types.JoinedTable{
-					Tables:          []*types.Table{messageTable2, messageOptionTable2},
-					RefTables:       []*types.RefTable{},
-					RefJoinedTables: []*types.RefJoinedTable{},
-				},
-			},
+		RefJoinedTables: []*types.RefJoinedTable{},
+	}
+	messageMessageOptionTable2 := &types.JoinedTable{
+		Tables:          []*types.Table{messageTable2, messageOptionTable2},
+		RefTables:       []*types.RefTable{},
+		RefJoinedTables: []*types.RefJoinedTable{},
+	}
+	userTable2.RefTables = []*types.RefTable{
+		{
+			Table:       messageTable2,
+			JoinedTable: userMessageJoinedTable2,
+		},
+	}
+	userTable2.RefJoinedTables = []*types.RefJoinedTable{
+		{
+			Table:       messageMessageOptionTable2,
+			JoinedTable: userMessageMessageOptionTable2,
+		},
+	}
+	messageTable2.RefTables = []*types.RefTable{
+		{
+			Table:       messageOptionTable2,
+			JoinedTable: messageMessageOptionTable2,
 		},
 	}
 
@@ -265,13 +294,7 @@ func TestConvertJoinedTables(t *testing.T) {
 				userTable,
 				messageTable,
 			},
-			expectJoinedTables: []*types.JoinedTable{
-				{
-					Tables:          []*types.Table{messageTable, userTable},
-					RefTables:       []*types.RefTable{},
-					RefJoinedTables: []*types.RefJoinedTable{},
-				},
-			},
+			expectJoinedTables: []*types.JoinedTable{userMessageJoinedTable},
 		},
 		{
 			description: "no join",
@@ -292,16 +315,29 @@ func TestConvertJoinedTables(t *testing.T) {
 							Decl: funcDecl,
 						},
 					},
-					RefTables: []*types.RefTable{
-						{
-							Table: messageTable,
-						},
-					},
+					RefTables: []*types.RefTable{},
 				},
 				messageTable,
 			},
 			expectTables: []*types.Table{
-				userTable,
+				{
+					StructName: "User",
+					Columns: []*types.Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*types.Method{
+						{
+							Type: types.MethodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+					RefTables:       []*types.RefTable{},
+					RefJoinedTables: []*types.RefJoinedTable{},
+				},
 				messageTable,
 			},
 			expectJoinedTables: []*types.JoinedTable{},
@@ -340,25 +376,9 @@ func TestConvertJoinedTables(t *testing.T) {
 				messageOptionTable2,
 			},
 			expectJoinedTables: []*types.JoinedTable{
-				{
-					Tables: []*types.Table{messageTable2, userTable2},
-					RefTables: []*types.RefTable{
-						{
-							Table: messageOptionTable2,
-						},
-					},
-					RefJoinedTables: []*types.RefJoinedTable{},
-				},
-				{
-					Tables:          []*types.Table{messageTable2, messageOptionTable2},
-					RefTables:       []*types.RefTable{},
-					RefJoinedTables: []*types.RefJoinedTable{},
-				},
-				{
-					Tables:          []*types.Table{messageTable2, messageOptionTable2, userTable2},
-					RefTables:       []*types.RefTable{},
-					RefJoinedTables: []*types.RefJoinedTable{},
-				},
+				userMessageJoinedTable2,
+				messageMessageOptionTable2,
+				userMessageMessageOptionTable2,
 			},
 		},
 	}
@@ -373,13 +393,18 @@ func TestConvertJoinedTables(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.ElementsMatch(t, test.expectTables, tables)
-
+			for _, table := range tables {
+				sort.Slice(table.RefTables, func(i, j int) bool {
+					return table.RefTables[i].Table.StructName < table.RefTables[j].Table.StructName
+				})
+			}
 			for _, joinedTable := range joinedTables {
 				sort.Slice(joinedTable.Tables, func(i, j int) bool {
 					return joinedTable.Tables[i].StructName < joinedTable.Tables[j].StructName
 				})
 			}
+
+			assert.ElementsMatch(t, test.expectTables, tables)
 			assert.ElementsMatch(t, test.expectJoinedTables, joinedTables)
 		})
 	}

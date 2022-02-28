@@ -21,19 +21,29 @@ func Convert(tables []*types.Table, joinNum int) ([]*types.Table, []*types.Joine
 type converterTable struct {
 	id              int
 	table           *types.Table
-	refTables       map[int]*converterTable
-	refJoinedTables map[int64]*converterJoinedTable
+	refTables       map[int]*converterRefTable
+	refJoinedTables map[int64]*converterRefJoinedTable
 	joinTablesList  []map[int64]*converterJoinedTable
 }
 
 type converterJoinedTable struct {
 	hash            int64
 	tables          map[int]*converterTable
-	refTables       map[int]*converterTable
-	refJoinedTables map[int64]*converterJoinedTable
+	refTables       map[int]*converterRefTable
+	refJoinedTables map[int64]*converterRefJoinedTable
 }
 
-func newConverterJoinedTable(tables map[int]*converterTable, refTables map[int]*converterTable) *converterJoinedTable {
+type converterRefTable struct {
+	refTable    *converterTable
+	joinedTable *converterJoinedTable
+}
+
+type converterRefJoinedTable struct {
+	refTable    *converterJoinedTable
+	joinedTable *converterJoinedTable
+}
+
+func newConverterJoinedTable(tables map[int]*converterTable, refTables map[int]*converterRefTable) *converterJoinedTable {
 	gjt := &converterJoinedTable{
 		hash:      -1,
 		tables:    tables,
@@ -94,7 +104,7 @@ func tablesToConverterTables(tables []*types.Table, joinNum int) ([]*converterTa
 		newconverterTable := &converterTable{
 			id:             i,
 			table:          table,
-			refTables:      map[int]*converterTable{},
+			refTables:      map[int]*converterRefTable{},
 			joinTablesList: make([]map[int64]*converterJoinedTable, 0, joinNum-1),
 		}
 
@@ -109,7 +119,9 @@ func tablesToConverterTables(tables []*types.Table, joinNum int) ([]*converterTa
 				return nil, fmt.Errorf("ref table not found: %s", refTable.Table.StructName)
 			}
 
-			converterTableValue.refTables[refconverterTable.id] = refconverterTable
+			converterTableValue.refTables[refconverterTable.id] = &converterRefTable{
+				refTable: refconverterTable,
+			}
 		}
 
 		joinedTable := newConverterJoinedTable(map[int]*converterTable{
@@ -136,8 +148,8 @@ func createJoinedTables(tables []*converterTable, joinNum int) ([]*converterTabl
 	for i := 1; i < joinNum-1; i++ {
 		for _, table := range tables {
 			joinedTableMap := map[int64]*converterJoinedTable{}
-			for _, refconverterTable := range table.refTables {
-				for _, refJoinedTable := range refconverterTable.joinTablesList[i-1] {
+			for _, refConverterTable := range table.refTables {
+				for _, refJoinedTable := range refConverterTable.refTable.joinTablesList[i-1] {
 					// skip if containing the same table
 					if _, ok := refJoinedTable.tables[table.id]; ok {
 						continue
@@ -149,23 +161,27 @@ func createJoinedTables(tables []*converterTable, joinNum int) ([]*converterTabl
 						joinTables[table.id] = table
 					}
 
-					joinedTableRefs := make(map[int]*converterTable, len(refJoinedTable.refTables)+len(table.refTables)-2)
+					joinedTableRefs := make(map[int]*converterRefTable, len(refJoinedTable.refTables)+len(table.refTables)-2)
 					for _, refTable := range refJoinedTable.refTables {
-						if table.id == refTable.id {
+						if table.id == refTable.refTable.id {
 							continue
 						}
 
-						joinedTableRefs[refTable.id] = refTable
+						joinedTableRefs[refTable.refTable.id] = &converterRefTable{
+							refTable: refTable.refTable,
+						}
 					}
 					for _, refTable := range table.refTables {
-						if _, ok := joinedTableRefs[refTable.id]; ok {
+						if _, ok := joinedTableRefs[refTable.refTable.id]; ok {
 							continue
 						}
-						if _, ok := refJoinedTable.tables[refTable.id]; ok {
+						if _, ok := refJoinedTable.tables[refTable.refTable.id]; ok {
 							continue
 						}
 
-						joinedTableRefs[refTable.id] = refTable
+						joinedTableRefs[refTable.refTable.id] = &converterRefTable{
+							refTable: refTable.refTable,
+						}
 					}
 
 					joinedTable := newConverterJoinedTable(joinTables, joinedTableRefs)
@@ -179,39 +195,44 @@ func createJoinedTables(tables []*converterTable, joinNum int) ([]*converterTabl
 					if _, ok := joinedTableHashMap[joinedTableHash]; ok {
 						continue
 					}
+
 					joinedTableHashMap[joinedTableHash] = joinedTable
 				}
 			}
 
 			for _, joinedTable := range table.joinTablesList[i-1] {
 				for _, refconverterTable := range table.refTables {
-					if _, ok := joinedTable.tables[refconverterTable.id]; ok {
+					if _, ok := joinedTable.tables[refconverterTable.refTable.id]; ok {
 						continue
 					}
 
 					joinTables := make(map[int]*converterTable, len(joinedTableMap)+1)
-					joinTables[refconverterTable.id] = refconverterTable
+					joinTables[refconverterTable.refTable.id] = refconverterTable.refTable
 					for _, table := range joinedTable.tables {
 						joinTables[table.id] = table
 					}
 
-					joinedTableRefs := map[int]*converterTable{}
+					joinedTableRefs := map[int]*converterRefTable{}
 					for _, refTable := range joinedTable.refTables {
-						if refconverterTable.id == refTable.id {
+						if refconverterTable.refTable.id == refTable.refTable.id {
 							continue
 						}
 
-						joinedTableRefs[refTable.id] = refTable
+						joinedTableRefs[refTable.refTable.id] = &converterRefTable{
+							refTable: refTable.refTable,
+						}
 					}
-					for _, refTable := range refconverterTable.refTables {
-						if _, ok := joinedTableRefs[refTable.id]; ok {
+					for _, refTable := range refconverterTable.refTable.refTables {
+						if _, ok := joinedTableRefs[refTable.refTable.id]; ok {
 							continue
 						}
-						if _, ok := joinedTable.tables[refTable.id]; ok {
+						if _, ok := joinedTable.tables[refTable.refTable.id]; ok {
 							continue
 						}
 
-						joinedTableRefs[refTable.id] = refTable
+						joinedTableRefs[refTable.refTable.id] = &converterRefTable{
+							refTable: refTable.refTable,
+						}
 					}
 
 					joinedTable := newConverterJoinedTable(joinTables, joinedTableRefs)
@@ -238,16 +259,13 @@ func createJoinedTables(tables []*converterTable, joinNum int) ([]*converterTabl
 
 func setTablesRefJoinedTable(tables []*converterTable, joinedTableMap map[int64]*converterJoinedTable, joinNum int) ([]*converterTable, map[int64]*converterJoinedTable) {
 	for _, table := range tables {
-		refJoinedTables := map[int64]*converterJoinedTable{}
+		refJoinedTables := map[int64]*converterRefJoinedTable{}
 		for _, refTable := range table.refTables {
-			for _, joinedTables := range refTable.joinTablesList {
+			for _, joinedTables := range refTable.refTable.joinTablesList {
 				for _, joinedTable := range joinedTables {
 					if _, ok := joinedTable.tables[table.id]; ok {
 						continue
 					}
-
-					joinedTableHash := joinedTable.tablesHash(len(tables))
-					refJoinedTables[joinedTableHash] = joinedTable
 
 					joinTables := make(map[int]*converterTable, len(joinedTable.tables)+1)
 					joinTables[table.id] = table
@@ -255,35 +273,57 @@ func setTablesRefJoinedTable(tables []*converterTable, joinedTableMap map[int64]
 						joinTables[table.id] = table
 					}
 
-					var joinedTableRefs map[int]*converterTable
+					var joinedTableRefs map[int]*converterRefTable
 					if len(joinTables) == joinNum {
-						joinedTableRefs = map[int]*converterTable{}
+						joinedTableRefs = map[int]*converterRefTable{}
 					} else {
-						joinedTableRefs = make(map[int]*converterTable, len(joinedTable.refTables)+len(table.refTables)-2)
+						joinedTableRefs = make(map[int]*converterRefTable, len(joinedTable.refTables)+len(table.refTables)-2)
 						for _, refTable := range joinedTable.refTables {
-							if table.id == refTable.id {
+							if table.id == refTable.refTable.id {
 								continue
 							}
 
-							joinedTableRefs[refTable.id] = refTable
+							joinedTableRefs[refTable.refTable.id] = &converterRefTable{
+								refTable: refTable.refTable,
+							}
 						}
 						for _, refTable := range table.refTables {
-							if _, ok := joinedTableRefs[refTable.id]; ok {
+							if _, ok := joinedTableRefs[refTable.refTable.id]; ok {
 								continue
 							}
-							if _, ok := joinedTable.tables[refTable.id]; ok {
+							if _, ok := joinedTable.tables[refTable.refTable.id]; ok {
 								continue
 							}
 
-							joinedTableRefs[refTable.id] = refTable
+							joinedTableRefs[refTable.refTable.id] = &converterRefTable{
+								refTable: refTable.refTable,
+							}
 						}
 					}
 
 					newJoinedTable := newConverterJoinedTable(joinTables, joinedTableRefs)
-					newJoinedTableHash := joinedTable.tablesHash(len(tables))
+					newJoinedTableHash := newJoinedTable.tablesHash(len(tables))
 
-					if _, ok := joinedTableMap[newJoinedTableHash]; ok {
+					joinedTableHash := joinedTable.tablesHash(len(tables))
+
+					if newJoinedTable, ok := joinedTableMap[newJoinedTableHash]; ok {
+						refJoinedTables[joinedTableHash] = &converterRefJoinedTable{
+							refTable:    joinedTable,
+							joinedTable: newJoinedTable,
+						}
+						if len(joinedTable.tables) == 1 {
+							refTable.joinedTable = newJoinedTable
+						}
+
 						continue
+					}
+
+					refJoinedTables[joinedTableHash] = &converterRefJoinedTable{
+						refTable:    joinedTable,
+						joinedTable: newJoinedTable,
+					}
+					if len(joinedTable.tables) == 1 {
+						refTable.joinedTable = newJoinedTable
 					}
 					joinedTableMap[newJoinedTableHash] = newJoinedTable
 				}
@@ -297,9 +337,9 @@ func setTablesRefJoinedTable(tables []*converterTable, joinedTableMap map[int64]
 
 func setJoinedTablesRefJoinedTable(joinedTableMap map[int64]*converterJoinedTable, tableNum int, joinNum int) map[int64]*converterJoinedTable {
 	for _, table := range joinedTableMap {
-		refJoinedTables := map[int64]*converterJoinedTable{}
+		refJoinedTables := map[int64]*converterRefJoinedTable{}
 		for _, refTable := range table.refTables {
-			for _, joinedTables := range refTable.joinTablesList[:joinNum-len(table.tables)] {
+			for _, joinedTables := range refTable.refTable.joinTablesList[:joinNum-len(table.tables)] {
 			CHECK_LOOP:
 				for _, joinedTable := range joinedTables {
 					for _, table := range table.tables {
@@ -307,9 +347,6 @@ func setJoinedTablesRefJoinedTable(joinedTableMap map[int64]*converterJoinedTabl
 							continue CHECK_LOOP
 						}
 					}
-
-					joinedTableHash := joinedTable.tablesHash(tableNum)
-					refJoinedTables[joinedTableHash] = joinedTable
 
 					joinTables := make(map[int]*converterTable, len(joinedTable.tables)+len(table.tables))
 					for _, table := range table.tables {
@@ -319,35 +356,29 @@ func setJoinedTablesRefJoinedTable(joinedTableMap map[int64]*converterJoinedTabl
 						joinTables[table.id] = table
 					}
 
-					var joinedTableRefs map[int]*converterTable
-					if len(joinTables) == joinNum {
-						joinedTableRefs = map[int]*converterTable{}
-					} else {
-						joinedTableRefs = make(map[int]*converterTable, len(joinedTable.refTables)+len(table.refTables)-2)
-						for _, refTable := range joinedTable.refTables {
-							if _, ok := table.tables[refTable.id]; ok {
-								continue
-							}
+					newJoinedTable := newConverterJoinedTable(joinTables, nil)
+					newJoinedTableHash := newJoinedTable.tablesHash(tableNum)
 
-							joinedTableRefs[refTable.id] = refTable
-						}
-						for _, refTable := range table.refTables {
-							if _, ok := joinedTableRefs[refTable.id]; ok {
-								continue
-							}
-							if _, ok := joinedTable.tables[refTable.id]; ok {
-								continue
-							}
+					joinedTableHash := joinedTable.tablesHash(tableNum)
 
-							joinedTableRefs[refTable.id] = refTable
+					if newJoinedTable, ok := joinedTableMap[newJoinedTableHash]; ok {
+						refJoinedTables[joinedTableHash] = &converterRefJoinedTable{
+							refTable:    joinedTable,
+							joinedTable: newJoinedTable,
 						}
+						if len(joinedTable.tables) == 1 {
+							refTable.joinedTable = newJoinedTable
+						}
+
+						continue
 					}
 
-					newJoinedTable := newConverterJoinedTable(joinTables, joinedTableRefs)
-					newJoinedTableHash := joinedTable.tablesHash(tableNum)
-
-					if _, ok := joinedTableMap[newJoinedTableHash]; ok {
-						continue
+					refJoinedTables[joinedTableHash] = &converterRefJoinedTable{
+						refTable:    joinedTable,
+						joinedTable: newJoinedTable,
+					}
+					if len(joinedTable.tables) == 1 {
+						refTable.joinedTable = newJoinedTable
 					}
 					joinedTableMap[newJoinedTableHash] = newJoinedTable
 				}
@@ -371,7 +402,7 @@ func converterTableToTable(converterTables []*converterTable, generateJoinedTabl
 
 	joinedTableMap := make(map[int64]*types.JoinedTable, len(generateJoinedTableMap))
 	for _, generateJoinedTable := range generateJoinedTableMap {
-		if len(generateJoinedTable.tables) < 2 {
+		if len(generateJoinedTable.tables) == 1 {
 			continue
 		}
 
@@ -380,18 +411,65 @@ func converterTableToTable(converterTables []*converterTable, generateJoinedTabl
 			tables = append(tables, tableMap[table.id])
 		}
 
+		joinedTableMap[generateJoinedTable.tablesHash(len(converterTables))] = &types.JoinedTable{
+			Tables: tables,
+		}
+	}
+
+	for _, generateJoinedTable := range generateJoinedTableMap {
+		if len(generateJoinedTable.tables) == 1 {
+			var table *types.Table
+			for _, convertTable := range generateJoinedTable.tables {
+				table = tableMap[convertTable.id]
+			}
+
+			refTables := make([]*types.RefTable, 0, len(generateJoinedTable.refTables))
+			for _, refTable := range generateJoinedTable.refTables {
+				refTables = append(refTables, &types.RefTable{
+					Table:       tableMap[refTable.refTable.id],
+					JoinedTable: joinedTableMap[refTable.joinedTable.tablesHash(len(converterTables))],
+				})
+			}
+			table.RefTables = refTables
+
+			refJoinedTables := make([]*types.RefJoinedTable, 0, len(generateJoinedTable.refJoinedTables))
+			for _, refJoinedTable := range generateJoinedTable.refJoinedTables {
+				if len(refJoinedTable.refTable.tables) == 1 {
+					continue
+				}
+
+				refJoinedTables = append(refJoinedTables, &types.RefJoinedTable{
+					Table:       joinedTableMap[refJoinedTable.refTable.tablesHash(len(converterTables))],
+					JoinedTable: joinedTableMap[refJoinedTable.joinedTable.tablesHash(len(converterTables))],
+				})
+			}
+			table.RefJoinedTables = refJoinedTables
+
+			continue
+		}
+
 		refTables := make([]*types.RefTable, 0, len(generateJoinedTable.refTables))
 		for _, refTable := range generateJoinedTable.refTables {
-			table := tableMap[refTable.id]
 			refTables = append(refTables, &types.RefTable{
-				Table: table,
+				Table:       tableMap[refTable.refTable.id],
+				JoinedTable: joinedTableMap[refTable.joinedTable.tablesHash(len(converterTables))],
 			})
 		}
 
-		joinedTableMap[generateJoinedTable.tablesHash(len(converterTables))] = &types.JoinedTable{
-			Tables:    tables,
-			RefTables: refTables,
+		refJoinedTables := make([]*types.RefJoinedTable, 0, len(generateJoinedTable.refJoinedTables))
+		for _, refJoinedTable := range generateJoinedTable.refJoinedTables {
+			if len(refJoinedTable.refTable.tables) == 1 {
+				continue
+			}
+
+			refJoinedTables = append(refJoinedTables, &types.RefJoinedTable{
+				Table:       joinedTableMap[refJoinedTable.refTable.tablesHash(len(converterTables))],
+				JoinedTable: joinedTableMap[refJoinedTable.joinedTable.tablesHash(len(converterTables))],
+			})
 		}
+
+		joinedTableMap[generateJoinedTable.tablesHash(len(converterTables))].RefTables = refTables
+		joinedTableMap[generateJoinedTable.tablesHash(len(converterTables))].RefJoinedTables = refJoinedTables
 	}
 
 	tables := make([]*types.Table, 0, len(converterTables))
@@ -401,34 +479,12 @@ func converterTableToTable(converterTables []*converterTable, generateJoinedTabl
 			return nil, nil, errors.New("converterTableToTable: table not found")
 		}
 
-		refTables := make([]*types.RefTable, 0, len(converterTable.refTables))
-		for _, refTable := range converterTable.refTables {
-			table := tableMap[refTable.id]
-			refTables = append(refTables, &types.RefTable{
-				Table: table,
-			})
-		}
-		table.RefTables = refTables
-
-		refJoinedTables := make([]*types.RefJoinedTable, 0, len(converterTable.refJoinedTables))
-		for _, refJoinedTable := range converterTable.refJoinedTables {
-			if len(refJoinedTable.tables) < 2 {
-				continue
-			}
-
-			joinedTable := joinedTableMap[refJoinedTable.tablesHash(len(converterTables))]
-			refJoinedTables = append(refJoinedTables, &types.RefJoinedTable{
-				Table: joinedTable,
-			})
-		}
-		table.RefJoinedTables = refJoinedTables
-
 		tables = append(tables, table)
 	}
 
 	joinedTables := make([]*types.JoinedTable, 0, len(generateJoinedTableMap))
 	for _, generateJoinedTable := range generateJoinedTableMap {
-		if len(generateJoinedTable.tables) < 2 {
+		if len(generateJoinedTable.tables) == 1 {
 			continue
 		}
 
@@ -436,19 +492,6 @@ func converterTableToTable(converterTables []*converterTable, generateJoinedTabl
 		if !ok {
 			return nil, nil, errors.New("converterTableToTable: joinedTable not found")
 		}
-
-		refJoinedTables := make([]*types.RefJoinedTable, 0, len(generateJoinedTable.refJoinedTables))
-		for _, refJoinedTable := range generateJoinedTable.refJoinedTables {
-			if len(refJoinedTable.tables) < 2 {
-				continue
-			}
-
-			joinedTable := joinedTableMap[refJoinedTable.tablesHash(len(converterTables))]
-			refJoinedTables = append(refJoinedTables, &types.RefJoinedTable{
-				Table: joinedTable,
-			})
-		}
-		joinedTable.RefJoinedTables = refJoinedTables
 
 		joinedTables = append(joinedTables, joinedTable)
 	}
