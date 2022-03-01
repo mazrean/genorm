@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"reflect"
+	"strconv"
 
 	"github.com/mazrean/genorm/cmd/generator/types"
 )
@@ -234,7 +235,12 @@ func parseStructType(name string, s *ast.StructType) (*parserTable, error) {
 
 		var tag string
 		if tagLit != nil {
-			structTag := reflect.StructTag(tagLit.Value)
+			tagValue, err := strconv.Unquote(tagLit.Value)
+			if err != nil {
+				return nil, fmt.Errorf("unquote tag: %w", err)
+			}
+
+			structTag := reflect.StructTag(tagValue)
 			tag = structTag.Get("genorm")
 		}
 
