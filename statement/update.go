@@ -12,7 +12,7 @@ import (
 
 type UpdateContext[T Table] struct {
 	*Context[T]
-	assignmentMap  map[genorm.TableColumns[T]]genorm.TableExpr[T]
+	assignExprs    []*genorm.TableAssignExpr[T]
 	whereCondition whereConditionClause[T]
 	order          orderClause[T]
 	limit          limitClause
@@ -22,62 +22,17 @@ func NewUpdateContext[T Table](table T) *UpdateContext[T] {
 	ctx := newContext(table)
 
 	return &UpdateContext[T]{
-		Context:       ctx,
-		assignmentMap: map[genorm.TableColumns[T]]genorm.TableExpr[T]{},
+		Context: ctx,
 	}
 }
 
-func (c *UpdateContext[Table]) Assign(column genorm.TableColumns[Table], expr genorm.TableExpr[Table]) (res *UpdateContext[Table]) {
-	res = c
-
-	defer func() {
-		err := recover()
-		if err != nil {
-			c.addError(errors.New("column should be comparable"))
-		}
-	}()
-
-	if column == nil {
-		c.addError(errors.New("invalid column"))
+func (c *UpdateContext[Table]) Set(assignExprs ...*genorm.TableAssignExpr[Table]) (res *UpdateContext[Table]) {
+	if len(assignExprs) == 0 {
+		c.addError(errors.New("no assign expressions"))
 		return c
 	}
-	if expr == nil {
-		c.addError(errors.New("invalid expression"))
-		return c
-	}
-	if c.assignmentMap == nil {
-		c.addError(errors.New("assignment map not initialized"))
-	}
 
-	if _, ok := c.assignmentMap[column]; ok { // if column is not comparable, panic
-		c.addError(errors.New("duplicate assignment"))
-	}
-
-	c.assignmentMap[column] = expr
-
-	return c
-}
-
-func (c *UpdateContext[Table]) MapAssign(assignMap map[genorm.TableColumns[Table]]genorm.TableExpr[Table]) *UpdateContext[Table] {
-	for column, expr := range assignMap {
-		if column == nil {
-			c.addError(errors.New("invalid column"))
-			return c
-		}
-		if expr == nil {
-			c.addError(errors.New("invalid expression"))
-			return c
-		}
-		if c.assignmentMap == nil {
-			c.addError(errors.New("assignment map not initialized"))
-		}
-
-		if _, ok := c.assignmentMap[column]; ok {
-			c.addError(errors.New("duplicate assignment"))
-		}
-
-		c.assignmentMap[column] = expr
-	}
+	assignExprs = append(c.assignExprs, assignExprs...)
 
 	return c
 }
@@ -161,19 +116,19 @@ func (c *UpdateContext[Table]) buildQuery() (string, []genorm.ExprType, error) {
 	sb.WriteString(tableQuery)
 	args = append(args, tableArgs...)
 
-	if len(c.assignmentMap) == 0 {
+	if len(c.assignExprs) == 0 {
 		return "", nil, errors.New("no assignment")
 	}
 
 	sb.WriteString(" SET ")
-	assignments := make([]string, 0, len(c.assignmentMap))
-	for column, expr := range c.assignmentMap {
-		assignmentQuery, assignmentArgs, errs := expr.Expr()
+	assignments := make([]string, 0, len(c.assignExprs))
+	for _, expr := range c.assignExprs {
+		assignmentQuery, assignmentArgs, errs := expr.AssignExpr()
 		if len(errs) != 0 {
 			return "", nil, errs[0]
 		}
 
-		assignments = append(assignments, fmt.Sprintf("%s = %s", column.SQLColumnName(), assignmentQuery))
+		assignments = append(assignments, assignmentQuery)
 		args = append(args, assignmentArgs...)
 	}
 	sb.WriteString(strings.Join(assignments, ", "))
