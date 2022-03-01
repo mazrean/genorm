@@ -134,7 +134,7 @@ func Eq[T Table, S ExprType](
 	}
 }
 
-func EqWithConst[T Table, S ExprType](
+func EqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -169,7 +169,7 @@ func Neq[T Table, S ExprType](
 	}
 }
 
-func NeqWithConst[T Table, S ExprType](
+func NeqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -204,7 +204,7 @@ func Leq[T Table, S ExprType](
 	}
 }
 
-func LeqWithConst[T Table, S ExprType](
+func LeqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -239,7 +239,7 @@ func Geq[T Table, S ExprType](
 	}
 }
 
-func GeqWithConst[T Table, S ExprType](
+func GeqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -274,7 +274,7 @@ func Lt[T Table, S ExprType](
 	}
 }
 
-func LtWithConst[T Table, S ExprType](
+func LtConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -309,7 +309,7 @@ func Gt[T Table, S ExprType](
 	}
 }
 
-func GtWithConst[T Table, S ExprType](
+func GtConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -393,7 +393,7 @@ func In[T Table, S ExprType](
 	}
 }
 
-func InWithConst[T Table, S ExprType](
+func InConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constants ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -449,7 +449,7 @@ func NotIn[T Table, S ExprType](
 	}
 }
 
-func NotInWithConst[T Table, S ExprType](
+func NotInConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constants ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
