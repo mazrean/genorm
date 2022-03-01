@@ -59,7 +59,10 @@ func joinedTableName(jt *types.JoinedTable) string {
 }
 
 func (jt *joinedTable) decl() []ast.Decl {
-	return []ast.Decl{
+	decls := []ast.Decl{}
+
+	decls = append(
+		decls,
 		jt.structDecl(),
 		jt.exprDecl(),
 		jt.columnsDecl(),
@@ -68,6 +71,18 @@ func (jt *joinedTable) decl() []ast.Decl {
 		jt.getErrorsDecl(),
 		jt.addErrorDecl(),
 		jt.setRelationDecl(),
+	)
+
+	for _, ref := range jt.refTables {
+		decls = append(decls, jt.tableJoinDecl(ref))
+	}
+
+	for _, ref := range jt.refJoinedTables {
+		decls = append(decls, jt.joinedTableJoinDecl(ref))
+	}
+
+	decls = append(
+		decls,
 		jt.tablesInterfaceDecl(),
 		jt.columnParseFuncDecl(),
 		jt.columnTypeDecl(),
@@ -77,7 +92,9 @@ func (jt *joinedTable) decl() []ast.Decl {
 		jt.columnTypeColumnNameDecl(),
 		jt.columnTypeTableExprDecl(),
 		jt.columnTypeTypedExprDecl(),
-	}
+	)
+
+	return decls
 }
 
 func (jt *joinedTable) structDecl() ast.Decl {
@@ -516,6 +533,139 @@ func (jt *joinedTable) setRelationDecl() ast.Decl {
 					},
 					Tok: token.ASSIGN,
 					Rhs: []ast.Expr{relationIdent},
+				},
+			},
+		},
+	}
+}
+
+func (jt *joinedTable) tableJoinDecl(ref *refTable) ast.Decl {
+	joinIdent := ast.NewIdent(ref.refTable.name)
+	refIdent := ast.NewIdent("ref")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{jt.recvIdent},
+					Type: &ast.StarExpr{
+						X: jt.structIdent,
+					},
+				},
+			},
+		},
+		Name: joinIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: relationContext(&ast.StarExpr{
+							X: jt.structIdent,
+						}, &ast.StarExpr{
+							X: ref.refTable.structIdent,
+						}, &ast.StarExpr{
+							X: ref.joinedTable.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{refIdent},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						&ast.CompositeLit{
+							Type: ref.refTable.structIdent,
+							Elts: []ast.Expr{},
+						},
+					},
+				},
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: newRelationContext(&ast.StarExpr{
+								X: jt.structIdent,
+							}, &ast.StarExpr{
+								X: ref.refTable.structIdent,
+							}, &ast.StarExpr{
+								X: ref.joinedTable.structIdent,
+							}),
+							Args: []ast.Expr{
+								jt.recvIdent,
+								&ast.UnaryExpr{
+									Op: token.AND,
+									X:  refIdent,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (jt *joinedTable) joinedTableJoinDecl(ref *refJoinedTable) ast.Decl {
+	joinIdent := ast.NewIdent(ref.refTable.name)
+	refIdent := ast.NewIdent("ref")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{jt.recvIdent},
+					Type: &ast.StarExpr{
+						X: jt.structIdent,
+					},
+				},
+			},
+		},
+		Name: joinIdent,
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{refIdent},
+						Type: &ast.StarExpr{
+							X: ref.refTable.structIdent,
+						},
+					},
+				},
+			},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: relationContext(&ast.StarExpr{
+							X: jt.structIdent,
+						}, &ast.StarExpr{
+							X: ref.refTable.structIdent,
+						}, &ast.StarExpr{
+							X: ref.joinedTable.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: newRelationContext(&ast.StarExpr{
+								X: jt.structIdent,
+							}, &ast.StarExpr{
+								X: ref.refTable.structIdent,
+							}, &ast.StarExpr{
+								X: ref.joinedTable.structIdent,
+							}),
+							Args: []ast.Expr{
+								jt.recvIdent,
+								refIdent,
+							},
+						},
+					},
 				},
 			},
 		},
