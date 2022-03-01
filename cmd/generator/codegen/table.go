@@ -25,7 +25,7 @@ func newTable(tbl *types.Table) (*table, error) {
 	codegenTable := &table{
 		table:       tbl,
 		name:        tbl.StructName,
-		structIdent: ast.NewIdent(fmt.Sprintf("%sTable", tbl.StructName)),
+		structIdent: ast.NewIdent(tbl.StructName),
 		recvIdent:   ast.NewIdent("t"),
 	}
 
