@@ -83,7 +83,7 @@ func (c *UpdateContext[Table]) MapAssign(assignMap map[genorm.TableColumns[Table
 }
 
 func (c *UpdateContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
 ) *UpdateContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
@@ -152,7 +152,14 @@ func (c *UpdateContext[Table]) buildQuery() (string, []genorm.ExprType, error) {
 
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE ")
-	sb.WriteString(c.table.SQLTableName())
+
+	tableQuery, tableArgs, errs := c.table.Expr()
+	if len(errs) != 0 {
+		return "", nil, fmt.Errorf("table expr: %w", errs[0])
+	}
+
+	sb.WriteString(tableQuery)
+	args = append(args, tableArgs...)
 
 	if len(c.assignmentMap) == 0 {
 		return "", nil, errors.New("no assignment")

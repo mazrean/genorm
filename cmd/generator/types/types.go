@@ -1,6 +1,8 @@
-package generator
+package types
 
-import "go/ast"
+import (
+	"go/ast"
+)
 
 type Table struct {
 	StructName      string
@@ -11,7 +13,7 @@ type Table struct {
 }
 
 type Method struct {
-	Type methodType
+	Type MethodType
 	Decl *ast.FuncDecl
 }
 
@@ -21,19 +23,21 @@ type JoinedTable struct {
 	RefJoinedTables []*RefJoinedTable
 }
 
-type methodType int8
+type MethodType int8
 
 const (
-	methodTypeIdentifier methodType = iota + 1
-	methodTypeStar
+	MethodTypeIdentifier MethodType = iota + 1
+	MethodTypeStar
 )
 
 type RefTable struct {
-	Table *Table
+	Table       *Table
+	JoinedTable *JoinedTable
 }
 
 type RefJoinedTable struct {
-	Table *JoinedTable
+	Table       *JoinedTable
+	JoinedTable *JoinedTable
 }
 
 type Column struct {

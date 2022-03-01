@@ -8,6 +8,7 @@ type Context[T Table] struct {
 func newContext[T Table](table T) *Context[T] {
 	return &Context[T]{
 		table: table,
+		errs:  table.GetErrors(),
 	}
 }
 

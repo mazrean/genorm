@@ -1,4 +1,4 @@
-package genorm
+package relation
 
 import (
 	"github.com/mazrean/genorm"
@@ -6,7 +6,6 @@ import (
 
 type Table interface {
 	genorm.Table
-	AddError(err error)
 }
 
 type BasicTable interface {

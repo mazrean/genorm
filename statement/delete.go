@@ -25,7 +25,7 @@ func NewDeleteContext[T BasicTable](table T) *DeleteContext[T] {
 }
 
 func (c *DeleteContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
 ) *DeleteContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {

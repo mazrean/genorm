@@ -75,7 +75,7 @@ func (c *SelectContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *Sel
 }
 
 func (c *SelectContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
 ) *SelectContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
@@ -97,7 +97,7 @@ func (c *SelectContext[Table]) GroupBy(exprs ...genorm.TableExpr[Table]) *Select
 }
 
 func (c *SelectContext[Table]) Having(
-	condition genorm.TypedTableExpr[Table, *genorm.WrappedPrimitive[bool]],
+	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
 ) *SelectContext[Table] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
@@ -244,7 +244,14 @@ func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm
 	sb.WriteString(strings.Join(selectExprs, ", "))
 
 	sb.WriteString(" FROM ")
-	sb.WriteString(c.table.SQLTableName())
+
+	tableQuery, tableArgs, errs := c.table.Expr()
+	if len(errs) != 0 {
+		return nil, "", nil, fmt.Errorf("table expr: %w", errs[0])
+	}
+
+	sb.WriteString(tableQuery)
+	args = append(args, tableArgs...)
 
 	if c.whereCondition.exists() {
 		whereQuery, whereArgs, err := c.whereCondition.getExpr()

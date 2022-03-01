@@ -7,7 +7,7 @@ import (
 type Table interface {
 	genorm.Table
 	// ColumnMap key: `table_name`.`column_name`
-	ColumnMap() map[string]genorm.ExprType
+	ColumnMap() map[string]genorm.ColumnFieldExprType
 }
 
 type BasicTable interface {

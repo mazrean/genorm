@@ -1,11 +1,172 @@
-package generator
+package parser
 
 import (
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/mazrean/genorm/cmd/generator/types"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestConvertTables(t *testing.T) {
+	t.Parallel()
+
+	typeIdent1 := ast.NewIdent("int64")
+	typeIdent2 := ast.NewIdent("int")
+	funcDecl := &ast.FuncDecl{
+		Name: ast.NewIdent("GetID"),
+	}
+
+	messageTable := &types.Table{
+		StructName: "Message",
+		Columns: []*types.Column{
+			{
+				Name:      "id",
+				FieldName: "ID",
+				Type:      typeIdent2,
+			},
+		},
+		Methods:         []*types.Method{},
+		RefTables:       []*types.RefTable{},
+		RefJoinedTables: nil,
+	}
+
+	tests := []struct {
+		description  string
+		parserTables []*parserTable
+		tables       []*types.Table
+		err          bool
+	}{
+		{
+			description: "simple",
+			parserTables: []*parserTable{
+				{
+					StructName: "User",
+					Columns: []*parserColumn{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*parserMethod{
+						{
+							StructName: "User",
+							Type:       types.MethodTypeIdentifier,
+							Decl:       funcDecl,
+						},
+					},
+					RefTables: []*parserRefTable{},
+				},
+			},
+			tables: []*types.Table{
+				{
+					StructName: "User",
+					Columns: []*types.Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*types.Method{
+						{
+							Type: types.MethodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+					RefTables:       []*types.RefTable{},
+					RefJoinedTables: nil,
+				},
+			},
+		},
+		{
+			description: "reference",
+			parserTables: []*parserTable{
+				{
+					StructName: "User",
+					Columns: []*parserColumn{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*parserMethod{
+						{
+							StructName: "User",
+							Type:       types.MethodTypeIdentifier,
+							Decl:       funcDecl,
+						},
+					},
+					RefTables: []*parserRefTable{
+						{
+							FieldName:  "Message",
+							StructName: "Message",
+						},
+					},
+				},
+				{
+					StructName: "Message",
+					Columns: []*parserColumn{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent2,
+						},
+					},
+					Methods:   []*parserMethod{},
+					RefTables: []*parserRefTable{},
+				},
+			},
+			tables: []*types.Table{
+				{
+					StructName: "User",
+					Columns: []*types.Column{
+						{
+							Name:      "id",
+							FieldName: "ID",
+							Type:      typeIdent1,
+						},
+					},
+					Methods: []*types.Method{
+						{
+							Type: types.MethodTypeIdentifier,
+							Decl: funcDecl,
+						},
+					},
+					RefTables: []*types.RefTable{
+						{
+							Table: messageTable,
+						},
+					},
+					RefJoinedTables: nil,
+				},
+				messageTable,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			tables, err := convertTables(test.parserTables)
+			if err != nil {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			assert.Len(t, tables, len(test.tables))
+
+			for i, table := range tables {
+				assert.Equal(t, test.tables[i], table)
+			}
+		})
+	}
+}
 
 func TestParseFuncDecl(t *testing.T) {
 	t.Parallel()
@@ -46,7 +207,7 @@ func TestParseFuncDecl(t *testing.T) {
 	tests := []struct {
 		description string
 		f           *ast.FuncDecl
-		method      *ParserMethod
+		method      *parserMethod
 		isMethod    bool
 		err         bool
 	}{
@@ -59,9 +220,9 @@ func TestParseFuncDecl(t *testing.T) {
 		{
 			description: "method func -> method",
 			f:           methodFunc,
-			method: &ParserMethod{
+			method: &parserMethod{
 				StructName: "a",
-				Type:       methodTypeIdentifier,
+				Type:       types.MethodTypeIdentifier,
 				Decl:       methodFunc,
 			},
 			isMethod: true,
@@ -85,9 +246,9 @@ func TestParseFuncDecl(t *testing.T) {
 		{
 			description: "pointer method func -> method",
 			f:           pointerMethodFunc,
-			method: &ParserMethod{
+			method: &parserMethod{
 				StructName: "a",
-				Type:       methodTypeStar,
+				Type:       types.MethodTypeStar,
 				Decl:       pointerMethodFunc,
 			},
 			isMethod: true,
@@ -142,7 +303,7 @@ func TestParseGenDecl(t *testing.T) {
 	tests := []struct {
 		description string
 		g           *ast.GenDecl
-		tables      []*ParserTable
+		tables      []*parserTable
 		err         bool
 	}{
 		{
@@ -166,17 +327,17 @@ func TestParseGenDecl(t *testing.T) {
 					},
 				},
 			},
-			tables: []*ParserTable{
+			tables: []*parserTable{
 				{
 					StructName: "a",
-					Columns: []*ParserColumn{
+					Columns: []*parserColumn{
 						{
 							Name:      "s",
 							FieldName: "s",
 							Type:      fieldType,
 						},
 					},
-					RefTables: []*ParserRefTable{},
+					RefTables: []*parserRefTable{},
 				},
 			},
 		},
@@ -195,7 +356,7 @@ func TestParseGenDecl(t *testing.T) {
 					},
 				},
 			},
-			tables: []*ParserTable{},
+			tables: []*parserTable{},
 		},
 		{
 			description: "skip non-struct type spec",
@@ -207,7 +368,7 @@ func TestParseGenDecl(t *testing.T) {
 					},
 				},
 			},
-			tables: []*ParserTable{},
+			tables: []*parserTable{},
 		},
 	}
 
@@ -278,7 +439,7 @@ func TestParseStructType(t *testing.T) {
 		description string
 		name        string
 		s           *ast.StructType
-		table       *ParserTable
+		table       *parserTable
 		err         bool
 	}{
 		{
@@ -296,16 +457,16 @@ func TestParseStructType(t *testing.T) {
 					},
 				},
 			},
-			table: &ParserTable{
+			table: &parserTable{
 				StructName: "a",
-				Columns: []*ParserColumn{
+				Columns: []*parserColumn{
 					{
 						Name:      "s",
 						FieldName: "s",
 						Type:      fieldType,
 					},
 				},
-				RefTables: []*ParserRefTable{},
+				RefTables: []*parserRefTable{},
 			},
 		},
 		{
@@ -327,16 +488,16 @@ func TestParseStructType(t *testing.T) {
 					},
 				},
 			},
-			table: &ParserTable{
+			table: &parserTable{
 				StructName: "a",
-				Columns: []*ParserColumn{
+				Columns: []*parserColumn{
 					{
 						Name:      "t",
 						FieldName: "s",
 						Type:      fieldType,
 					},
 				},
-				RefTables: []*ParserRefTable{},
+				RefTables: []*parserRefTable{},
 			},
 		},
 		{
@@ -354,10 +515,10 @@ func TestParseStructType(t *testing.T) {
 					},
 				},
 			},
-			table: &ParserTable{
+			table: &parserTable{
 				StructName: "a",
-				Columns:    []*ParserColumn{},
-				RefTables: []*ParserRefTable{
+				Columns:    []*parserColumn{},
+				RefTables: []*parserRefTable{
 					{
 						FieldName:  "s",
 						StructName: "Table",
@@ -386,9 +547,9 @@ func TestParseStructType(t *testing.T) {
 					},
 				},
 			},
-			table: &ParserTable{
+			table: &parserTable{
 				StructName: "a",
-				Columns: []*ParserColumn{
+				Columns: []*parserColumn{
 					{
 						Name:      "s",
 						FieldName: "s",
@@ -400,7 +561,7 @@ func TestParseStructType(t *testing.T) {
 						Type:      fieldType,
 					},
 				},
-				RefTables: []*ParserRefTable{},
+				RefTables: []*parserRefTable{},
 			},
 		},
 		{
@@ -419,9 +580,9 @@ func TestParseStructType(t *testing.T) {
 					},
 				},
 			},
-			table: &ParserTable{
+			table: &parserTable{
 				StructName: "a",
-				Columns: []*ParserColumn{
+				Columns: []*parserColumn{
 					{
 						Name:      "s",
 						FieldName: "s",
@@ -433,7 +594,7 @@ func TestParseStructType(t *testing.T) {
 						Type:      fieldType,
 					},
 				},
-				RefTables: []*ParserRefTable{},
+				RefTables: []*parserRefTable{},
 			},
 		},
 		{
@@ -452,10 +613,10 @@ func TestParseStructType(t *testing.T) {
 					},
 				},
 			},
-			table: &ParserTable{
+			table: &parserTable{
 				StructName: "a",
-				Columns:    []*ParserColumn{},
-				RefTables: []*ParserRefTable{
+				Columns:    []*parserColumn{},
+				RefTables: []*parserRefTable{
 					{
 						FieldName:  "s",
 						StructName: "Table",
