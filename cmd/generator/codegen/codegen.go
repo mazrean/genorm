@@ -20,6 +20,8 @@ var (
 	genormRelationIdent  = ast.NewIdent("relation")
 	genormStatementIdent = ast.NewIdent("statement")
 	fmtIdent             = ast.NewIdent("fmt")
+
+	rootPackageIdent *ast.Ident
 )
 
 func Codegen(
@@ -30,6 +32,8 @@ func Codegen(
 	tables []*types.Table,
 	joinedTables []*types.JoinedTable,
 ) error {
+	rootPackageIdent = ast.NewIdent(packageName)
+
 	dir, err := newDirectory(destinationDir, packageName, modulePath)
 	if err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
@@ -45,6 +49,13 @@ func Codegen(
 	err = codegenMain(dir, importDecls, codegenTables, codegenJoinedTables)
 	if err != nil {
 		return fmt.Errorf("failed to codegen main: %w", err)
+	}
+
+	for _, table := range codegenTables {
+		err = codegenTable(dir, importDecls, table)
+		if err != nil {
+			return fmt.Errorf("failed to codegen table(%s): %w", table.name, err)
+		}
 	}
 
 	return nil
@@ -274,6 +285,45 @@ func codegenMain(dir *directory, importDecls []ast.Decl, tables []*table, joined
 	for _, joinedTable := range joinedTables {
 		astFile.Decls = append(astFile.Decls, joinedTable.decl()...)
 	}
+
+	return nil
+}
+
+func codegenTable(dir *directory, importDecls []ast.Decl, table *table) error {
+	rootModulePath := dir.modulePath
+
+	dir, err := dir.addDirectory(table.snakeName(), table.lowerName())
+	if err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	f, err := dir.addFile(fmt.Sprintf("%s.go", table.snakeName()))
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer f.Close()
+
+	astFile := f.ast()
+
+	astFile.Decls = append(astFile.Decls, &ast.GenDecl{
+		Tok: token.IMPORT,
+		Specs: []ast.Spec{
+			&ast.ImportSpec{
+				Path: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: fmt.Sprintf(`"%s"`, rootModulePath),
+				},
+			},
+			&ast.ImportSpec{
+				Path: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: genormImport,
+				},
+			},
+		},
+	})
+
+	astFile.Decls = append(astFile.Decls, table.tablePackageDecls()...)
 
 	return nil
 }

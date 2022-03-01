@@ -55,6 +55,19 @@ func (tbl *table) lowerName() string {
 	return strings.ToLower(tbl.name[0:1]) + tbl.name[1:]
 }
 
+func (tbl *table) snakeName() string {
+	snakeName := ""
+	for i, c := range tbl.name {
+		if i != 0 && c >= 'A' && c <= 'Z' {
+			snakeName += "_"
+		}
+
+		snakeName += strings.ToLower(string(c))
+	}
+
+	return snakeName
+}
+
 func (tbl *table) decl() []ast.Decl {
 	tableDecls := []ast.Decl{}
 
@@ -627,6 +640,15 @@ func (tbl *table) deleteDecl() ast.Decl {
 			},
 		},
 	}
+}
+
+func (tbl *table) tablePackageDecls() []ast.Decl {
+	decls := []ast.Decl{}
+	for _, column := range tbl.columns {
+		decls = append(decls, column.tablePackageDecls()...)
+	}
+
+	return decls
 }
 
 type method struct {
