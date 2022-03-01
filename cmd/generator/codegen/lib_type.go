@@ -34,6 +34,10 @@ var (
 		X:   genormStatementIdent,
 		Sel: ast.NewIdent("NewInsertContext"),
 	}
+	selectStatementIdent = &ast.SelectorExpr{
+		X:   genormStatementIdent,
+		Sel: ast.NewIdent("NewSelectContext"),
+	}
 
 	exprExprIdent           = ast.NewIdent("Expr")
 	tableExprTableExprIdent = ast.NewIdent("TableExpr")
@@ -113,6 +117,18 @@ func insertContext(basicTable ast.Expr) ast.Expr {
 			X: &ast.SelectorExpr{
 				X:   genormStatementIdent,
 				Sel: ast.NewIdent("InsertContext"),
+			},
+			Indices: []ast.Expr{basicTable},
+		},
+	}
+}
+
+func selectContext(basicTable ast.Expr) ast.Expr {
+	return &ast.StarExpr{
+		X: &ast.IndexListExpr{
+			X: &ast.SelectorExpr{
+				X:   genormStatementIdent,
+				Sel: ast.NewIdent("SelectContext"),
 			},
 			Indices: []ast.Expr{basicTable},
 		},
