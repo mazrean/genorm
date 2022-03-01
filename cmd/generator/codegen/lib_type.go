@@ -76,6 +76,19 @@ func wrappedPrimitive(primitive ast.Expr) ast.Expr {
 	}
 }
 
+func typedTableExpr(tableType ast.Expr, exprType ast.Expr) ast.Expr {
+	return &ast.IndexListExpr{
+		X: &ast.SelectorExpr{
+			X:   genormIdent,
+			Sel: ast.NewIdent("TypedTableExpr"),
+		},
+		Indices: []ast.Expr{
+			tableType,
+			exprType,
+		},
+	}
+}
+
 func typedTableColumn(tableType ast.Expr, exprType ast.Expr) ast.Expr {
 	return &ast.IndexListExpr{
 		X: &ast.SelectorExpr{
