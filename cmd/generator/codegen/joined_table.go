@@ -84,6 +84,7 @@ func (jt *joinedTable) decl() []ast.Decl {
 	decls = append(
 		decls,
 		jt.selectDecl(),
+		jt.updateDecl(),
 		jt.tablesInterfaceDecl(),
 		jt.columnParseFuncDecl(),
 		jt.columnTypeDecl(),
@@ -705,6 +706,49 @@ func (jt *joinedTable) selectDecl() ast.Decl {
 					Results: []ast.Expr{
 						&ast.CallExpr{
 							Fun: selectStatementIdent,
+							Args: []ast.Expr{
+								jt.recvIdent,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (jt *joinedTable) updateDecl() ast.Decl {
+	updateIdent := ast.NewIdent("Update")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{jt.recvIdent},
+					Type: &ast.StarExpr{
+						X: jt.structIdent,
+					},
+				},
+			},
+		},
+		Name: updateIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: updateContext(&ast.StarExpr{
+							X: jt.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: updateStatementIdent,
 							Args: []ast.Expr{
 								jt.recvIdent,
 							},

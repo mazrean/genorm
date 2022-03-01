@@ -68,7 +68,7 @@ func (tbl *table) decl() []ast.Decl {
 		tableDecls = append(tableDecls, tbl.joinedTableJoinDecl(ref))
 	}
 
-	tableDecls = append(tableDecls, tbl.insertDecl(), tbl.selectDecl())
+	tableDecls = append(tableDecls, tbl.insertDecl(), tbl.selectDecl(), tbl.updateDecl())
 
 	for _, method := range tbl.methods {
 		tableDecls = append(tableDecls, method.Decl)
@@ -532,6 +532,49 @@ func (tbl *table) selectDecl() ast.Decl {
 					Results: []ast.Expr{
 						&ast.CallExpr{
 							Fun: selectStatementIdent,
+							Args: []ast.Expr{
+								tbl.recvIdent,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (tbl *table) updateDecl() ast.Decl {
+	updateIdent := ast.NewIdent("Update")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{tbl.recvIdent},
+					Type: &ast.StarExpr{
+						X: tbl.structIdent,
+					},
+				},
+			},
+		},
+		Name: updateIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: updateContext(&ast.StarExpr{
+							X: tbl.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: updateStatementIdent,
 							Args: []ast.Expr{
 								tbl.recvIdent,
 							},
