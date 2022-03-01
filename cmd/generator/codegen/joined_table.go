@@ -33,7 +33,7 @@ func newJoinedTable(jt *types.JoinedTable) *joinedTable {
 
 	return &joinedTable{
 		joinedTable:          jt,
-		name:                 structName,
+		name:                 name,
 		structIdent:          structIdent,
 		relationFieldIdent:   ast.NewIdent("relation"),
 		errsFieldIdent:       ast.NewIdent("errs"),
@@ -157,8 +157,11 @@ func (jt *joinedTable) exprDecl() ast.Decl {
 					Results: []ast.Expr{
 						&ast.CallExpr{
 							Fun: &ast.SelectorExpr{
-								X:   jt.recvIdent,
-								Sel: exprExprIdent,
+								X: &ast.SelectorExpr{
+									X:   jt.recvIdent,
+									Sel: jt.relationFieldIdent,
+								},
+								Sel: relationJoinedTableNameIdent,
 							},
 						},
 					},
