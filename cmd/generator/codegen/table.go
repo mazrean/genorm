@@ -13,6 +13,7 @@ import (
 type table struct {
 	table           *types.Table
 	name            string
+	funcIdent       *ast.Ident
 	structIdent     *ast.Ident
 	recvIdent       *ast.Ident
 	methods         []*method
@@ -25,7 +26,8 @@ func newTable(tbl *types.Table) (*table, error) {
 	codegenTable := &table{
 		table:       tbl,
 		name:        tbl.StructName,
-		structIdent: ast.NewIdent(tbl.StructName),
+		funcIdent:   ast.NewIdent(tbl.StructName),
+		structIdent: ast.NewIdent(tbl.StructName + "Table"),
 		recvIdent:   ast.NewIdent("t"),
 	}
 
@@ -71,7 +73,7 @@ func (tbl *table) snakeName() string {
 func (tbl *table) decl() []ast.Decl {
 	tableDecls := []ast.Decl{}
 
-	tableDecls = append(tableDecls, tbl.structDecl())
+	tableDecls = append(tableDecls, tbl.structDecl(), tbl.funcDecl())
 
 	for _, ref := range tbl.refTables {
 		tableDecls = append(tableDecls, tbl.tableJoinDecl(ref))
@@ -110,6 +112,38 @@ func (tbl *table) structDecl() ast.Decl {
 				Type: &ast.StructType{
 					Fields: &ast.FieldList{
 						List: fields,
+					},
+				},
+			},
+		},
+	}
+}
+
+func (tbl *table) funcDecl() ast.Decl {
+	return &ast.FuncDecl{
+		Name: tbl.funcIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: &ast.StarExpr{
+							X: tbl.structIdent,
+						},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.UnaryExpr{
+							Op: token.AND,
+							X: &ast.CompositeLit{
+								Type: tbl.structIdent,
+								Elts: []ast.Expr{},
+							},
+						},
 					},
 				},
 			},
