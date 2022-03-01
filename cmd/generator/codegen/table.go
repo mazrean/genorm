@@ -68,7 +68,7 @@ func (tbl *table) decl() []ast.Decl {
 		tableDecls = append(tableDecls, tbl.joinedTableJoinDecl(ref))
 	}
 
-	tableDecls = append(tableDecls, tbl.insertDecl(), tbl.selectDecl(), tbl.updateDecl())
+	tableDecls = append(tableDecls, tbl.insertDecl(), tbl.selectDecl(), tbl.updateDecl(), tbl.deleteDecl())
 
 	for _, method := range tbl.methods {
 		tableDecls = append(tableDecls, method.Decl)
@@ -575,6 +575,49 @@ func (tbl *table) updateDecl() ast.Decl {
 					Results: []ast.Expr{
 						&ast.CallExpr{
 							Fun: updateStatementIdent,
+							Args: []ast.Expr{
+								tbl.recvIdent,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (tbl *table) deleteDecl() ast.Decl {
+	insertIdent := ast.NewIdent("Delete")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{tbl.recvIdent},
+					Type: &ast.StarExpr{
+						X: tbl.structIdent,
+					},
+				},
+			},
+		},
+		Name: insertIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: deleteContext(&ast.StarExpr{
+							X: tbl.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: deleteStatementIdent,
 							Args: []ast.Expr{
 								tbl.recvIdent,
 							},
