@@ -478,7 +478,7 @@ func TestParseStructType(t *testing.T) {
 							Type: fieldType,
 							Tag: &ast.BasicLit{
 								Kind:  token.STRING,
-								Value: "genorm:\"t\"",
+								Value: "`genorm:\"t\"`",
 							},
 						},
 					},
