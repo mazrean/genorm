@@ -45,6 +45,8 @@ var (
 	columnSQLColumnsIdent = ast.NewIdent("SQLColumnName")
 	columnTableNameIdent  = ast.NewIdent("TableName")
 	columnColumnNameIdent = ast.NewIdent("ColumnName")
+
+	relationJoinedTableNameIdent = ast.NewIdent("JoinedTableName")
 )
 
 func wrappedPrimitive(primitive ast.Expr) ast.Expr {
