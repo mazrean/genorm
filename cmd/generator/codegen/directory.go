@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -8,6 +9,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/tools/imports"
 )
 
 type directory struct {
@@ -65,9 +68,21 @@ func (f *file) ast() *ast.File {
 func (f *file) Close() (err error) {
 	defer f.writer.Close()
 
-	err = format.Node(f.writer, token.NewFileSet(), f.file)
+	buf := bytes.NewBuffer(nil)
+
+	err = format.Node(buf, token.NewFileSet(), f.file)
 	if err != nil {
 		return fmt.Errorf("failed to format file: %w", err)
+	}
+
+	codeBytes, err := imports.Process("", buf.Bytes(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to process file: %w", err)
+	}
+
+	_, err = f.writer.Write(codeBytes)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
 	}
 
 	return nil
