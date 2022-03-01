@@ -68,7 +68,7 @@ func (tbl *table) decl() []ast.Decl {
 		tableDecls = append(tableDecls, tbl.joinedTableJoinDecl(ref))
 	}
 
-	tableDecls = append(tableDecls, tbl.insertDecl())
+	tableDecls = append(tableDecls, tbl.insertDecl(), tbl.selectDecl())
 
 	for _, method := range tbl.methods {
 		tableDecls = append(tableDecls, method.Decl)
@@ -492,6 +492,49 @@ func (tbl *table) insertDecl() ast.Decl {
 								valuesIdent,
 							},
 							Ellipsis: token.Pos(1),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (tbl *table) selectDecl() ast.Decl {
+	selectIdent := ast.NewIdent("Select")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{tbl.recvIdent},
+					Type: &ast.StarExpr{
+						X: tbl.structIdent,
+					},
+				},
+			},
+		},
+		Name: selectIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: selectContext(&ast.StarExpr{
+							X: tbl.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: selectStatementIdent,
+							Args: []ast.Expr{
+								tbl.recvIdent,
+							},
 						},
 					},
 				},
