@@ -100,7 +100,7 @@ func newRelation(relationType RelationType, baseTable, refTable Table, expr geno
 	}, nil
 }
 
-func (r *Relation) JoinedTableName() (string, []genorm.ExprType, error) {
+func (r *Relation) JoinedTableName() (string, []genorm.ExprType, []error) {
 	sb := strings.Builder{}
 	args := []genorm.ExprType{}
 
@@ -108,7 +108,7 @@ func (r *Relation) JoinedTableName() (string, []genorm.ExprType, error) {
 
 	baseTableQuery, baseTableArgs, errs := r.baseTable.Expr()
 	if len(errs) != 0 {
-		return "", nil, errs[0]
+		return "", nil, errs
 	}
 
 	sb.WriteString(baseTableQuery)
@@ -126,12 +126,12 @@ func (r *Relation) JoinedTableName() (string, []genorm.ExprType, error) {
 	case rightJoin:
 		sb.WriteString(" RIGHT JOIN ")
 	default:
-		return "", nil, errors.New("unsupported relation type")
+		return "", nil, []error{errors.New("unsupported relation type")}
 	}
 
 	refTableQuery, refTableArgs, errs := r.refTable.Expr()
 	if len(errs) != 0 {
-		return "", nil, errs[0]
+		return "", nil, errs
 	}
 
 	sb.WriteString(refTableQuery)
@@ -142,7 +142,7 @@ func (r *Relation) JoinedTableName() (string, []genorm.ExprType, error) {
 
 		onExprQuery, onExprArgs, errs := r.onExpr.Expr()
 		if len(errs) != 0 {
-			return "", nil, errs[0]
+			return "", nil, errs
 		}
 
 		sb.WriteString(onExprQuery)
