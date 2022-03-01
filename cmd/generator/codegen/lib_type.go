@@ -30,6 +30,11 @@ var (
 		Sel: ast.NewIdent("Relation"),
 	}
 
+	insertStatementIdent = &ast.SelectorExpr{
+		X:   genormStatementIdent,
+		Sel: ast.NewIdent("NewInsertContext"),
+	}
+
 	exprExprIdent           = ast.NewIdent("Expr")
 	tableExprTableExprIdent = ast.NewIdent("TableExpr")
 	typedExprTypedExprIdent = ast.NewIdent("TypedExpr")
@@ -98,6 +103,18 @@ func newRelationContext(baseTable ast.Expr, refTable ast.Expr, joinedTable ast.E
 			baseTable,
 			refTable,
 			joinedTable,
+		},
+	}
+}
+
+func insertContext(basicTable ast.Expr) ast.Expr {
+	return &ast.StarExpr{
+		X: &ast.IndexListExpr{
+			X: &ast.SelectorExpr{
+				X:   genormStatementIdent,
+				Sel: ast.NewIdent("InsertContext"),
+			},
+			Indices: []ast.Expr{basicTable},
 		},
 	}
 }
