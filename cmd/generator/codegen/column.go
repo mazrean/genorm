@@ -62,7 +62,7 @@ func fieldTypeExpr(columnTypeExpr ast.Expr) ast.Expr {
 		if ok &&
 			identExpr != nil &&
 			identExpr.Name == "time" &&
-			columnTypeSelectorExpr.Sel.Name != "Time" {
+			columnTypeSelectorExpr.Sel.Name == "Time" {
 			return wrappedPrimitive(columnTypeExpr)
 		}
 	}
