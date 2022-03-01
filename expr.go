@@ -31,6 +31,20 @@ type NullableTypedTableExpr[T Table, S ExprType] interface {
 	TypedExpr[S]
 }
 
+type TableAssignExpr[T Table] struct {
+	query string
+	args  []ExprType
+	errs  []error
+}
+
+func (tae *TableAssignExpr[_]) AssignExpr() (string, []ExprType, []error) {
+	if len(tae.errs) != 0 {
+		return "", nil, tae.errs
+	}
+
+	return tae.query, tae.args, nil
+}
+
 type ExprStruct[T Table, S ExprType] struct {
 	query string
 	args  []ExprType

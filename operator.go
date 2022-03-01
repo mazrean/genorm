@@ -5,6 +5,43 @@ import (
 	"strings"
 )
 
+// Assign Operators
+
+func Assign[T Table, S ExprType](
+	expr1 TypedTableColumns[T, S],
+	expr2 TypedTableExpr[T, S],
+) *TableAssignExpr[T] {
+	query1, args1, errs1 := expr1.Expr()
+	query2, args2, errs2 := expr2.Expr()
+	if len(errs1) != 0 || len(errs2) != 0 {
+		return &TableAssignExpr[T]{
+			errs: append(errs1, errs2...),
+		}
+	}
+
+	return &TableAssignExpr[T]{
+		query: fmt.Sprintf("%s = %s", query1, query2),
+		args:  append(args1, args2...),
+	}
+}
+
+func AssignConst[T Table, S ExprType](
+	expr TypedTableColumns[T, S],
+	constant S,
+) *TableAssignExpr[T] {
+	query, args, errs := expr.Expr()
+	if len(errs) != 0 {
+		return &TableAssignExpr[T]{
+			errs: errs,
+		}
+	}
+
+	return &TableAssignExpr[T]{
+		query: fmt.Sprintf("%s = ?", query),
+		args:  append(args, constant),
+	}
+}
+
 // Logical Operators
 
 func And[T Table](
