@@ -159,11 +159,7 @@ func TestConvertTables(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Len(t, tables, len(test.tables))
-
-			for i, table := range tables {
-				assert.Equal(t, test.tables[i], table)
-			}
+			assert.ElementsMatch(t, test.tables, tables)
 		})
 	}
 }
