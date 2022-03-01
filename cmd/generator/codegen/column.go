@@ -9,24 +9,28 @@ import (
 )
 
 type column struct {
-	table      *table
-	columnName string
-	fieldIdent *ast.Ident
-	fieldType  ast.Expr
-	typeIdent  *ast.Ident
-	varIdent   *ast.Ident
-	recvIdent  *ast.Ident
+	table                 *table
+	columnName            string
+	fieldIdent            *ast.Ident
+	fieldType             ast.Expr
+	typeIdent             *ast.Ident
+	varIdent              *ast.Ident
+	tablePackageVarIdent  *ast.Ident
+	tablePackageExprIdent *ast.Ident
+	recvIdent             *ast.Ident
 }
 
 func newColumn(tbl *table, clmn *types.Column) *column {
 	return &column{
-		table:      tbl,
-		columnName: clmn.Name,
-		fieldIdent: ast.NewIdent(clmn.FieldName),
-		fieldType:  fieldTypeExpr(clmn.Type),
-		typeIdent:  ast.NewIdent(tbl.lowerName() + clmn.FieldName),
-		varIdent:   ast.NewIdent(tbl.name + clmn.FieldName),
-		recvIdent:  ast.NewIdent("c"),
+		table:                 tbl,
+		columnName:            clmn.Name,
+		fieldIdent:            ast.NewIdent(clmn.FieldName),
+		fieldType:             fieldTypeExpr(clmn.Type),
+		typeIdent:             ast.NewIdent(tbl.lowerName() + clmn.FieldName),
+		varIdent:              ast.NewIdent(tbl.name + clmn.FieldName),
+		tablePackageVarIdent:  ast.NewIdent(clmn.FieldName),
+		tablePackageExprIdent: ast.NewIdent(clmn.FieldName + "Expr"),
+		recvIdent:             ast.NewIdent("c"),
 	}
 }
 
@@ -400,6 +404,59 @@ func (clmn *column) typeExprDecl() ast.Decl {
 								Sel: exprExprIdent,
 							},
 						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (clmn *column) tablePackageDecls() []ast.Decl {
+	return []ast.Decl{
+		clmn.tablePackageVarDecl(),
+		clmn.tablePackageExprDecl(),
+	}
+}
+
+func (clmn *column) tablePackageVarDecl() ast.Decl {
+	return &ast.GenDecl{
+		Tok: token.VAR,
+		Specs: []ast.Spec{
+			&ast.ValueSpec{
+				Names: []*ast.Ident{clmn.tablePackageVarIdent},
+				Type: typedTableColumn(&ast.StarExpr{
+					X: &ast.SelectorExpr{
+						X:   rootPackageIdent,
+						Sel: clmn.table.structIdent,
+					},
+				}, clmn.fieldType),
+				Values: []ast.Expr{
+					&ast.SelectorExpr{
+						X:   rootPackageIdent,
+						Sel: clmn.varIdent,
+					},
+				},
+			},
+		},
+	}
+}
+
+func (clmn *column) tablePackageExprDecl() ast.Decl {
+	return &ast.GenDecl{
+		Tok: token.VAR,
+		Specs: []ast.Spec{
+			&ast.ValueSpec{
+				Names: []*ast.Ident{clmn.tablePackageExprIdent},
+				Type: typedTableExpr(&ast.StarExpr{
+					X: &ast.SelectorExpr{
+						X:   rootPackageIdent,
+						Sel: clmn.table.structIdent,
+					},
+				}, clmn.fieldType),
+				Values: []ast.Expr{
+					&ast.SelectorExpr{
+						X:   rootPackageIdent,
+						Sel: clmn.varIdent,
 					},
 				},
 			},
