@@ -10,30 +10,30 @@ import (
 	"github.com/mazrean/genorm"
 )
 
-type CreateContext[T BasicTable] struct {
+type InsertContext[T BasicTable] struct {
 	*Context[T]
 	values []T
 	fields []genorm.TableColumns[T]
 }
 
-func NewCreateContext[T BasicTable](table T, tableBases ...T) *CreateContext[T] {
+func NewInsertContext[T BasicTable](table T, tableBases ...T) *InsertContext[T] {
 	ctx := newContext(table)
 	if len(tableBases) == 0 {
 		ctx.addError(errors.New("no insert values"))
 
-		return &CreateContext[T]{
+		return &InsertContext[T]{
 			Context: ctx,
 		}
 	}
 
-	return &CreateContext[T]{
+	return &InsertContext[T]{
 		Context: ctx,
 		values:  tableBases,
 		fields:  nil,
 	}
 }
 
-func (c *CreateContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *CreateContext[Table] {
+func (c *InsertContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *InsertContext[Table] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -59,7 +59,7 @@ func (c *CreateContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *Cre
 	return c
 }
 
-func (c *CreateContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *InsertContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -83,11 +83,11 @@ func (c *CreateContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsA
 	return rowsAffected, nil
 }
 
-func (c *CreateContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
+func (c *InsertContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
 	return c.DoContext(context.Background(), db)
 }
 
-func (c *CreateContext[Table]) buildQuery() (string, []any, error) {
+func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := strings.Builder{}
@@ -133,7 +133,7 @@ func (c *CreateContext[Table]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *CreateContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ColumnFieldExprType) (strings.Builder, []any, error) {
+func (c *InsertContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ColumnFieldExprType) (strings.Builder, []any, error) {
 	sb.WriteString("(")
 	for i, columnName := range fields {
 		if i != 0 {
