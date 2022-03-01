@@ -123,14 +123,14 @@ func insertContext(basicTable ast.Expr) ast.Expr {
 	}
 }
 
-func selectContext(basicTable ast.Expr) ast.Expr {
+func selectContext(table ast.Expr) ast.Expr {
 	return &ast.StarExpr{
 		X: &ast.IndexListExpr{
 			X: &ast.SelectorExpr{
 				X:   genormStatementIdent,
 				Sel: ast.NewIdent("SelectContext"),
 			},
-			Indices: []ast.Expr{basicTable},
+			Indices: []ast.Expr{table},
 		},
 	}
 }
