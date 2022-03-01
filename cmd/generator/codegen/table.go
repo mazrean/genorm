@@ -68,6 +68,8 @@ func (tbl *table) decl() []ast.Decl {
 		tableDecls = append(tableDecls, tbl.joinedTableJoinDecl(ref))
 	}
 
+	tableDecls = append(tableDecls, tbl.insertDecl())
+
 	for _, method := range tbl.methods {
 		tableDecls = append(tableDecls, method.Decl)
 	}
@@ -432,6 +434,64 @@ func (tbl *table) joinedTableJoinDecl(ref *refJoinedTable) ast.Decl {
 								tbl.recvIdent,
 								refIdent,
 							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (tbl *table) insertDecl() ast.Decl {
+	insertIdent := ast.NewIdent("Insert")
+	valuesIdent := ast.NewIdent("values")
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{tbl.recvIdent},
+					Type: &ast.StarExpr{
+						X: tbl.structIdent,
+					},
+				},
+			},
+		},
+		Name: insertIdent,
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{valuesIdent},
+						Type: &ast.Ellipsis{
+							Elt: &ast.StarExpr{
+								X: tbl.structIdent,
+							},
+						},
+					},
+				},
+			},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: insertContext(&ast.StarExpr{
+							X: tbl.structIdent,
+						}),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: insertStatementIdent,
+							Args: []ast.Expr{
+								tbl.recvIdent,
+								valuesIdent,
+							},
+							Ellipsis: token.Pos(1),
 						},
 					},
 				},
