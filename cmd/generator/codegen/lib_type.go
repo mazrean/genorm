@@ -42,6 +42,10 @@ var (
 		X:   genormStatementIdent,
 		Sel: ast.NewIdent("NewUpdateContext"),
 	}
+	deleteStatementIdent = &ast.SelectorExpr{
+		X:   genormStatementIdent,
+		Sel: ast.NewIdent("NewDeleteContext"),
+	}
 
 	exprExprIdent           = ast.NewIdent("Expr")
 	tableExprTableExprIdent = ast.NewIdent("TableExpr")
@@ -147,6 +151,18 @@ func updateContext(table ast.Expr) ast.Expr {
 				Sel: ast.NewIdent("UpdateContext"),
 			},
 			Indices: []ast.Expr{table},
+		},
+	}
+}
+
+func deleteContext(basicTable ast.Expr) ast.Expr {
+	return &ast.StarExpr{
+		X: &ast.IndexListExpr{
+			X: &ast.SelectorExpr{
+				X:   genormStatementIdent,
+				Sel: ast.NewIdent("DeleteContext"),
+			},
+			Indices: []ast.Expr{basicTable},
 		},
 	}
 }
