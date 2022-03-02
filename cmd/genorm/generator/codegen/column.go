@@ -5,7 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 
-	"github.com/mazrean/genorm/cmd/generator/types"
+	"github.com/mazrean/genorm/cmd/genorm/generator/types"
 )
 
 type column struct {

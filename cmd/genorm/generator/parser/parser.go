@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/mazrean/genorm/cmd/generator/types"
+	"github.com/mazrean/genorm/cmd/genorm/generator/types"
 )
 
 type parserTable struct {

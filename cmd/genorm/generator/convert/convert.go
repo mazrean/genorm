@@ -6,7 +6,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/mazrean/genorm/cmd/generator/types"
+	"github.com/mazrean/genorm/cmd/genorm/generator/types"
 )
 
 func Convert(tables []*types.Table, joinNum int) ([]*types.Table, []*types.JoinedTable, error) {

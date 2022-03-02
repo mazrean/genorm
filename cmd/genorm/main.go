@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/mazrean/genorm/cmd/generator"
+	"github.com/mazrean/genorm/cmd/genorm/generator"
 )
 
 var (
