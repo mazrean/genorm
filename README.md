@@ -5,7 +5,7 @@ example: https://github.com/mazrean/genorm-workspace
 ## CLI(Code Generator)
 ### Install
 ```bash
-$ go install github.com/mazrean/genorm/cmd@latest
+$ go install github.com/mazrean/genorm/cmd/genorm@latest
 ```
 
 ### Code Generate
