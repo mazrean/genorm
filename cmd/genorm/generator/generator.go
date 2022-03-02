@@ -6,9 +6,9 @@ import (
 	"go/token"
 	"io"
 
-	"github.com/mazrean/genorm/cmd/generator/codegen"
-	"github.com/mazrean/genorm/cmd/generator/convert"
-	"github.com/mazrean/genorm/cmd/generator/parser"
+	"github.com/mazrean/genorm/cmd/genorm/generator/codegen"
+	"github.com/mazrean/genorm/cmd/genorm/generator/convert"
+	"github.com/mazrean/genorm/cmd/genorm/generator/parser"
 )
 
 type Config struct {

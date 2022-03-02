@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/mazrean/genorm/cmd/generator/types"
+	"github.com/mazrean/genorm/cmd/genorm/generator/types"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -7,7 +7,7 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/mazrean/genorm/cmd/generator/types"
+	"github.com/mazrean/genorm/cmd/genorm/generator/types"
 )
 
 type table struct {
