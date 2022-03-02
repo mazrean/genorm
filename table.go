@@ -2,6 +2,7 @@ package genorm
 
 type Table interface {
 	Expr
+	New() Table
 	Columns() []Column
 	GetErrors() []error
 }
