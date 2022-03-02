@@ -21,15 +21,18 @@ func NewRelationContext[S Table, T Table, U JoinedTable](baseTable S, refTable T
 }
 
 func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(
-	expr genorm.TypedTableExpr[JoinedTable, *genorm.WrappedPrimitive[bool]],
+	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
 ) JoinedTable {
-	var (
-		baseTable   BaseTable
-		refTable    RefTable
-		joinedTable JoinedTable
-	)
+	var joinedTable JoinedTable
+	iJoinedTable := joinedTable.New()
+	switch v := iJoinedTable.(type) {
+	case JoinedTable:
+		joinedTable = v
+	default:
+		return joinedTable
+	}
 
-	relation, err := newRelation(join, baseTable, refTable, expr)
+	relation, err := newRelation(join, r.baseTable, r.refTable, expr)
 	if err != nil {
 		joinedTable.AddError(err)
 		return joinedTable
@@ -41,15 +44,18 @@ func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(
 }
 
 func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(
-	expr genorm.TypedTableExpr[JoinedTable, *genorm.WrappedPrimitive[bool]],
+	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
 ) JoinedTable {
-	var (
-		baseTable   BaseTable
-		refTable    RefTable
-		joinedTable JoinedTable
-	)
+	var joinedTable JoinedTable
+	iJoinedTable := joinedTable.New()
+	switch v := iJoinedTable.(type) {
+	case JoinedTable:
+		joinedTable = v
+	default:
+		return joinedTable
+	}
 
-	relation, err := newRelation(leftJoin, baseTable, refTable, expr)
+	relation, err := newRelation(leftJoin, r.baseTable, r.refTable, expr)
 	if err != nil {
 		joinedTable.AddError(err)
 		return joinedTable
@@ -61,15 +67,18 @@ func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(
 }
 
 func (r *RelationContext[BaseTable, RefTable, JoinedTable]) RightJoin(
-	expr genorm.TypedTableExpr[JoinedTable, *genorm.WrappedPrimitive[bool]],
+	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
 ) JoinedTable {
-	var (
-		baseTable   BaseTable
-		refTable    RefTable
-		joinedTable JoinedTable
-	)
+	var joinedTable JoinedTable
+	iJoinedTable := joinedTable.New()
+	switch v := iJoinedTable.(type) {
+	case JoinedTable:
+		joinedTable = v
+	default:
+		return joinedTable
+	}
 
-	relation, err := newRelation(rightJoin, baseTable, refTable, expr)
+	relation, err := newRelation(rightJoin, r.baseTable, r.refTable, expr)
 	if err != nil {
 		joinedTable.AddError(err)
 		return joinedTable
