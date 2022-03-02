@@ -73,7 +73,7 @@ func (tbl *table) snakeName() string {
 func (tbl *table) decl() []ast.Decl {
 	tableDecls := []ast.Decl{}
 
-	tableDecls = append(tableDecls, tbl.structDecl(), tbl.funcDecl())
+	tableDecls = append(tableDecls, tbl.structDecl(), tbl.funcDecl(), tbl.newDecl())
 
 	for _, ref := range tbl.refTables {
 		tableDecls = append(tableDecls, tbl.tableJoinDecl(ref))
@@ -129,6 +129,46 @@ func (tbl *table) funcDecl() ast.Decl {
 						Type: &ast.StarExpr{
 							X: tbl.structIdent,
 						},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.UnaryExpr{
+							Op: token.AND,
+							X: &ast.CompositeLit{
+								Type: tbl.structIdent,
+								Elts: []ast.Expr{},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (tbl *table) newDecl() ast.Decl {
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{tbl.recvIdent},
+					Type: &ast.StarExpr{
+						X: tbl.structIdent,
+					},
+				},
+			},
+		},
+		Name: tableNewIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: tableTypeExpr,
 					},
 				},
 			},

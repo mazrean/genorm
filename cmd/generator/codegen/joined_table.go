@@ -64,6 +64,7 @@ func (jt *joinedTable) decl() []ast.Decl {
 	decls = append(
 		decls,
 		jt.structDecl(),
+		jt.newDecl(),
 		jt.exprDecl(),
 		jt.columnsDecl(),
 		jt.columnMapDecl(),
@@ -131,6 +132,60 @@ func (jt *joinedTable) structDecl() ast.Decl {
 				Type: &ast.StructType{
 					Fields: &ast.FieldList{
 						List: fields,
+					},
+				},
+			},
+		},
+	}
+}
+
+func (jt *joinedTable) newDecl() ast.Decl {
+	elts := make([]ast.Expr, 0, len(jt.tables))
+	for _, table := range jt.tables {
+		elts = append(elts, &ast.KeyValueExpr{
+			Key: table.structIdent,
+			Value: &ast.UnaryExpr{
+				Op: token.AND,
+				X: &ast.CompositeLit{
+					Type: table.structIdent,
+					Elts: []ast.Expr{},
+				},
+			},
+		})
+	}
+
+	return &ast.FuncDecl{
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{jt.recvIdent},
+					Type: &ast.StarExpr{
+						X: jt.structIdent,
+					},
+				},
+			},
+		},
+		Name: tableNewIdent,
+		Type: &ast.FuncType{
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: tableTypeExpr,
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.UnaryExpr{
+							Op: token.AND,
+							X: &ast.CompositeLit{
+								Type: jt.structIdent,
+								Elts: elts,
+							},
+						},
 					},
 				},
 			},
