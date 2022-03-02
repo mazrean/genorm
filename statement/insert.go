@@ -90,7 +90,7 @@ func (c *InsertContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
 func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 	args := []any{}
 
-	sb := strings.Builder{}
+	sb := &strings.Builder{}
 	sb.WriteString("INSERT INTO ")
 	sb.WriteString(c.table.TableName())
 
@@ -133,7 +133,7 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *InsertContext[Table]) buildValueList(sb strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ColumnFieldExprType) (strings.Builder, []any, error) {
+func (c *InsertContext[Table]) buildValueList(sb *strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ColumnFieldExprType) (*strings.Builder, []any, error) {
 	sb.WriteString("(")
 	for i, columnName := range fields {
 		if i != 0 {
