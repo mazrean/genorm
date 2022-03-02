@@ -10,20 +10,21 @@ import (
 )
 
 type joinedTable struct {
-	joinedTable          *types.JoinedTable
-	name                 string
-	structIdent          *ast.Ident
-	relationFieldIdent   *ast.Ident
-	errsFieldIdent       *ast.Ident
-	tablesInterfaceIdent *ast.Ident
-	recvIdent            *ast.Ident
-	columnTypeIdent      *ast.Ident
-	columnTypeFieldIdent *ast.Ident
-	columnTypeRecvIdent  *ast.Ident
-	columnParseFuncIdent *ast.Ident
-	tables               []*table
-	refTables            []*refTable
-	refJoinedTables      []*refJoinedTable
+	joinedTable              *types.JoinedTable
+	name                     string
+	structIdent              *ast.Ident
+	relationFieldIdent       *ast.Ident
+	errsFieldIdent           *ast.Ident
+	tablesInterfaceIdent     *ast.Ident
+	recvIdent                *ast.Ident
+	columnTypeIdent          *ast.Ident
+	columnTypeFieldIdent     *ast.Ident
+	columnTypeRecvIdent      *ast.Ident
+	columnParseFuncIdent     *ast.Ident
+	columnParseExprFuncIdent *ast.Ident
+	tables                   []*table
+	refTables                []*refTable
+	refJoinedTables          []*refJoinedTable
 }
 
 func newJoinedTable(jt *types.JoinedTable) *joinedTable {
@@ -32,17 +33,18 @@ func newJoinedTable(jt *types.JoinedTable) *joinedTable {
 	structIdent := ast.NewIdent(structName)
 
 	return &joinedTable{
-		joinedTable:          jt,
-		name:                 name,
-		structIdent:          structIdent,
-		relationFieldIdent:   ast.NewIdent("relation"),
-		errsFieldIdent:       ast.NewIdent("errs"),
-		tablesInterfaceIdent: ast.NewIdent(name + "Tables"),
-		recvIdent:            ast.NewIdent("jt"),
-		columnTypeIdent:      ast.NewIdent(name + "ColumnType"),
-		columnTypeFieldIdent: ast.NewIdent("columnType"),
-		columnTypeRecvIdent:  ast.NewIdent("ct"),
-		columnParseFuncIdent: ast.NewIdent(name + "Parse"),
+		joinedTable:              jt,
+		name:                     name,
+		structIdent:              structIdent,
+		relationFieldIdent:       ast.NewIdent("relation"),
+		errsFieldIdent:           ast.NewIdent("errs"),
+		tablesInterfaceIdent:     ast.NewIdent(name + "Tables"),
+		recvIdent:                ast.NewIdent("jt"),
+		columnTypeIdent:          ast.NewIdent(name + "ColumnType"),
+		columnTypeFieldIdent:     ast.NewIdent("columnType"),
+		columnTypeRecvIdent:      ast.NewIdent("ct"),
+		columnParseFuncIdent:     ast.NewIdent(name + "Parse"),
+		columnParseExprFuncIdent: ast.NewIdent(name + "ParseExpr"),
 	}
 }
 
@@ -88,6 +90,7 @@ func (jt *joinedTable) decl() []ast.Decl {
 		jt.updateDecl(),
 		jt.tablesInterfaceDecl(),
 		jt.columnParseFuncDecl(),
+		jt.columnParseExprFuncDecl(),
 		jt.columnTypeDecl(),
 		jt.columnTypeExprDecl(),
 		jt.columnTypeSQLColumnDecl(),
@@ -891,6 +894,71 @@ func (jt *joinedTable) columnParseFuncDecl() ast.Decl {
 				List: []*ast.Field{
 					{
 						Type: typedTableColumn(&ast.StarExpr{
+							X: jt.structIdent,
+						}, exprTypeParamIdent),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CompositeLit{
+							Type: &ast.IndexListExpr{
+								X: jt.columnTypeIdent,
+								Indices: []ast.Expr{
+									tableTypeParamIdent,
+									exprTypeParamIdent,
+								},
+							},
+							Elts: []ast.Expr{
+								&ast.KeyValueExpr{
+									Key:   jt.columnTypeFieldIdent,
+									Value: columnParamIdent,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (jt *joinedTable) columnParseExprFuncDecl() ast.Decl {
+	tableTypeParamIdent := ast.NewIdent("S")
+	exprTypeParamIdent := ast.NewIdent("T")
+
+	columnParamIdent := ast.NewIdent("column")
+
+	return &ast.FuncDecl{
+		Name: jt.columnParseExprFuncIdent,
+		Type: &ast.FuncType{
+			TypeParams: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{tableTypeParamIdent},
+						Type:  jt.tablesInterfaceIdent,
+					},
+					{
+						Names: []*ast.Ident{exprTypeParamIdent},
+						Type:  exprTypeInterfaceTypeExpr,
+					},
+				},
+			},
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{columnParamIdent},
+						Type:  typedTableColumn(tableTypeParamIdent, exprTypeParamIdent),
+					},
+				},
+			},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: typedTableExpr(&ast.StarExpr{
 							X: jt.structIdent,
 						}, exprTypeParamIdent),
 					},
