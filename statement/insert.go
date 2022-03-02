@@ -99,12 +99,12 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 		columns := c.table.Columns()
 		fields = make([]string, 0, len(columns))
 		for _, column := range columns {
-			fields = append(fields, column.ColumnName())
+			fields = append(fields, column.SQLColumnName())
 		}
 	} else {
 		fields = make([]string, 0, len(c.fields))
 		for _, field := range c.fields {
-			fields = append(fields, field.ColumnName())
+			fields = append(fields, field.SQLColumnName())
 		}
 	}
 
@@ -142,7 +142,7 @@ func (c *InsertContext[Table]) buildValueList(sb *strings.Builder, args []any, f
 
 		columnField, ok := fieldValueMap[columnName]
 		if !ok {
-			return sb, nil, errors.New("field not found")
+			return sb, nil, fmt.Errorf("field(%s) not found", columnName)
 		}
 
 		fieldValue, err := columnField.Value()
