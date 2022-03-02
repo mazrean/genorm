@@ -180,6 +180,14 @@ func (c *SelectContext[Table]) DoContext(ctx context.Context, db *sql.DB) ([]Tab
 	tables := []Table{}
 	for rows.Next() {
 		var table Table
+		iTable := table.New()
+		switch v := iTable.(type) {
+		case Table:
+			table = v
+		default:
+			return nil, fmt.Errorf("invalid table type: %T", iTable)
+		}
+
 		columnMap := table.ColumnMap()
 
 		dests := make([]any, 0, len(resultColumns))
@@ -232,7 +240,7 @@ func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm
 	for _, column := range columns {
 		var alias string
 		i := 0
-		for ok := false; ok; _, ok = columnAliasMap[alias] {
+		for ok := true; ok; _, ok = columnAliasMap[alias] {
 			alias = fmt.Sprintf("%s_%s_%d", column.TableName(), column.ColumnName(), i)
 			i++
 		}

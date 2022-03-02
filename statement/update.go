@@ -32,7 +32,7 @@ func (c *UpdateContext[Table]) Set(assignExprs ...*genorm.TableAssignExpr[Table]
 		return c
 	}
 
-	assignExprs = append(c.assignExprs, assignExprs...)
+	c.assignExprs = append(c.assignExprs, assignExprs...)
 
 	return c
 }

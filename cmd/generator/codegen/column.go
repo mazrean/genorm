@@ -246,14 +246,11 @@ func (clmn *column) tableNameDecl() ast.Decl {
 					Results: []ast.Expr{
 						&ast.CallExpr{
 							Fun: &ast.SelectorExpr{
-								X: &ast.CallExpr{
-									Fun: &ast.ParenExpr{
-										X: &ast.StarExpr{
-											X: clmn.table.structIdent,
-										},
-									},
-									Args: []ast.Expr{
-										ast.NewIdent("nil"),
+								X: &ast.UnaryExpr{
+									Op: token.AND,
+									X: &ast.CompositeLit{
+										Type: clmn.table.structIdent,
+										Elts: []ast.Expr{},
 									},
 								},
 								Sel: columnTableNameIdent,

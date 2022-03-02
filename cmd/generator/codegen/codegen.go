@@ -305,6 +305,8 @@ func codegenTable(dir *directory, importDecls []ast.Decl, table *table) error {
 
 	astFile := f.ast()
 
+	astFile.Decls = append(astFile.Decls, importDecls...)
+
 	astFile.Decls = append(astFile.Decls, &ast.GenDecl{
 		Tok: token.IMPORT,
 		Specs: []ast.Spec{
