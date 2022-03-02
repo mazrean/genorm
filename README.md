@@ -66,7 +66,7 @@ import (
   _ "github.com/go-sql-driver/mysql"
 )
 
-db, err := sql.Open("mysql", "user:pass@tcp(host:port)/database?parseTime=true&loc=Asia%%2FTokyo&charset=utf8mb4")
+db, err := sql.Open("mysql", "user:pass@tcp(host:port)/database?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
 ```
 
 ### Transaction
