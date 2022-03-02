@@ -51,6 +51,7 @@ var (
 	tableExprTableExprIdent = ast.NewIdent("TableExpr")
 	typedExprTypedExprIdent = ast.NewIdent("TypedExpr")
 
+	tableNewIdent               = ast.NewIdent("New")
 	tableColumnsIdent           = ast.NewIdent("Columns")
 	tableGetErrorsIdent         = ast.NewIdent("GetErrors")
 	tableAddErrorIdent          = ast.NewIdent("AddError")
