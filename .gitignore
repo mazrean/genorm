@@ -16,3 +16,6 @@
 
 # Go workspace file
 go.work
+
+# mock file
+mock/*_mock_test.go
