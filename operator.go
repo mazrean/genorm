@@ -12,6 +12,12 @@ func Assign[T Table, S ExprType](
 	expr1 TypedTableColumns[T, S],
 	expr2 TypedTableExpr[T, S],
 ) *TableAssignExpr[T] {
+	if expr1 == nil || expr2 == nil {
+		return &TableAssignExpr[T]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -30,6 +36,12 @@ func AssignConst[T Table, S ExprType](
 	expr TypedTableColumns[T, S],
 	constant S,
 ) *TableAssignExpr[T] {
+	if expr == nil {
+		return &TableAssignExpr[T]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &TableAssignExpr[T]{
@@ -49,6 +61,12 @@ func And[T Table](
 	expr1 TypedTableExpr[T, WrappedPrimitive[bool]],
 	expr2 TypedTableExpr[T, WrappedPrimitive[bool]],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -67,6 +85,12 @@ func Or[T Table](
 	expr1 TypedTableExpr[T, WrappedPrimitive[bool]],
 	expr2 TypedTableExpr[T, WrappedPrimitive[bool]],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -85,6 +109,12 @@ func Xor[T Table](
 	expr1 TypedTableExpr[T, WrappedPrimitive[bool]],
 	expr2 TypedTableExpr[T, WrappedPrimitive[bool]],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -102,6 +132,12 @@ func Xor[T Table](
 func Not[T Table](
 	expr TypedTableExpr[T, WrappedPrimitive[bool]],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -121,6 +157,12 @@ func Eq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -139,6 +181,12 @@ func EqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -156,6 +204,12 @@ func Neq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -174,6 +228,12 @@ func NeqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -191,6 +251,12 @@ func Leq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -209,6 +275,12 @@ func LeqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -226,6 +298,12 @@ func Geq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -244,6 +322,12 @@ func GeqConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -261,6 +345,12 @@ func Lt[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -279,6 +369,12 @@ func LtConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -296,6 +392,12 @@ func Gt[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr1 == nil || expr2 == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	query2, args2, errs2 := expr2.Expr()
 	if len(errs1) != 0 || len(errs2) != 0 {
@@ -314,6 +416,12 @@ func GtConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constant S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -330,6 +438,12 @@ func GtConst[T Table, S ExprType](
 func IsNull[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -346,6 +460,12 @@ func IsNull[T Table, S ExprType](
 func IsNotNull[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -364,6 +484,10 @@ func In[T Table, S ExprType](
 	exprs ...TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	errs := []error{}
+
+	if expr1 == nil || exprs == nil {
+		errs = append(errs, errors.New("Assign: nil expression"))
+	}
 
 	if len(exprs) == 0 {
 		errs = append(errs, errors.New("invalid number of arguments for in"))
@@ -402,6 +526,12 @@ func InConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constants ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil || constants == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	if len(constants) == 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
 			errs: []error{errors.New("invalid number of arguments for in")},
@@ -430,6 +560,10 @@ func NotIn[T Table, S ExprType](
 	exprs ...TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	errs := []error{}
+
+	if expr1 == nil || exprs == nil {
+		errs = append(errs, errors.New("Assign: nil expression"))
+	}
 
 	if len(exprs) == 0 {
 		errs = append(errs, errors.New("invalid number of arguments for in"))
@@ -468,6 +602,12 @@ func NotInConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constants ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if expr == nil || constants == nil {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("Assign: nil expression")},
+		}
+	}
+
 	if len(constants) == 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
 			errs: []error{errors.New("invalid number of arguments for in")},
