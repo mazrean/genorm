@@ -1,6 +1,7 @@
 package genorm
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -364,6 +365,10 @@ func In[T Table, S ExprType](
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	errs := []error{}
 
+	if len(exprs) == 0 {
+		errs = append(errs, errors.New("invalid number of arguments for in"))
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	if len(errs1) != 0 {
 		errs = errs1
@@ -397,6 +402,12 @@ func InConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constants ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if len(constants) == 0 {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("invalid number of arguments for in")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -419,6 +430,10 @@ func NotIn[T Table, S ExprType](
 	exprs ...TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	errs := []error{}
+
+	if len(exprs) == 0 {
+		errs = append(errs, errors.New("invalid number of arguments for in"))
+	}
 
 	query1, args1, errs1 := expr1.Expr()
 	if len(errs1) != 0 {
@@ -453,6 +468,12 @@ func NotInConst[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	constants ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
+	if len(constants) == 0 {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: []error{errors.New("invalid number of arguments for in")},
+		}
+	}
+
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
