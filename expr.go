@@ -4,11 +4,6 @@ type Expr interface {
 	Expr() (string, []ExprType, []error)
 }
 
-type NullableExpr interface {
-	Expr
-	IsNull() bool
-}
-
 type TableExpr[T Table] interface {
 	Expr
 	TableExpr(T) (string, []ExprType, []error)
@@ -21,12 +16,6 @@ type TypedExpr[T ExprType] interface {
 
 type TypedTableExpr[T Table, S ExprType] interface {
 	Expr
-	TableExpr[T]
-	TypedExpr[S]
-}
-
-type NullableTypedTableExpr[T Table, S ExprType] interface {
-	NullableExpr
 	TableExpr[T]
 	TypedExpr[S]
 }
