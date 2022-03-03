@@ -327,7 +327,7 @@ func GtConst[T Table, S ExprType](
 }
 
 func IsNull[T Table, S ExprType](
-	expr NullableTypedTableExpr[T, S],
+	expr TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
@@ -343,7 +343,7 @@ func IsNull[T Table, S ExprType](
 }
 
 func IsNotNull[T Table, S ExprType](
-	expr NullableTypedTableExpr[T, S],
+	expr TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	query, args, errs := expr.Expr()
 	if len(errs) != 0 {
