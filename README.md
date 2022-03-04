@@ -88,7 +88,7 @@ affectedRows, err := orm.User().
 userValues, err := orm.User().
   Select().
   Fields(user.Name, user.Password).
-  Where(genorm.EqConst(user.IDExpr, userID)).
+  Where(genorm.EqLit(user.IDExpr, userID)).
   Do(db)
 ```
 
@@ -97,10 +97,10 @@ userValues, err := orm.User().
 affectedRows, err = orm.Message().
   Update().
   Set(
-    genorm.AssignConst(message.Content, genorm.Wrap("hello world")),
-    genorm.AssignConst(message.CreatedAt, genorm.Wrap(time.Now())),
+    genorm.AssignLit(message.Content, genorm.Wrap("hello world")),
+    genorm.AssignLit(message.CreatedAt, genorm.Wrap(time.Now())),
   ).
-  Where(genorm.EqConst(message.IDExpr, messageID1)).
+  Where(genorm.EqLit(message.IDExpr, messageID1)).
   Do(db)
 ```
 
@@ -109,7 +109,7 @@ affectedRows, err = orm.Message().
 ```go
 affectedRows, err = orm.Message().
   Delete().
-  Where(genorm.EqConst(message.UserIDExpr, userID)).
+  Where(genorm.EqLit(message.UserIDExpr, userID)).
   Do(db)
 ```
 
@@ -121,7 +121,7 @@ messageUserIDColumn := orm.MessageUserParseExpr(message.UserID)
 messageUserValues, err := orm.Message().
   User().Join(genorm.Eq(userIDColumn, messageUserIDColumn)).
   Select().
-  Where(genorm.EqConst(userIDColumn, userID).
+  Where(genorm.EqLit(userIDColumn, userID).
   Do(db)
 ```
 
@@ -133,8 +133,8 @@ messageContent := orm.MessageUserParseExpr(message.Content)
 messageUserValues, err := orm.Message().
   User().Join(genorm.Eq(userIDColumn, messageUserIDColumn)).
   Update().
-  Set(genorm.AssignConst(messageContent, genorm.Wrap("hello world"))).
-  Where(genorm.EqConst(userIDColumn, userID)).
+  Set(genorm.AssignLit(messageContent, genorm.Wrap("hello world"))).
+  Where(genorm.EqLit(userIDColumn, userID)).
   Do(db)
 ```
 

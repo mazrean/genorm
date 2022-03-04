@@ -32,9 +32,9 @@ func Assign[T Table, S ExprType](
 	}
 }
 
-func AssignConst[T Table, S ExprType](
+func AssignLit[T Table, S ExprType](
 	expr TypedTableColumns[T, S],
-	constant S,
+	literal S,
 ) *TableAssignExpr[T] {
 	if expr == nil {
 		return &TableAssignExpr[T]{
@@ -51,7 +51,7 @@ func AssignConst[T Table, S ExprType](
 
 	return &TableAssignExpr[T]{
 		query: fmt.Sprintf("%s = ?", query),
-		args:  append(args, constant),
+		args:  append(args, literal),
 	}
 }
 
@@ -177,9 +177,9 @@ func Eq[T Table, S ExprType](
 	}
 }
 
-func EqConst[T Table, S ExprType](
+func EqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constant S,
+	literal S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -196,7 +196,7 @@ func EqConst[T Table, S ExprType](
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
 		query: fmt.Sprintf("(%s = ?)", query),
-		args:  append(args, constant),
+		args:  append(args, literal),
 	}
 }
 
@@ -224,9 +224,9 @@ func Neq[T Table, S ExprType](
 	}
 }
 
-func NeqConst[T Table, S ExprType](
+func NeqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constant S,
+	literal S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -243,7 +243,7 @@ func NeqConst[T Table, S ExprType](
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
 		query: fmt.Sprintf("(%s != ?)", query),
-		args:  append(args, constant),
+		args:  append(args, literal),
 	}
 }
 
@@ -271,9 +271,9 @@ func Leq[T Table, S ExprType](
 	}
 }
 
-func LeqConst[T Table, S ExprType](
+func LeqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constant S,
+	literal S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -290,7 +290,7 @@ func LeqConst[T Table, S ExprType](
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
 		query: fmt.Sprintf("(%s <= ?)", query),
-		args:  append(args, constant),
+		args:  append(args, literal),
 	}
 }
 
@@ -318,9 +318,9 @@ func Geq[T Table, S ExprType](
 	}
 }
 
-func GeqConst[T Table, S ExprType](
+func GeqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constant S,
+	literal S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -337,7 +337,7 @@ func GeqConst[T Table, S ExprType](
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
 		query: fmt.Sprintf("(%s >= ?)", query),
-		args:  append(args, constant),
+		args:  append(args, literal),
 	}
 }
 
@@ -365,9 +365,9 @@ func Lt[T Table, S ExprType](
 	}
 }
 
-func LtConst[T Table, S ExprType](
+func LtLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constant S,
+	literal S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -384,7 +384,7 @@ func LtConst[T Table, S ExprType](
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
 		query: fmt.Sprintf("(%s < ?)", query),
-		args:  append(args, constant),
+		args:  append(args, literal),
 	}
 }
 
@@ -412,9 +412,9 @@ func Gt[T Table, S ExprType](
 	}
 }
 
-func GtConst[T Table, S ExprType](
+func GtLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constant S,
+	literal S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
@@ -431,7 +431,7 @@ func GtConst[T Table, S ExprType](
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
 		query: fmt.Sprintf("(%s > ?)", query),
-		args:  append(args, constant),
+		args:  append(args, literal),
 	}
 }
 
@@ -522,17 +522,17 @@ func In[T Table, S ExprType](
 	}
 }
 
-func InConst[T Table, S ExprType](
+func InLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constants ...S,
+	literals ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
-	if expr == nil || constants == nil {
+	if expr == nil || literals == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
 			errs: []error{errors.New("Assign: nil expression")},
 		}
 	}
 
-	if len(constants) == 0 {
+	if len(literals) == 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
 			errs: []error{errors.New("invalid number of arguments for in")},
 		}
@@ -545,12 +545,12 @@ func InConst[T Table, S ExprType](
 		}
 	}
 
-	for _, constant := range constants {
-		args = append(args, constant)
+	for _, literal := range literals {
+		args = append(args, literal)
 	}
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
-		query: fmt.Sprintf("(%s IN (%s))", query, strings.Repeat("?, ", len(constants)-1)+"?"),
+		query: fmt.Sprintf("(%s IN (%s))", query, strings.Repeat("?, ", len(literals)-1)+"?"),
 		args:  args,
 	}
 }
@@ -598,17 +598,17 @@ func NotIn[T Table, S ExprType](
 	}
 }
 
-func NotInConst[T Table, S ExprType](
+func NotInLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
-	constants ...S,
+	literals ...S,
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
-	if expr == nil || constants == nil {
+	if expr == nil || literals == nil {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
 			errs: []error{errors.New("Assign: nil expression")},
 		}
 	}
 
-	if len(constants) == 0 {
+	if len(literals) == 0 {
 		return &ExprStruct[T, WrappedPrimitive[bool]]{
 			errs: []error{errors.New("invalid number of arguments for in")},
 		}
@@ -621,12 +621,12 @@ func NotInConst[T Table, S ExprType](
 		}
 	}
 
-	for _, constant := range constants {
-		args = append(args, constant)
+	for _, literal := range literals {
+		args = append(args, literal)
 	}
 
 	return &ExprStruct[T, WrappedPrimitive[bool]]{
-		query: fmt.Sprintf("(%s NOT IN (%s))", query, strings.Repeat("?, ", len(constants)-1)+"?"),
+		query: fmt.Sprintf("(%s NOT IN (%s))", query, strings.Repeat("?, ", len(literals)-1)+"?"),
 		args:  args,
 	}
 }
