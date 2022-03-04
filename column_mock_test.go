@@ -4,7 +4,7 @@ import (
 	"github.com/mazrean/genorm"
 )
 
-//go:generate go run -workfile=off github.com/golang/mock/mockgen@v1.6.0 -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go run -workfile=off github.com/golang/mock/mockgen@v1.6.0 -source=$GOFILE -destination=mock/column_mock.go -package=mock
 
 type Column interface {
 	genorm.Column
