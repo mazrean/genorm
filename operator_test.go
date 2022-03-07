@@ -1051,6 +1051,89 @@ func TestNeq(t *testing.T) {
 	}
 }
 
+func TestNeqLit(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description   string
+		expr1IsNil    bool
+		expr1Query    string
+		expr1Args     []genorm.ExprType
+		expr1Errs     []error
+		lit           genorm.WrappedPrimitive[bool]
+		expectedQuery string
+		expectedArgs  []genorm.ExprType
+		isError       bool
+	}{
+		{
+			description:   "normal",
+			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
+			lit:           genorm.Wrap(true),
+			expectedQuery: "((`hoge`.`huga` = ?) != ?)",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
+		},
+		{
+			description: "nil expr1",
+			expr1IsNil:  true,
+			lit:         genorm.Wrap(true),
+			isError:     true,
+		},
+		{
+			description: "expr1 error",
+			expr1Errs:   []error{errors.New("expr1 error")},
+			lit:         genorm.Wrap(true),
+			isError:     true,
+		},
+		{
+			description:   "expr1 no args",
+			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Args:     nil,
+			lit:           genorm.Wrap(true),
+			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) != ?)",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+
+			var expr1 genorm.TypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]]
+			if test.expr1IsNil {
+				expr1 = nil
+			} else {
+				mockExpr1 := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+				expr1 = mockExpr1
+
+				mockExpr1.
+					EXPECT().
+					Expr().
+					Return(test.expr1Query, test.expr1Args, test.expr1Errs)
+			}
+
+			res := genorm.NeqLit(expr1, test.lit)
+
+			assert.NotNil(t, res)
+
+			query, args, errs := res.Expr()
+			if test.isError {
+				assert.NotNil(t, errs)
+				assert.NotEmpty(t, errs)
+
+				return
+			}
+
+			if !assert.Nil(t, errs) {
+				return
+			}
+
+			assert.Equal(t, test.expectedQuery, query)
+			assert.Equal(t, test.expectedArgs, args)
+		})
+	}
+}
+
 func TestLeq(t *testing.T) {
 	t.Parallel()
 
