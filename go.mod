@@ -2,7 +2,10 @@ module github.com/mazrean/genorm
 
 go 1.18
 
-require github.com/stretchr/testify v1.7.0
+require (
+	github.com/golang/mock v1.6.0
+	github.com/stretchr/testify v1.7.0
+)
 
 require (
 	golang.org/x/mod v0.5.1 // indirect
