@@ -146,6 +146,6 @@ affectedRows, err := orm.User().
     Name:     genorm.Wrap("user"),
     Password: genorm.Wrap("password"),
   }).
-  DoContext(ctx, db)
+  DoCtx(ctx, db)
 ```
 
