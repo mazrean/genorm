@@ -18,4 +18,4 @@
 go.work
 
 # mock file
-mock/*_mock_test.go
+mock/*_mock.go
