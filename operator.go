@@ -493,6 +493,12 @@ func In[T Table, S ExprType](
 		errs = append(errs, errors.New("invalid number of arguments for in"))
 	}
 
+	if len(errs) != 0 {
+		return &ExprStruct[T, WrappedPrimitive[bool]]{
+			errs: errs,
+		}
+	}
+
 	query1, args1, errs1 := expr1.Expr()
 	if len(errs1) != 0 {
 		errs = errs1
