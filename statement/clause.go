@@ -95,7 +95,7 @@ func (c *orderClause[Table]) getExpr() (string, []genorm.ExprType, error) {
 		args = append(args, orderArgs...)
 	}
 
-	return fmt.Sprintf("ORDER BY %s", strings.Join(orderQueries, ", ")), nil, nil
+	return fmt.Sprintf("ORDER BY %s", strings.Join(orderQueries, ", ")), args, nil
 }
 
 type limitClause struct {
