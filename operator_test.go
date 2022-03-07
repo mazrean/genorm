@@ -1766,3 +1766,216 @@ func TestIn(t *testing.T) {
 		})
 	}
 }
+
+func TestNotIn(t *testing.T) {
+	t.Parallel()
+
+	type expr struct {
+		query string
+		args  []genorm.ExprType
+		errs  []error
+	}
+
+	tests := []struct {
+		description   string
+		expr          *expr
+		exprs         []*expr
+		expectedQuery string
+		expectedArgs  []genorm.ExprType
+		isError       bool
+	}{
+		{
+			description: "normal",
+			expr: &expr{
+				query: "(`hoge`.`huga` = ?)",
+				args:  []genorm.ExprType{genorm.Wrap(1)},
+			},
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`nyan` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(2)},
+				},
+			},
+			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`nyan` = ?)))",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
+		},
+		{
+			description: "nil expr",
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`nyan` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(2)},
+				},
+			},
+			isError: true,
+		},
+		{
+			description: "nil exprs",
+			expr: &expr{
+				query: "(`hoge`.`huga` = ?)",
+				args:  []genorm.ExprType{genorm.Wrap(1)},
+			},
+			isError: true,
+		},
+		{
+			description: "expr error",
+			expr: &expr{
+				errs: []error{errors.New("expr1 error")},
+			},
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`nyan` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(2)},
+				},
+			},
+			isError: true,
+		},
+		{
+			description: "exprs error",
+			expr: &expr{
+				query: "(`hoge`.`huga` = ?)",
+				args:  []genorm.ExprType{genorm.Wrap(1)},
+			},
+			exprs: []*expr{
+				{
+					errs: []error{errors.New("expr1 error")},
+				},
+			},
+			isError: true,
+		},
+		{
+			description: "expr no args",
+			expr: &expr{
+				query: "(`hoge`.`huga` = `hoge`.`huga`)",
+				args:  []genorm.ExprType{},
+			},
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`nyan` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(2)},
+				},
+			},
+			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) NOT IN ((`hoge`.`nyan` = ?)))",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
+		},
+		{
+			description: "exprs no args",
+			expr: &expr{
+				query: "(`hoge`.`huga` = ?)",
+				args:  []genorm.ExprType{genorm.Wrap(1)},
+			},
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`huga` = `hoge`.`huga`)",
+					args:  []genorm.ExprType{},
+				},
+			},
+			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`huga` = `hoge`.`huga`)))",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
+		},
+		{
+			description: "expr nil args",
+			expr: &expr{
+				query: "(`hoge`.`huga` = `hoge`.`huga`)",
+			},
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`nyan` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(2)},
+				},
+			},
+			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) NOT IN ((`hoge`.`nyan` = ?)))",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
+		},
+		{
+			description: "exprs nil args",
+			expr: &expr{
+				query: "(`hoge`.`huga` = ?)",
+				args:  []genorm.ExprType{genorm.Wrap(1)},
+			},
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`huga` = `hoge`.`huga`)",
+				},
+			},
+			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`huga` = `hoge`.`huga`)))",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
+		},
+		{
+			description: "multiple exprs",
+			expr: &expr{
+				query: "(`hoge`.`huga` = ?)",
+				args:  []genorm.ExprType{genorm.Wrap(1)},
+			},
+			exprs: []*expr{
+				{
+					query: "(`hoge`.`nyan` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(2)},
+				},
+				{
+					query: "(`hoge`.`nyanya` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(3)},
+				},
+			},
+			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`nyan` = ?), (`hoge`.`nyanya` = ?)))",
+			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2), genorm.Wrap(3)},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+
+			var expr genorm.TypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]]
+			if test.expr == nil {
+				expr = nil
+			} else {
+				mockExpr := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+				expr = mockExpr
+
+				if len(test.exprs) != 0 {
+					mockExpr.
+						EXPECT().
+						Expr().
+						Return(test.expr.query, test.expr.args, test.expr.errs)
+				}
+			}
+
+			exprs := make([]genorm.TypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]], 0, len(test.exprs))
+			for _, e := range test.exprs {
+				if e == nil {
+					exprs = append(exprs, nil)
+				} else {
+					mockExpr := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+					exprs = append(exprs, mockExpr)
+
+					if test.expr != nil {
+						mockExpr.
+							EXPECT().
+							Expr().
+							Return(e.query, e.args, e.errs)
+					}
+				}
+			}
+
+			res := genorm.NotIn(expr, exprs...)
+
+			assert.NotNil(t, res)
+
+			query, args, errs := res.Expr()
+			if test.isError {
+				assert.NotNil(t, errs)
+				assert.NotEmpty(t, errs)
+
+				return
+			}
+
+			if !assert.Nil(t, errs) {
+				return
+			}
+
+			assert.Equal(t, test.expectedQuery, query)
+			assert.Equal(t, test.expectedArgs, args)
+		})
+	}
+}
