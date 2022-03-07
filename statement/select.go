@@ -172,6 +172,9 @@ func (c *SelectContext[Table]) DoCtx(ctx context.Context, db *sql.DB) ([]Table, 
 	}
 
 	rows, err := db.QueryContext(ctx, query, args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, genorm.ErrRecordNotFound
+	}
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
