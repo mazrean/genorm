@@ -59,7 +59,7 @@ func (c *InsertContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *Ins
 	return c
 }
 
-func (c *InsertContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *InsertContext[Table]) DoCtx(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -84,7 +84,7 @@ func (c *InsertContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsA
 }
 
 func (c *InsertContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
-	return c.DoContext(context.Background(), db)
+	return c.DoCtx(context.Background(), db)
 }
 
 func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
