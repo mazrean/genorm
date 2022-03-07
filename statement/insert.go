@@ -2,7 +2,6 @@ package statement
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -59,7 +58,7 @@ func (c *InsertContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *Ins
 	return c
 }
 
-func (c *InsertContext[Table]) DoCtx(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *InsertContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -83,7 +82,7 @@ func (c *InsertContext[Table]) DoCtx(ctx context.Context, db *sql.DB) (rowsAffec
 	return rowsAffected, nil
 }
 
-func (c *InsertContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
+func (c *InsertContext[Table]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 

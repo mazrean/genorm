@@ -2,7 +2,6 @@ package statement
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -69,7 +68,7 @@ func (c *UpdateContext[Table]) Limit(limit uint64) *UpdateContext[Table] {
 	return c
 }
 
-func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -98,7 +97,7 @@ func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db *sql.DB) (rowsAffec
 	return rowsAffected, nil
 }
 
-func (c *UpdateContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
+func (c *UpdateContext[Table]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 
