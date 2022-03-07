@@ -69,7 +69,7 @@ func (c *UpdateContext[Table]) Limit(limit uint64) *UpdateContext[Table] {
 	return c
 }
 
-func (c *UpdateContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -99,7 +99,7 @@ func (c *UpdateContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsA
 }
 
 func (c *UpdateContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
-	return c.DoContext(context.Background(), db)
+	return c.DoCtx(context.Background(), db)
 }
 
 func (c *UpdateContext[Table]) buildQuery() (string, []genorm.ExprType, error) {

@@ -56,7 +56,7 @@ func (c *DeleteContext[Table]) Limit(limit uint64) *DeleteContext[Table] {
 	return c
 }
 
-func (c *DeleteContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
+func (c *DeleteContext[Table]) DoCtx(ctx context.Context, db *sql.DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -86,7 +86,7 @@ func (c *DeleteContext[Table]) DoContext(ctx context.Context, db *sql.DB) (rowsA
 }
 
 func (c *DeleteContext[Table]) Do(db *sql.DB) (rowsAffected int64, err error) {
-	return c.DoContext(context.Background(), db)
+	return c.DoCtx(context.Background(), db)
 }
 
 func (c *DeleteContext[Table]) buildQuery() (string, []genorm.ExprType, error) {

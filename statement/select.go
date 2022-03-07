@@ -155,7 +155,7 @@ func (c *SelectContext[Table]) Lock(lockType LockType) *SelectContext[Table] {
 	return c
 }
 
-func (c *SelectContext[Table]) DoContext(ctx context.Context, db *sql.DB) ([]Table, error) {
+func (c *SelectContext[Table]) DoCtx(ctx context.Context, db *sql.DB) ([]Table, error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return nil, errs[0]
@@ -214,7 +214,7 @@ func (c *SelectContext[Table]) DoContext(ctx context.Context, db *sql.DB) ([]Tab
 }
 
 func (c *SelectContext[Table]) Do(db *sql.DB) ([]Table, error) {
-	return c.DoContext(context.Background(), db)
+	return c.DoCtx(context.Background(), db)
 }
 
 func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm.ExprType, error) {
