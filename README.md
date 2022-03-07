@@ -86,8 +86,7 @@ affectedRows, err := orm.User().
 ### Select
 ```go
 userValues, err := orm.User().
-  Select().
-  Fields(user.Name, user.Password).
+  Select(user.Name, user.Password).
   Where(genorm.EqLit(user.IDExpr, userID)).
   Do(db)
 ```

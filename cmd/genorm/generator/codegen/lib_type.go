@@ -90,6 +90,18 @@ func typedTableExpr(tableType ast.Expr, exprType ast.Expr) ast.Expr {
 	}
 }
 
+func tableColumn(tableType ast.Expr) ast.Expr {
+	return &ast.IndexListExpr{
+		X: &ast.SelectorExpr{
+			X:   genormIdent,
+			Sel: ast.NewIdent("TableColumns"),
+		},
+		Indices: []ast.Expr{
+			tableType,
+		},
+	}
+}
+
 func typedTableColumn(tableType ast.Expr, exprType ast.Expr) ast.Expr {
 	return &ast.IndexListExpr{
 		X: &ast.SelectorExpr{

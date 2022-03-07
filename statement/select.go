@@ -23,10 +23,12 @@ type SelectContext[T Table] struct {
 	lockType        LockType
 }
 
-func NewSelectContext[T Table](table T) *SelectContext[T] {
-	return &SelectContext[T]{
+func NewSelectContext[T Table](table T, fields ...genorm.TableColumns[T]) *SelectContext[T] {
+	ctx := &SelectContext[T]{
 		Context: newContext(table),
 	}
+
+	return ctx.setFields(fields...)
 }
 
 type LockType uint8
@@ -48,7 +50,7 @@ func (c *SelectContext[Table]) Distinct() *SelectContext[Table] {
 	return c
 }
 
-func (c *SelectContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *SelectContext[Table] {
+func (c *SelectContext[Table]) setFields(fields ...genorm.TableColumns[Table]) *SelectContext[Table] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c

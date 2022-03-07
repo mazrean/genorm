@@ -589,6 +589,7 @@ func (tbl *table) insertDecl() ast.Decl {
 
 func (tbl *table) selectDecl() ast.Decl {
 	selectIdent := ast.NewIdent("Select")
+	fieldsIdent := ast.NewIdent("fields")
 
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
@@ -603,6 +604,18 @@ func (tbl *table) selectDecl() ast.Decl {
 		},
 		Name: selectIdent,
 		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{fieldsIdent},
+						Type: &ast.Ellipsis{
+							Elt: tableColumn(&ast.StarExpr{
+								X: tbl.structIdent,
+							}),
+						},
+					},
+				},
+			},
 			Results: &ast.FieldList{
 				List: []*ast.Field{
 					{
@@ -621,7 +634,9 @@ func (tbl *table) selectDecl() ast.Decl {
 							Fun: selectStatementIdent,
 							Args: []ast.Expr{
 								tbl.recvIdent,
+								fieldsIdent,
 							},
+							Ellipsis: token.Pos(1),
 						},
 					},
 				},
