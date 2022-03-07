@@ -734,6 +734,7 @@ func (jt *joinedTable) joinedTableJoinDecl(ref *refJoinedTable) ast.Decl {
 
 func (jt *joinedTable) selectDecl() ast.Decl {
 	selectIdent := ast.NewIdent("Select")
+	fieldsIdent := ast.NewIdent("fields")
 
 	return &ast.FuncDecl{
 		Recv: &ast.FieldList{
@@ -748,6 +749,18 @@ func (jt *joinedTable) selectDecl() ast.Decl {
 		},
 		Name: selectIdent,
 		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{fieldsIdent},
+						Type: &ast.Ellipsis{
+							Elt: tableColumn(&ast.StarExpr{
+								X: jt.structIdent,
+							}),
+						},
+					},
+				},
+			},
 			Results: &ast.FieldList{
 				List: []*ast.Field{
 					{
@@ -766,7 +779,9 @@ func (jt *joinedTable) selectDecl() ast.Decl {
 							Fun: selectStatementIdent,
 							Args: []ast.Expr{
 								jt.recvIdent,
+								fieldsIdent,
 							},
+							Ellipsis: token.Pos(1),
 						},
 					},
 				},
