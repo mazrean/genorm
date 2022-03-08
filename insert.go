@@ -13,21 +13,30 @@ type InsertContext[T BasicTable] struct {
 	fields []TableColumns[T]
 }
 
-func Insert[T BasicTable](table T, tableBases ...T) *InsertContext[T] {
+func Insert[T BasicTable](table T) *InsertContext[T] {
 	ctx := newContext(table)
-	if len(tableBases) == 0 {
-		ctx.addError(errors.New("no insert values"))
-
-		return &InsertContext[T]{
-			Context: ctx,
-		}
-	}
 
 	return &InsertContext[T]{
 		Context: ctx,
-		values:  tableBases,
 		fields:  nil,
 	}
+}
+
+func (c *InsertContext[Table]) Values(tableBases ...Table) *InsertContext[Table] {
+	if len(tableBases) == 0 {
+		c.addError(errors.New("no values"))
+
+		return c
+	}
+	if len(c.values) != 0 {
+		c.addError(errors.New("values already set"))
+
+		return c
+	}
+
+	c.values = append(c.values, tableBases...)
+
+	return c
 }
 
 func (c *InsertContext[Table]) Fields(fields ...TableColumns[Table]) *InsertContext[Table] {
