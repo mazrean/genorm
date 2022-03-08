@@ -278,10 +278,18 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 	sb := strings.Builder{}
 	args := []ExprType{}
 
-	sb.WriteString("SELECT ")
+	str := "SELECT "
+	_, err := sb.WriteString(str)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
 	if c.distinct {
-		sb.WriteString("DISTINCT ")
+		str = "DISTINCT "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
 	}
 
 	var columns []Column
@@ -308,16 +316,28 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 		selectExprs = append(selectExprs, fmt.Sprintf("%s AS %s", column.SQLColumnName(), alias))
 	}
 
-	sb.WriteString(strings.Join(selectExprs, ", "))
+	str = strings.Join(selectExprs, ", ")
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
-	sb.WriteString(" FROM ")
+	str = " FROM "
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
 	tableQuery, tableArgs, errs := c.table.Expr()
 	if len(errs) != 0 {
 		return nil, "", nil, fmt.Errorf("table expr: %w", errs[0])
 	}
 
-	sb.WriteString(tableQuery)
+	_, err = sb.WriteString(tableQuery)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("write string(%s): %w", tableQuery, err)
+	}
+
 	args = append(args, tableArgs...)
 
 	if c.whereCondition.exists() {
@@ -326,13 +346,26 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 			return nil, "", nil, fmt.Errorf("where condition: %w", err)
 		}
 
-		sb.WriteString(" WHERE ")
-		sb.WriteString(whereQuery)
+		str = " WHERE "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(whereQuery)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", whereQuery, err)
+		}
+
 		args = append(args, whereArgs...)
 	}
 
 	if len(c.groupExpr) != 0 {
-		sb.WriteString(" GROUP BY ")
+		str = " GROUP BY "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
 
 		groupQueries := make([]string, 0, len(c.groupExpr))
 		for _, groupExpr := range c.groupExpr {
@@ -345,7 +378,11 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 			args = append(args, groupArgs...)
 		}
 
-		sb.WriteString(strings.Join(groupQueries, ", "))
+		str = strings.Join(groupQueries, ", ")
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
 	}
 
 	if c.havingCondition.exists() {
@@ -354,8 +391,17 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 			return nil, "", nil, fmt.Errorf("having condition: %w", err)
 		}
 
-		sb.WriteString(" HAVING ")
-		sb.WriteString(havingQuery)
+		str = " HAVING "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(havingQuery)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", havingQuery, err)
+		}
+
 		args = append(args, havingArgs...)
 	}
 
@@ -365,8 +411,17 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 			return nil, "", nil, fmt.Errorf("order: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(orderQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(orderQuery)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", orderQuery, err)
+		}
+
 		args = append(args, orderArgs...)
 	}
 
@@ -376,8 +431,17 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 			return nil, "", nil, fmt.Errorf("limit: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(limitQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(limitQuery)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", limitQuery, err)
+		}
+
 		args = append(args, limitArgs...)
 	}
 
@@ -387,17 +451,34 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 			return nil, "", nil, fmt.Errorf("offset: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(offsetQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(offsetQuery)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", offsetQuery, err)
+		}
+
 		args = append(args, offsetArgs...)
 	}
 
 	if c.lockType != none {
 		switch c.lockType {
 		case ForUpdate:
-			sb.WriteString(" FOR UPDATE")
+			str = " FOR UPDATE"
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+			}
 		case ForShare:
-			sb.WriteString(" FOR SHARE")
+			str = " FOR SHARE"
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+			}
 		}
 	}
 
