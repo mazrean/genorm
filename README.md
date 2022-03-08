@@ -74,8 +74,8 @@ Ref: https://pkg.go.dev/database/sql#example-DB.BeginTx
 
 ### Insert
 ```go
-affectedRows, err := orm.User().
-  Insert(&orm.UserTable{
+affectedRows, err := genorm.Insert(orm.User()).
+  Values(&orm.UserTable{
     ID:       uuid.New(),
     Name:     genorm.Wrap("user"),
     Password: genorm.Wrap("password"),
@@ -84,17 +84,24 @@ affectedRows, err := orm.User().
 ```
 
 ### Select
+
 ```go
-userValues, err := orm.User().
-  Select(user.Name, user.Password).
+userValues, err := genorm.Select(orm.User()).
+  Fields(user.Name, user.Password).
   Where(genorm.EqLit(user.IDExpr, userID)).
-  Do(db)
+  Find(db)
+```
+
+```go
+userValue, err := genorm.Select(orm.User()).
+  Fields(user.Name, user.Password).
+  Where(genorm.EqLit(user.IDExpr, userID)).
+  Take(db)
 ```
 
 ### Update
 ```go
-affectedRows, err = orm.Message().
-  Update().
+affectedRows, err = genorm.Update(orm.Message()).
   Set(
     genorm.AssignLit(message.Content, genorm.Wrap("hello world")),
     genorm.AssignLit(message.CreatedAt, genorm.Wrap(time.Now())),
@@ -106,8 +113,7 @@ affectedRows, err = orm.Message().
 
 ### Delete
 ```go
-affectedRows, err = orm.Message().
-  Delete().
+affectedRows, err = genorm.Delete(orm.Message()).
   Where(genorm.EqLit(message.UserIDExpr, userID)).
   Do(db)
 ```
@@ -117,11 +123,11 @@ affectedRows, err = orm.Message().
 ```go
 userIDColumn := orm.MessageUserParseExpr(user.ID)
 messageUserIDColumn := orm.MessageUserParseExpr(message.UserID)
-messageUserValues, err := orm.Message().
-  User().Join(genorm.Eq(userIDColumn, messageUserIDColumn)).
-  Select().
+messageUserTable := orm.Message().
+  User().Join(genorm.Eq(userIDColumn, messageUserIDColumn)
+messageUserValues, err := genorm.Select(messageUserTable).
   Where(genorm.EqLit(userIDColumn, userID).
-  Do(db)
+  Find(db)
 ```
 
 #### Update
@@ -129,9 +135,8 @@ messageUserValues, err := orm.Message().
 userIDColumn := orm.MessageUserParseExpr(user.ID)
 messageUserIDColumn := orm.MessageUserParseExpr(message.UserID)
 messageContent := orm.MessageUserParseExpr(message.Content)
-messageUserValues, err := orm.Message().
-  User().Join(genorm.Eq(userIDColumn, messageUserIDColumn)).
-  Update().
+messageUserValues, err := genorm.Update(orm.Message().
+    User().Join(genorm.Eq(userIDColumn, messageUserIDColumn))).
   Set(genorm.AssignLit(messageContent, genorm.Wrap("hello world"))).
   Where(genorm.EqLit(userIDColumn, userID)).
   Do(db)
@@ -140,8 +145,8 @@ messageUserValues, err := orm.Message().
 ### Context
 ```go
 ctx := context.Background()
-affectedRows, err := orm.User().
-  Insert(&orm.UserTable{
+affectedRows, err := genorm.Insert(orm.User()).
+  Values(&orm.UserTable{
     ID:       uuid.New(),
     Name:     genorm.Wrap("user"),
     Password: genorm.Wrap("password"),
