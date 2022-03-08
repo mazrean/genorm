@@ -86,8 +86,6 @@ func (jt *joinedTable) decl() []ast.Decl {
 
 	decls = append(
 		decls,
-		jt.selectDecl(),
-		jt.updateDecl(),
 		jt.tablesInterfaceDecl(),
 		jt.columnParseFuncDecl(),
 		jt.columnParseExprFuncDecl(),
@@ -723,107 +721,6 @@ func (jt *joinedTable) joinedTableJoinDecl(ref *refJoinedTable) ast.Decl {
 							Args: []ast.Expr{
 								jt.recvIdent,
 								refIdent,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func (jt *joinedTable) selectDecl() ast.Decl {
-	selectIdent := ast.NewIdent("Select")
-	fieldsIdent := ast.NewIdent("fields")
-
-	return &ast.FuncDecl{
-		Recv: &ast.FieldList{
-			List: []*ast.Field{
-				{
-					Names: []*ast.Ident{jt.recvIdent},
-					Type: &ast.StarExpr{
-						X: jt.structIdent,
-					},
-				},
-			},
-		},
-		Name: selectIdent,
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Names: []*ast.Ident{fieldsIdent},
-						Type: &ast.Ellipsis{
-							Elt: tableColumn(&ast.StarExpr{
-								X: jt.structIdent,
-							}),
-						},
-					},
-				},
-			},
-			Results: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Type: selectContext(&ast.StarExpr{
-							X: jt.structIdent,
-						}),
-					},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.CallExpr{
-							Fun: selectStatementIdent,
-							Args: []ast.Expr{
-								jt.recvIdent,
-								fieldsIdent,
-							},
-							Ellipsis: token.Pos(1),
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func (jt *joinedTable) updateDecl() ast.Decl {
-	updateIdent := ast.NewIdent("Update")
-
-	return &ast.FuncDecl{
-		Recv: &ast.FieldList{
-			List: []*ast.Field{
-				{
-					Names: []*ast.Ident{jt.recvIdent},
-					Type: &ast.StarExpr{
-						X: jt.structIdent,
-					},
-				},
-			},
-		},
-		Name: updateIdent,
-		Type: &ast.FuncType{
-			Results: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Type: updateContext(&ast.StarExpr{
-							X: jt.structIdent,
-						}),
-					},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.CallExpr{
-							Fun: updateStatementIdent,
-							Args: []ast.Expr{
-								jt.recvIdent,
 							},
 						},
 					},
