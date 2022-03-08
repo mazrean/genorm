@@ -1,11 +1,9 @@
-package statement
+package genorm
 
 import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/mazrean/genorm"
 )
 
 type DeleteContext[T BasicTable] struct {
@@ -15,7 +13,7 @@ type DeleteContext[T BasicTable] struct {
 	limit          limitClause
 }
 
-func NewDeleteContext[T BasicTable](table T) *DeleteContext[T] {
+func Delete[T BasicTable](table T) *DeleteContext[T] {
 	ctx := newContext(table)
 
 	return &DeleteContext[T]{
@@ -24,7 +22,7 @@ func NewDeleteContext[T BasicTable](table T) *DeleteContext[T] {
 }
 
 func (c *DeleteContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
+	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
 ) *DeleteContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
@@ -34,7 +32,7 @@ func (c *DeleteContext[Table]) Where(
 	return c
 }
 
-func (c *DeleteContext[Table]) OrderBy(direction OrderDirection, expr genorm.TableExpr[Table]) *DeleteContext[Table] {
+func (c *DeleteContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[Table]) *DeleteContext[Table] {
 	err := c.order.add(orderItem[Table]{
 		expr:      expr,
 		direction: direction,
@@ -88,8 +86,8 @@ func (c *DeleteContext[Table]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 
-func (c *DeleteContext[Table]) buildQuery() (string, []genorm.ExprType, error) {
-	args := []genorm.ExprType{}
+func (c *DeleteContext[Table]) buildQuery() (string, []ExprType, error) {
+	args := []ExprType{}
 
 	sb := strings.Builder{}
 	sb.WriteString("DELETE FROM ")

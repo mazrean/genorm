@@ -1,23 +1,21 @@
-package statement
+package genorm
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/mazrean/genorm"
 )
 
 type UpdateContext[T Table] struct {
 	*Context[T]
-	assignExprs    []*genorm.TableAssignExpr[T]
+	assignExprs    []*TableAssignExpr[T]
 	whereCondition whereConditionClause[T]
 	order          orderClause[T]
 	limit          limitClause
 }
 
-func NewUpdateContext[T Table](table T) *UpdateContext[T] {
+func Update[T Table](table T) *UpdateContext[T] {
 	ctx := newContext(table)
 
 	return &UpdateContext[T]{
@@ -25,7 +23,7 @@ func NewUpdateContext[T Table](table T) *UpdateContext[T] {
 	}
 }
 
-func (c *UpdateContext[Table]) Set(assignExprs ...*genorm.TableAssignExpr[Table]) (res *UpdateContext[Table]) {
+func (c *UpdateContext[Table]) Set(assignExprs ...*TableAssignExpr[Table]) (res *UpdateContext[Table]) {
 	if len(assignExprs) == 0 {
 		c.addError(errors.New("no assign expressions"))
 		return c
@@ -37,7 +35,7 @@ func (c *UpdateContext[Table]) Set(assignExprs ...*genorm.TableAssignExpr[Table]
 }
 
 func (c *UpdateContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
+	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
 ) *UpdateContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
@@ -47,7 +45,7 @@ func (c *UpdateContext[Table]) Where(
 	return c
 }
 
-func (c *UpdateContext[Table]) OrderBy(direction OrderDirection, expr genorm.TableExpr[Table]) *UpdateContext[Table] {
+func (c *UpdateContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[Table]) *UpdateContext[Table] {
 	err := c.order.add(orderItem[Table]{
 		expr:      expr,
 		direction: direction,
@@ -101,8 +99,8 @@ func (c *UpdateContext[Table]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 
-func (c *UpdateContext[Table]) buildQuery() (string, []genorm.ExprType, error) {
-	args := []genorm.ExprType{}
+func (c *UpdateContext[Table]) buildQuery() (string, []ExprType, error) {
+	args := []ExprType{}
 
 	sb := strings.Builder{}
 	sb.WriteString("UPDATE ")

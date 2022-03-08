@@ -30,23 +30,6 @@ var (
 		Sel: ast.NewIdent("Relation"),
 	}
 
-	insertStatementIdent = &ast.SelectorExpr{
-		X:   genormStatementIdent,
-		Sel: ast.NewIdent("NewInsertContext"),
-	}
-	selectStatementIdent = &ast.SelectorExpr{
-		X:   genormStatementIdent,
-		Sel: ast.NewIdent("NewSelectContext"),
-	}
-	updateStatementIdent = &ast.SelectorExpr{
-		X:   genormStatementIdent,
-		Sel: ast.NewIdent("NewUpdateContext"),
-	}
-	deleteStatementIdent = &ast.SelectorExpr{
-		X:   genormStatementIdent,
-		Sel: ast.NewIdent("NewDeleteContext"),
-	}
-
 	exprExprIdent           = ast.NewIdent("Expr")
 	tableExprTableExprIdent = ast.NewIdent("TableExpr")
 	typedExprTypedExprIdent = ast.NewIdent("TypedExpr")
@@ -90,18 +73,6 @@ func typedTableExpr(tableType ast.Expr, exprType ast.Expr) ast.Expr {
 	}
 }
 
-func tableColumn(tableType ast.Expr) ast.Expr {
-	return &ast.IndexListExpr{
-		X: &ast.SelectorExpr{
-			X:   genormIdent,
-			Sel: ast.NewIdent("TableColumns"),
-		},
-		Indices: []ast.Expr{
-			tableType,
-		},
-	}
-}
-
 func typedTableColumn(tableType ast.Expr, exprType ast.Expr) ast.Expr {
 	return &ast.IndexListExpr{
 		X: &ast.SelectorExpr{
@@ -141,54 +112,6 @@ func newRelationContext(baseTable ast.Expr, refTable ast.Expr, joinedTable ast.E
 			baseTable,
 			refTable,
 			joinedTable,
-		},
-	}
-}
-
-func insertContext(basicTable ast.Expr) ast.Expr {
-	return &ast.StarExpr{
-		X: &ast.IndexListExpr{
-			X: &ast.SelectorExpr{
-				X:   genormStatementIdent,
-				Sel: ast.NewIdent("InsertContext"),
-			},
-			Indices: []ast.Expr{basicTable},
-		},
-	}
-}
-
-func selectContext(table ast.Expr) ast.Expr {
-	return &ast.StarExpr{
-		X: &ast.IndexListExpr{
-			X: &ast.SelectorExpr{
-				X:   genormStatementIdent,
-				Sel: ast.NewIdent("SelectContext"),
-			},
-			Indices: []ast.Expr{table},
-		},
-	}
-}
-
-func updateContext(table ast.Expr) ast.Expr {
-	return &ast.StarExpr{
-		X: &ast.IndexListExpr{
-			X: &ast.SelectorExpr{
-				X:   genormStatementIdent,
-				Sel: ast.NewIdent("UpdateContext"),
-			},
-			Indices: []ast.Expr{table},
-		},
-	}
-}
-
-func deleteContext(basicTable ast.Expr) ast.Expr {
-	return &ast.StarExpr{
-		X: &ast.IndexListExpr{
-			X: &ast.SelectorExpr{
-				X:   genormStatementIdent,
-				Sel: ast.NewIdent("DeleteContext"),
-			},
-			Indices: []ast.Expr{basicTable},
 		},
 	}
 }

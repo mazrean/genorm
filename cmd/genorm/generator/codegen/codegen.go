@@ -9,17 +9,15 @@ import (
 )
 
 const (
-	genormImport          = `"github.com/mazrean/genorm"`
-	genormRelationImport  = `"github.com/mazrean/genorm/relation"`
-	genormStatementImport = `"github.com/mazrean/genorm/statement"`
-	fmtImport             = `"fmt"`
+	genormImport         = `"github.com/mazrean/genorm"`
+	genormRelationImport = `"github.com/mazrean/genorm/relation"`
+	fmtImport            = `"fmt"`
 )
 
 var (
-	genormIdent          = ast.NewIdent("genorm")
-	genormRelationIdent  = ast.NewIdent("relation")
-	genormStatementIdent = ast.NewIdent("statement")
-	fmtIdent             = ast.NewIdent("fmt")
+	genormIdent         = ast.NewIdent("genorm")
+	genormRelationIdent = ast.NewIdent("relation")
+	fmtIdent            = ast.NewIdent("fmt")
 
 	rootPackageIdent *ast.Ident
 )
@@ -67,7 +65,6 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 	haveImport := false
 	haveGenorm := false
 	haveGenormRelation := false
-	haveGenormStatement := false
 	haveFmt := false
 	for _, decl := range baseAst.Decls {
 		genDecl, ok := decl.(*ast.GenDecl)
@@ -94,11 +91,6 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 					genormRelationIdent = importSpec.Name
 				}
 				haveGenormRelation = true
-			case genormStatementImport:
-				if importSpec.Name != nil {
-					genormStatementIdent = importSpec.Name
-				}
-				haveGenormStatement = true
 			case fmtImport:
 				if importSpec.Name != nil {
 					fmtIdent = importSpec.Name
@@ -123,15 +115,6 @@ func codegenImportDecls(baseAst *ast.File) []ast.Decl {
 				Path: &ast.BasicLit{
 					Kind:  token.STRING,
 					Value: genormRelationImport,
-				},
-			})
-		}
-
-		if !haveGenormStatement {
-			genDecl.Specs = append(genDecl.Specs, &ast.ImportSpec{
-				Path: &ast.BasicLit{
-					Kind:  token.STRING,
-					Value: genormStatementImport,
 				},
 			})
 		}

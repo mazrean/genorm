@@ -1,18 +1,16 @@
-package statement
+package genorm
 
 import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/mazrean/genorm"
 )
 
 type whereConditionClause[T Table] struct {
-	condition genorm.TypedTableExpr[T, genorm.WrappedPrimitive[bool]]
+	condition TypedTableExpr[T, WrappedPrimitive[bool]]
 }
 
-func (c *whereConditionClause[Table]) set(condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]]) error {
+func (c *whereConditionClause[Table]) set(condition TypedTableExpr[Table, WrappedPrimitive[bool]]) error {
 	if c.condition != nil {
 		return errors.New("where conditions already set")
 	}
@@ -29,7 +27,7 @@ func (c *whereConditionClause[Table]) exists() bool {
 	return c.condition != nil
 }
 
-func (c *whereConditionClause[Table]) getExpr() (string, []genorm.ExprType, error) {
+func (c *whereConditionClause[Table]) getExpr() (string, []ExprType, error) {
 	query, args, errs := c.condition.Expr()
 	if len(errs) != 0 {
 		return "", nil, errs[0]
@@ -43,7 +41,7 @@ type orderClause[T Table] struct {
 }
 
 type orderItem[T Table] struct {
-	expr      genorm.TableExpr[T]
+	expr      TableExpr[T]
 	direction OrderDirection
 }
 
@@ -72,8 +70,8 @@ func (c *orderClause[Table]) exists() bool {
 	return len(c.orderExprs) != 0
 }
 
-func (c *orderClause[Table]) getExpr() (string, []genorm.ExprType, error) {
-	args := []genorm.ExprType{}
+func (c *orderClause[Table]) getExpr() (string, []ExprType, error) {
+	args := []ExprType{}
 	orderQueries := make([]string, 0, len(c.orderExprs))
 	for _, orderItem := range c.orderExprs {
 		orderQuery, orderArgs, errs := orderItem.expr.Expr()
@@ -119,7 +117,7 @@ func (l *limitClause) exists() bool {
 	return l.limit != 0
 }
 
-func (l *limitClause) getExpr() (string, []genorm.ExprType, error) {
+func (l *limitClause) getExpr() (string, []ExprType, error) {
 	return fmt.Sprintf("LIMIT %d", l.limit), nil, nil
 }
 
@@ -144,6 +142,6 @@ func (o *offsetClause) exists() bool {
 	return o.offset != 0
 }
 
-func (o *offsetClause) getExpr() (string, []genorm.ExprType, error) {
+func (o *offsetClause) getExpr() (string, []ExprType, error) {
 	return fmt.Sprintf("OFFSET %d", o.offset), nil, nil
 }

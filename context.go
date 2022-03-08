@@ -1,4 +1,4 @@
-package statement
+package genorm
 
 type Context[T Table] struct {
 	table T
