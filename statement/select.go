@@ -161,7 +161,7 @@ func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, err
 		return nil, errs[0]
 	}
 
-	columnAliasMap, query, exprArgs, err := c.buildQuery()
+	columns, query, exprArgs, err := c.buildQuery()
 	if err != nil {
 		return nil, fmt.Errorf("build query: %w", err)
 	}
@@ -180,8 +180,6 @@ func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, err
 	}
 	defer rows.Close()
 
-	resultColumns, err := rows.Columns()
-
 	tables := []Table{}
 	for rows.Next() {
 		var table Table
@@ -195,11 +193,11 @@ func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, err
 
 		columnMap := table.ColumnMap()
 
-		dests := make([]any, 0, len(resultColumns))
-		for _, columnAlias := range resultColumns {
-			columnField, ok := columnMap[columnAliasMap[columnAlias]]
+		dests := make([]any, 0, len(columns))
+		for _, column := range columns {
+			columnField, ok := columnMap[column.SQLColumnName()]
 			if !ok {
-				return nil, fmt.Errorf("column %s not found", columnAlias)
+				return nil, fmt.Errorf("column %s not found", column.SQLColumnName())
 			}
 
 			dests = append(dests, columnField)
@@ -280,8 +278,7 @@ func (c *SelectContext[Table]) Take(db DB) (Table, error) {
 	return c.TakeCtx(context.Background(), db)
 }
 
-func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm.ExprType, error) {
-	columnAliasMap := map[string]string{}
+func (c *SelectContext[Table]) buildQuery() ([]genorm.Column, string, []genorm.ExprType, error) {
 	sb := strings.Builder{}
 	args := []genorm.ExprType{}
 
@@ -301,6 +298,7 @@ func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm
 		}
 	}
 
+	columnAliasMap := map[string]struct{}{}
 	selectExprs := make([]string, 0, len(columns))
 	for _, column := range columns {
 		var alias string
@@ -310,7 +308,7 @@ func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm
 			i++
 		}
 
-		columnAliasMap[alias] = column.SQLColumnName()
+		columnAliasMap[alias] = struct{}{}
 		selectExprs = append(selectExprs, fmt.Sprintf("%s AS %s", column.SQLColumnName(), alias))
 	}
 
@@ -407,5 +405,5 @@ func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm
 		}
 	}
 
-	return columnAliasMap, sb.String(), args, nil
+	return columns, sb.String(), args, nil
 }
