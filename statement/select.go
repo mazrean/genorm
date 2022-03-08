@@ -220,6 +220,66 @@ func (c *SelectContext[Table]) Find(db DB) ([]Table, error) {
 	return c.FindCtx(context.Background(), db)
 }
 
+func (c *SelectContext[Table]) TakeCtx(ctx context.Context, db DB) (Table, error) {
+	var table Table
+
+	err := c.limit.set(1)
+	if err != nil {
+		return table, fmt.Errorf("set limit 1: %w", err)
+	}
+
+	errs := c.Errors()
+	if len(errs) != 0 {
+		return table, errs[0]
+	}
+
+	columns, query, exprArgs, err := c.buildQuery()
+	if err != nil {
+		return table, fmt.Errorf("build query: %w", err)
+	}
+
+	args := make([]any, 0, len(exprArgs))
+	for _, arg := range exprArgs {
+		args = append(args, arg)
+	}
+
+	row := db.QueryRowContext(ctx, query, args...)
+
+	iTable := table.New()
+	switch v := iTable.(type) {
+	case Table:
+		table = v
+	default:
+		return table, fmt.Errorf("invalid table type: %T", iTable)
+	}
+
+	columnMap := table.ColumnMap()
+
+	dests := make([]any, 0, len(columns))
+	for _, column := range columns {
+		columnField, ok := columnMap[column.SQLColumnName()]
+		if !ok {
+			return table, fmt.Errorf("column %s not found", column)
+		}
+
+		dests = append(dests, columnField)
+	}
+
+	err = row.Scan(dests...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return table, genorm.ErrRecordNotFound
+	}
+	if err != nil {
+		return table, fmt.Errorf("query: %w", err)
+	}
+
+	return table, nil
+}
+
+func (c *SelectContext[Table]) Take(db DB) (Table, error) {
+	return c.TakeCtx(context.Background(), db)
+}
+
 func (c *SelectContext[Table]) buildQuery() (map[string]string, string, []genorm.ExprType, error) {
 	columnAliasMap := map[string]string{}
 	sb := strings.Builder{}
