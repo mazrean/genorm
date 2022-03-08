@@ -103,21 +103,35 @@ func (c *UpdateContext[Table]) buildQuery() (string, []ExprType, error) {
 	args := []ExprType{}
 
 	sb := strings.Builder{}
-	sb.WriteString("UPDATE ")
+
+	str := "UPDATE "
+	_, err := sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
 	tableQuery, tableArgs, errs := c.table.Expr()
 	if len(errs) != 0 {
 		return "", nil, fmt.Errorf("table expr: %w", errs[0])
 	}
 
-	sb.WriteString(tableQuery)
+	_, err = sb.WriteString(tableQuery)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", tableQuery, err)
+	}
+
 	args = append(args, tableArgs...)
 
 	if len(c.assignExprs) == 0 {
 		return "", nil, errors.New("no assignment")
 	}
 
-	sb.WriteString(" SET ")
+	str = " SET "
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
+
 	assignments := make([]string, 0, len(c.assignExprs))
 	for _, expr := range c.assignExprs {
 		assignmentQuery, assignmentArgs, errs := expr.AssignExpr()
@@ -128,7 +142,12 @@ func (c *UpdateContext[Table]) buildQuery() (string, []ExprType, error) {
 		assignments = append(assignments, assignmentQuery)
 		args = append(args, assignmentArgs...)
 	}
-	sb.WriteString(strings.Join(assignments, ", "))
+
+	str = strings.Join(assignments, ", ")
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
 	if c.whereCondition.exists() {
 		whereQuery, whereArgs, err := c.whereCondition.getExpr()
@@ -136,8 +155,17 @@ func (c *UpdateContext[Table]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("where condition: %w", err)
 		}
 
-		sb.WriteString(" WHERE ")
-		sb.WriteString(whereQuery)
+		str = " WHERE "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(whereQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write string(%s): %w", whereQuery, err)
+		}
+
 		args = append(args, whereArgs...)
 	}
 
@@ -147,8 +175,17 @@ func (c *UpdateContext[Table]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("order: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(orderQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(orderQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write string(%s): %w", orderQuery, err)
+		}
+
 		args = append(args, orderArgs...)
 	}
 
@@ -158,8 +195,17 @@ func (c *UpdateContext[Table]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("limit: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(limitQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(limitQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write string(%s): %w", limitQuery, err)
+		}
+
 		args = append(args, limitArgs...)
 	}
 

@@ -113,27 +113,51 @@ func (r *Relation) JoinedTableName() (string, []genorm.ExprType, []error) {
 	sb := strings.Builder{}
 	args := []genorm.ExprType{}
 
-	sb.WriteString("(")
+	str := "("
+	_, err := sb.WriteString(str)
+	if err != nil {
+		return "", nil, []error{fmt.Errorf("write string(%s): %w", str, err)}
+	}
 
 	baseTableQuery, baseTableArgs, errs := r.baseTable.Expr()
 	if len(errs) != 0 {
 		return "", nil, errs
 	}
 
-	sb.WriteString(baseTableQuery)
+	_, err = sb.WriteString(baseTableQuery)
+	if err != nil {
+		return "", nil, []error{fmt.Errorf("write string(%s): %w", baseTableQuery, err)}
+	}
+
 	args = append(args, baseTableArgs...)
 
 	switch r.relationType {
 	case join:
 		if r.onExpr != nil {
-			sb.WriteString(" INNER JOIN ")
+			str = " INNER JOIN "
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return "", nil, []error{fmt.Errorf("write string(%s): %w", str, err)}
+			}
 		} else {
-			sb.WriteString(" CROSS JOIN ")
+			str = " CROSS JOIN "
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return "", nil, []error{fmt.Errorf("write string(%s): %w", str, err)}
+			}
 		}
 	case leftJoin:
-		sb.WriteString(" LEFT JOIN ")
+		str = " LEFT JOIN "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, []error{fmt.Errorf("write string(%s): %w", str, err)}
+		}
 	case rightJoin:
-		sb.WriteString(" RIGHT JOIN ")
+		str = " RIGHT JOIN "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, []error{fmt.Errorf("write string(%s): %w", str, err)}
+		}
 	default:
 		return "", nil, []error{errors.New("unsupported relation type")}
 	}
@@ -143,22 +167,38 @@ func (r *Relation) JoinedTableName() (string, []genorm.ExprType, []error) {
 		return "", nil, errs
 	}
 
-	sb.WriteString(refTableQuery)
+	_, err = sb.WriteString(refTableQuery)
+	if err != nil {
+		return "", nil, []error{fmt.Errorf("write string(%s): %w", refTableQuery, err)}
+	}
+
 	args = append(args, refTableArgs...)
 
 	if r.onExpr != nil {
-		sb.WriteString(" ON ")
+		str = " ON "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, []error{fmt.Errorf("write string(%s): %w", str, err)}
+		}
 
 		onExprQuery, onExprArgs, errs := r.onExpr.Expr()
 		if len(errs) != 0 {
 			return "", nil, errs
 		}
 
-		sb.WriteString(onExprQuery)
+		_, err = sb.WriteString(onExprQuery)
+		if err != nil {
+			return "", nil, []error{fmt.Errorf("write string(%s): %w", onExprQuery, err)}
+		}
+
 		args = append(args, onExprArgs...)
 	}
 
-	sb.WriteString(")")
+	str = ")"
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, []error{fmt.Errorf("write string(%s): %w", str, err)}
+	}
 
 	return sb.String(), args, nil
 }

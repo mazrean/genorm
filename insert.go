@@ -97,8 +97,18 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := &strings.Builder{}
-	sb.WriteString("INSERT INTO ")
-	sb.WriteString(c.table.TableName())
+
+	str := "INSERT INTO "
+	_, err := sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
+
+	str = c.table.TableName()
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
 	var fields []string
 	if c.fields == nil {
@@ -114,13 +124,31 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 		}
 	}
 
-	sb.WriteString(" (")
-	sb.WriteString(strings.Join(fields, ", "))
-	sb.WriteString(") VALUES ")
+	str = " ("
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
+
+	str = strings.Join(fields, ", ")
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
+
+	str = ") VALUES "
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
 	for i, value := range c.values {
 		if i != 0 {
-			sb.WriteString(", ")
+			str = ", "
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+			}
 		}
 
 		var val any = value
@@ -140,10 +168,19 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 }
 
 func (c *InsertContext[Table]) buildValueList(sb *strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnFieldExprType) (*strings.Builder, []any, error) {
-	sb.WriteString("(")
+	str := "("
+	_, err := sb.WriteString(str)
+	if err != nil {
+		return sb, args, fmt.Errorf("write string(%s): %w", str, err)
+	}
+
 	for i, columnName := range fields {
 		if i != 0 {
-			sb.WriteString(", ")
+			str = ", "
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return sb, args, fmt.Errorf("write string(%s): %w", str, err)
+			}
 		}
 
 		columnField, ok := fieldValueMap[columnName]
@@ -157,13 +194,27 @@ func (c *InsertContext[Table]) buildValueList(sb *strings.Builder, args []any, f
 		}
 
 		if fieldValue == nil {
-			sb.WriteString("NULL")
+			str = "NULL"
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return sb, nil, fmt.Errorf("write string(%s): %w", str, err)
+			}
 		} else {
-			sb.WriteString("?")
+			str = "?"
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return sb, nil, fmt.Errorf("write string(%s): %w", str, err)
+			}
+
 			args = append(args, fieldValue)
 		}
 	}
-	sb.WriteString(")")
+
+	str = ")"
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return sb, nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
 
 	return sb, args, nil
 }
