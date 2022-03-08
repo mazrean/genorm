@@ -15,7 +15,7 @@ type UpdateContext[T Table] struct {
 	limit          limitClause
 }
 
-func NewUpdateContext[T Table](table T) *UpdateContext[T] {
+func Update[T Table](table T) *UpdateContext[T] {
 	ctx := newContext(table)
 
 	return &UpdateContext[T]{

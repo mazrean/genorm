@@ -13,7 +13,7 @@ type DeleteContext[T BasicTable] struct {
 	limit          limitClause
 }
 
-func NewDeleteContext[T BasicTable](table T) *DeleteContext[T] {
+func Delete[T BasicTable](table T) *DeleteContext[T] {
 	ctx := newContext(table)
 
 	return &DeleteContext[T]{

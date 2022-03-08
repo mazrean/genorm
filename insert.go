@@ -13,7 +13,7 @@ type InsertContext[T BasicTable] struct {
 	fields []TableColumns[T]
 }
 
-func NewInsertContext[T BasicTable](table T, tableBases ...T) *InsertContext[T] {
+func Insert[T BasicTable](table T, tableBases ...T) *InsertContext[T] {
 	ctx := newContext(table)
 	if len(tableBases) == 0 {
 		ctx.addError(errors.New("no insert values"))

@@ -21,7 +21,7 @@ type SelectContext[T Table] struct {
 	lockType        LockType
 }
 
-func NewSelectContext[T Table](table T, fields ...TableColumns[T]) *SelectContext[T] {
+func Select[T Table](table T, fields ...TableColumns[T]) *SelectContext[T] {
 	ctx := &SelectContext[T]{
 		Context: newContext(table),
 	}
