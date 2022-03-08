@@ -1,44 +1,29 @@
-package statement
+package genorm
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/mazrean/genorm"
 )
 
-type UpdateContext[T Table] struct {
+type DeleteContext[T BasicTable] struct {
 	*Context[T]
-	assignExprs    []*genorm.TableAssignExpr[T]
 	whereCondition whereConditionClause[T]
 	order          orderClause[T]
 	limit          limitClause
 }
 
-func NewUpdateContext[T Table](table T) *UpdateContext[T] {
+func NewDeleteContext[T BasicTable](table T) *DeleteContext[T] {
 	ctx := newContext(table)
 
-	return &UpdateContext[T]{
+	return &DeleteContext[T]{
 		Context: ctx,
 	}
 }
 
-func (c *UpdateContext[Table]) Set(assignExprs ...*genorm.TableAssignExpr[Table]) (res *UpdateContext[Table]) {
-	if len(assignExprs) == 0 {
-		c.addError(errors.New("no assign expressions"))
-		return c
-	}
-
-	c.assignExprs = append(c.assignExprs, assignExprs...)
-
-	return c
-}
-
-func (c *UpdateContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
-) *UpdateContext[Table] {
+func (c *DeleteContext[Table]) Where(
+	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
+) *DeleteContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -47,7 +32,7 @@ func (c *UpdateContext[Table]) Where(
 	return c
 }
 
-func (c *UpdateContext[Table]) OrderBy(direction OrderDirection, expr genorm.TableExpr[Table]) *UpdateContext[Table] {
+func (c *DeleteContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[Table]) *DeleteContext[Table] {
 	err := c.order.add(orderItem[Table]{
 		expr:      expr,
 		direction: direction,
@@ -59,7 +44,7 @@ func (c *UpdateContext[Table]) OrderBy(direction OrderDirection, expr genorm.Tab
 	return c
 }
 
-func (c *UpdateContext[Table]) Limit(limit uint64) *UpdateContext[Table] {
+func (c *DeleteContext[Table]) Limit(limit uint64) *DeleteContext[Table] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -68,7 +53,7 @@ func (c *UpdateContext[Table]) Limit(limit uint64) *UpdateContext[Table] {
 	return c
 }
 
-func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
+func (c *DeleteContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -97,40 +82,16 @@ func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected i
 	return rowsAffected, nil
 }
 
-func (c *UpdateContext[Table]) Do(db DB) (rowsAffected int64, err error) {
+func (c *DeleteContext[Table]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 
-func (c *UpdateContext[Table]) buildQuery() (string, []genorm.ExprType, error) {
-	args := []genorm.ExprType{}
+func (c *DeleteContext[Table]) buildQuery() (string, []ExprType, error) {
+	args := []ExprType{}
 
 	sb := strings.Builder{}
-	sb.WriteString("UPDATE ")
-
-	tableQuery, tableArgs, errs := c.table.Expr()
-	if len(errs) != 0 {
-		return "", nil, fmt.Errorf("table expr: %w", errs[0])
-	}
-
-	sb.WriteString(tableQuery)
-	args = append(args, tableArgs...)
-
-	if len(c.assignExprs) == 0 {
-		return "", nil, errors.New("no assignment")
-	}
-
-	sb.WriteString(" SET ")
-	assignments := make([]string, 0, len(c.assignExprs))
-	for _, expr := range c.assignExprs {
-		assignmentQuery, assignmentArgs, errs := expr.AssignExpr()
-		if len(errs) != 0 {
-			return "", nil, errs[0]
-		}
-
-		assignments = append(assignments, assignmentQuery)
-		args = append(args, assignmentArgs...)
-	}
-	sb.WriteString(strings.Join(assignments, ", "))
+	sb.WriteString("DELETE FROM ")
+	sb.WriteString(c.table.TableName())
 
 	if c.whereCondition.exists() {
 		whereQuery, whereArgs, err := c.whereCondition.getExpr()

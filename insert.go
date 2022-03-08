@@ -1,18 +1,16 @@
-package statement
+package genorm
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/mazrean/genorm"
 )
 
 type InsertContext[T BasicTable] struct {
 	*Context[T]
 	values []T
-	fields []genorm.TableColumns[T]
+	fields []TableColumns[T]
 }
 
 func NewInsertContext[T BasicTable](table T, tableBases ...T) *InsertContext[T] {
@@ -32,7 +30,7 @@ func NewInsertContext[T BasicTable](table T, tableBases ...T) *InsertContext[T] 
 	}
 }
 
-func (c *InsertContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *InsertContext[Table] {
+func (c *InsertContext[Table]) Fields(fields ...TableColumns[Table]) *InsertContext[Table] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -43,7 +41,7 @@ func (c *InsertContext[Table]) Fields(fields ...genorm.TableColumns[Table]) *Ins
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[genorm.TableColumns[Table]]struct{}, len(fields))
+	fieldMap := make(map[TableColumns[Table]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -132,7 +130,7 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *InsertContext[Table]) buildValueList(sb *strings.Builder, args []any, fields []string, fieldValueMap map[string]genorm.ColumnFieldExprType) (*strings.Builder, []any, error) {
+func (c *InsertContext[Table]) buildValueList(sb *strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnFieldExprType) (*strings.Builder, []any, error) {
 	sb.WriteString("(")
 	for i, columnName := range fields {
 		if i != 0 {

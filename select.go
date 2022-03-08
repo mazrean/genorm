@@ -1,4 +1,4 @@
-package statement
+package genorm
 
 import (
 	"context"
@@ -6,16 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/mazrean/genorm"
 )
 
 type SelectContext[T Table] struct {
 	*Context[T]
 	distinct        bool
-	fields          []genorm.TableColumns[T]
+	fields          []TableColumns[T]
 	whereCondition  whereConditionClause[T]
-	groupExpr       []genorm.TableExpr[T]
+	groupExpr       []TableExpr[T]
 	havingCondition whereConditionClause[T]
 	order           orderClause[T]
 	limit           limitClause
@@ -23,7 +21,7 @@ type SelectContext[T Table] struct {
 	lockType        LockType
 }
 
-func NewSelectContext[T Table](table T, fields ...genorm.TableColumns[T]) *SelectContext[T] {
+func NewSelectContext[T Table](table T, fields ...TableColumns[T]) *SelectContext[T] {
 	ctx := &SelectContext[T]{
 		Context: newContext(table),
 	}
@@ -50,7 +48,7 @@ func (c *SelectContext[Table]) Distinct() *SelectContext[Table] {
 	return c
 }
 
-func (c *SelectContext[Table]) setFields(fields ...genorm.TableColumns[Table]) *SelectContext[Table] {
+func (c *SelectContext[Table]) setFields(fields ...TableColumns[Table]) *SelectContext[Table] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -61,7 +59,7 @@ func (c *SelectContext[Table]) setFields(fields ...genorm.TableColumns[Table]) *
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[genorm.TableColumns[Table]]struct{}, len(fields))
+	fieldMap := make(map[TableColumns[Table]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -77,7 +75,7 @@ func (c *SelectContext[Table]) setFields(fields ...genorm.TableColumns[Table]) *
 }
 
 func (c *SelectContext[Table]) Where(
-	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
+	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
 ) *SelectContext[Table] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
@@ -87,7 +85,7 @@ func (c *SelectContext[Table]) Where(
 	return c
 }
 
-func (c *SelectContext[Table]) GroupBy(exprs ...genorm.TableExpr[Table]) *SelectContext[Table] {
+func (c *SelectContext[Table]) GroupBy(exprs ...TableExpr[Table]) *SelectContext[Table] {
 	if len(exprs) == 0 {
 		c.addError(errors.New("no group expr"))
 		return c
@@ -99,7 +97,7 @@ func (c *SelectContext[Table]) GroupBy(exprs ...genorm.TableExpr[Table]) *Select
 }
 
 func (c *SelectContext[Table]) Having(
-	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
+	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
 ) *SelectContext[Table] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
@@ -109,7 +107,7 @@ func (c *SelectContext[Table]) Having(
 	return c
 }
 
-func (c *SelectContext[Table]) OrderBy(direction OrderDirection, expr genorm.TableExpr[Table]) *SelectContext[Table] {
+func (c *SelectContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[Table]) *SelectContext[Table] {
 	err := c.order.add(orderItem[Table]{
 		expr:      expr,
 		direction: direction,
@@ -173,7 +171,7 @@ func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, err
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, genorm.ErrRecordNotFound
+		return nil, ErrRecordNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
@@ -265,7 +263,7 @@ func (c *SelectContext[Table]) TakeCtx(ctx context.Context, db DB) (Table, error
 
 	err = row.Scan(dests...)
 	if errors.Is(err, sql.ErrNoRows) {
-		return table, genorm.ErrRecordNotFound
+		return table, ErrRecordNotFound
 	}
 	if err != nil {
 		return table, fmt.Errorf("query: %w", err)
@@ -278,9 +276,9 @@ func (c *SelectContext[Table]) Take(db DB) (Table, error) {
 	return c.TakeCtx(context.Background(), db)
 }
 
-func (c *SelectContext[Table]) buildQuery() ([]genorm.Column, string, []genorm.ExprType, error) {
+func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error) {
 	sb := strings.Builder{}
-	args := []genorm.ExprType{}
+	args := []ExprType{}
 
 	sb.WriteString("SELECT ")
 
@@ -288,11 +286,11 @@ func (c *SelectContext[Table]) buildQuery() ([]genorm.Column, string, []genorm.E
 		sb.WriteString("DISTINCT ")
 	}
 
-	var columns []genorm.Column
+	var columns []Column
 	if len(c.fields) == 0 {
 		columns = c.table.Columns()
 	} else {
-		columns = make([]genorm.Column, 0, len(c.fields))
+		columns = make([]Column, 0, len(c.fields))
 		for _, field := range c.fields {
 			columns = append(columns, field)
 		}
