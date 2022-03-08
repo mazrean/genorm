@@ -1,4 +1,4 @@
-package statement
+package genorm
 
 import (
 	"context"
@@ -6,16 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/mazrean/genorm"
 )
 
-type PruneContext[T Table, S genorm.ExprType] struct {
+type PluckContext[T Table, S ExprType] struct {
 	*Context[T]
 	distinct        bool
-	field           genorm.TypedTableExpr[T, S]
+	field           TypedTableExpr[T, S]
 	whereCondition  whereConditionClause[T]
-	groupExpr       []genorm.TableExpr[T]
+	groupExpr       []TableExpr[T]
 	havingCondition whereConditionClause[T]
 	order           orderClause[T]
 	limit           limitClause
@@ -23,14 +21,14 @@ type PruneContext[T Table, S genorm.ExprType] struct {
 	lockType        LockType
 }
 
-func NewPruneContext[T Table, S genorm.ExprType](table T, field genorm.TypedTableExpr[T, S]) *PruneContext[T, S] {
-	return &PruneContext[T, S]{
+func Pluck[T Table, S ExprType](table T, field TypedTableExpr[T, S]) *PluckContext[T, S] {
+	return &PluckContext[T, S]{
 		Context: newContext(table),
 		field:   field,
 	}
 }
 
-func (c *PruneContext[Table, ExprType]) Distinct() *PruneContext[Table, ExprType] {
+func (c *PluckContext[T, S]) Distinct() *PluckContext[T, S] {
 	if c.distinct {
 		c.addError(errors.New("distinct already set"))
 		return c
@@ -41,9 +39,9 @@ func (c *PruneContext[Table, ExprType]) Distinct() *PruneContext[Table, ExprType
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) Where(
-	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
-) *PruneContext[Table, ExprType] {
+func (c *PluckContext[T, S]) Where(
+	condition TypedTableExpr[T, WrappedPrimitive[bool]],
+) *PluckContext[T, S] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -52,7 +50,7 @@ func (c *PruneContext[Table, ExprType]) Where(
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) GroupBy(exprs ...genorm.TableExpr[Table]) *PruneContext[Table, ExprType] {
+func (c *PluckContext[T, S]) GroupBy(exprs ...TableExpr[T]) *PluckContext[T, S] {
 	if len(exprs) == 0 {
 		c.addError(errors.New("no group expr"))
 		return c
@@ -63,9 +61,9 @@ func (c *PruneContext[Table, ExprType]) GroupBy(exprs ...genorm.TableExpr[Table]
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) Having(
-	condition genorm.TypedTableExpr[Table, genorm.WrappedPrimitive[bool]],
-) *PruneContext[Table, ExprType] {
+func (c *PluckContext[T, S]) Having(
+	condition TypedTableExpr[T, WrappedPrimitive[bool]],
+) *PluckContext[T, S] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("having condition: %w", err))
@@ -74,8 +72,8 @@ func (c *PruneContext[Table, ExprType]) Having(
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) OrderBy(direction OrderDirection, expr genorm.TableExpr[Table]) *PruneContext[Table, ExprType] {
-	err := c.order.add(orderItem[Table]{
+func (c *PluckContext[T, S]) OrderBy(direction OrderDirection, expr TableExpr[T]) *PluckContext[T, S] {
+	err := c.order.add(orderItem[T]{
 		expr:      expr,
 		direction: direction,
 	})
@@ -86,7 +84,7 @@ func (c *PruneContext[Table, ExprType]) OrderBy(direction OrderDirection, expr g
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) Limit(limit uint64) *PruneContext[Table, ExprType] {
+func (c *PluckContext[T, S]) Limit(limit uint64) *PluckContext[T, S] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -95,7 +93,7 @@ func (c *PruneContext[Table, ExprType]) Limit(limit uint64) *PruneContext[Table,
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) Offset(offset uint64) *PruneContext[Table, ExprType] {
+func (c *PluckContext[T, S]) Offset(offset uint64) *PluckContext[T, S] {
 	err := c.offset.set(offset)
 	if err != nil {
 		c.addError(fmt.Errorf("offset: %w", err))
@@ -104,7 +102,7 @@ func (c *PruneContext[Table, ExprType]) Offset(offset uint64) *PruneContext[Tabl
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) Lock(lockType LockType) *PruneContext[Table, ExprType] {
+func (c *PluckContext[T, S]) Lock(lockType LockType) *PluckContext[T, S] {
 	if c.lockType != none {
 		c.addError(errors.New("lock already set"))
 		return c
@@ -120,7 +118,7 @@ func (c *PruneContext[Table, ExprType]) Lock(lockType LockType) *PruneContext[Ta
 	return c
 }
 
-func (c *PruneContext[Table, ExprType]) FindCtx(ctx context.Context, db DB) ([]ExprType, error) {
+func (c *PluckContext[T, S]) FindCtx(ctx context.Context, db DB) ([]S, error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return nil, errs[0]
@@ -138,16 +136,16 @@ func (c *PruneContext[Table, ExprType]) FindCtx(ctx context.Context, db DB) ([]E
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, genorm.ErrRecordNotFound
+		return nil, ErrRecordNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
 	defer rows.Close()
 
-	exprs := []ExprType{}
+	exprs := []S{}
 	for rows.Next() {
-		var expr ExprType
+		var expr S
 
 		err := rows.Scan(&expr)
 		if err != nil {
@@ -160,12 +158,12 @@ func (c *PruneContext[Table, ExprType]) FindCtx(ctx context.Context, db DB) ([]E
 	return exprs, nil
 }
 
-func (c *PruneContext[Table, ExprType]) Find(db DB) ([]ExprType, error) {
+func (c *PluckContext[T, S]) Find(db DB) ([]S, error) {
 	return c.FindCtx(context.Background(), db)
 }
 
-func (c *PruneContext[Table, ExprType]) TakeCtx(ctx context.Context, db DB) (ExprType, error) {
-	var res ExprType
+func (c *PluckContext[T, S]) TakeCtx(ctx context.Context, db DB) (S, error) {
+	var res S
 
 	err := c.limit.set(1)
 	if err != nil {
@@ -191,7 +189,7 @@ func (c *PruneContext[Table, ExprType]) TakeCtx(ctx context.Context, db DB) (Exp
 
 	err = row.Scan(&res)
 	if errors.Is(err, sql.ErrNoRows) {
-		return res, genorm.ErrRecordNotFound
+		return res, ErrRecordNotFound
 	}
 	if err != nil {
 		return res, fmt.Errorf("query: %w", err)
@@ -200,13 +198,13 @@ func (c *PruneContext[Table, ExprType]) TakeCtx(ctx context.Context, db DB) (Exp
 	return res, nil
 }
 
-func (c *PruneContext[Table, ExprType]) Take(db DB) (ExprType, error) {
+func (c *PluckContext[T, S]) Take(db DB) (S, error) {
 	return c.TakeCtx(context.Background(), db)
 }
 
-func (c *PruneContext[Table, ExprType]) buildQuery() (string, []genorm.ExprType, error) {
+func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 	sb := strings.Builder{}
-	args := []genorm.ExprType{}
+	args := []ExprType{}
 
 	sb.WriteString("SELECT ")
 
