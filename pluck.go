@@ -206,28 +206,54 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 	sb := strings.Builder{}
 	args := []ExprType{}
 
-	sb.WriteString("SELECT ")
+	str := "SELECT "
+	_, err := sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write select(%s): %w", str, err)
+	}
 
 	if c.distinct {
-		sb.WriteString("DISTINCT ")
+		str = "DISTINCT "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write distinct(%s): %w", str, err)
+		}
 	}
 
 	fieldQuery, fieldArgs, errs := c.field.Expr()
 	if len(errs) != 0 {
 		return "", nil, fmt.Errorf("field: %w", errs[0])
 	}
-	sb.WriteString(fieldQuery)
-	sb.WriteString(" AS res")
+
+	_, err = sb.WriteString(fieldQuery)
+	if err != nil {
+		return "", nil, fmt.Errorf("write field(%s): %w", fieldQuery, err)
+	}
+
+	str = " AS res"
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write as(%s): %w", str, err)
+	}
+
 	args = append(args, fieldArgs...)
 
-	sb.WriteString(" FROM ")
+	str = " FROM "
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write from(%s): %w", str, err)
+	}
 
 	tableQuery, tableArgs, errs := c.table.Expr()
 	if len(errs) != 0 {
 		return "", nil, fmt.Errorf("table expr: %w", errs[0])
 	}
 
-	sb.WriteString(tableQuery)
+	_, err = sb.WriteString(tableQuery)
+	if err != nil {
+		return "", nil, fmt.Errorf("write table(%s): %w", tableQuery, err)
+	}
+
 	args = append(args, tableArgs...)
 
 	if c.whereCondition.exists() {
@@ -236,13 +262,26 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("where condition: %w", err)
 		}
 
-		sb.WriteString(" WHERE ")
-		sb.WriteString(whereQuery)
+		str = " WHERE "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write where(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(whereQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write where(%s): %w", whereQuery, err)
+		}
+
 		args = append(args, whereArgs...)
 	}
 
 	if len(c.groupExpr) != 0 {
-		sb.WriteString(" GROUP BY ")
+		str = " GROUP BY "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write group by(%s): %w", str, err)
+		}
 
 		groupQueries := make([]string, 0, len(c.groupExpr))
 		for _, groupExpr := range c.groupExpr {
@@ -255,7 +294,11 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 			args = append(args, groupArgs...)
 		}
 
-		sb.WriteString(strings.Join(groupQueries, ", "))
+		str = strings.Join(groupQueries, ", ")
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write group by(%s): %w", str, err)
+		}
 	}
 
 	if c.havingCondition.exists() {
@@ -264,8 +307,17 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("having condition: %w", err)
 		}
 
-		sb.WriteString(" HAVING ")
-		sb.WriteString(havingQuery)
+		str = " HAVING "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write having(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(havingQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write having(%s): %w", havingQuery, err)
+		}
+
 		args = append(args, havingArgs...)
 	}
 
@@ -275,8 +327,17 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("order: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(orderQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write order(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(orderQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write order(%s): %w", orderQuery, err)
+		}
+
 		args = append(args, orderArgs...)
 	}
 
@@ -286,8 +347,17 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("limit: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(limitQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write limit(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(limitQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write limit(%s): %w", limitQuery, err)
+		}
+
 		args = append(args, limitArgs...)
 	}
 
@@ -297,17 +367,34 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 			return "", nil, fmt.Errorf("offset: %w", err)
 		}
 
-		sb.WriteString(" ")
-		sb.WriteString(offsetQuery)
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write offset(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(offsetQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write offset(%s): %w", offsetQuery, err)
+		}
+
 		args = append(args, offsetArgs...)
 	}
 
 	if c.lockType != none {
 		switch c.lockType {
 		case ForUpdate:
-			sb.WriteString(" FOR UPDATE")
+			str = " FOR UPDATE"
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return "", nil, fmt.Errorf("write for update(%s): %w", str, err)
+			}
 		case ForShare:
-			sb.WriteString(" FOR SHARE")
+			str = " FOR SHARE"
+			_, err = sb.WriteString(str)
+			if err != nil {
+				return "", nil, fmt.Errorf("write for share(%s): %w", str, err)
+			}
 		}
 	}
 
