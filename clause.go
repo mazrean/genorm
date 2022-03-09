@@ -145,3 +145,45 @@ func (o *offsetClause) exists() bool {
 func (o *offsetClause) getExpr() (string, []ExprType, error) {
 	return fmt.Sprintf("OFFSET %d", o.offset), nil, nil
 }
+
+type lockClause struct {
+	lockType LockType
+}
+
+type LockType uint8
+
+const (
+	none LockType = iota
+	ForUpdate
+	ForShare
+)
+
+func (l *lockClause) set(lockType LockType) error {
+	if l.lockType != none {
+		return errors.New("lock type already set")
+	}
+	if lockType != ForUpdate && lockType != ForShare {
+		return errors.New("invalid lock type")
+	}
+
+	l.lockType = lockType
+
+	return nil
+}
+
+func (l *lockClause) exists() bool {
+	return l.lockType != none
+}
+
+func (l *lockClause) getExpr() (string, []ExprType, error) {
+	switch l.lockType {
+	case ForUpdate:
+		return "FOR UPDATE", nil, nil
+	case ForShare:
+		return "FOR SHARE", nil, nil
+	case none:
+		return "", nil, nil
+	}
+
+	return "", nil, errors.New("invalid lock type")
+}

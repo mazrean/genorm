@@ -18,7 +18,7 @@ type SelectContext[T Table] struct {
 	order           orderClause[T]
 	limit           limitClause
 	offset          offsetClause
-	lockType        LockType
+	lockType        lockClause
 }
 
 func Select[T Table](table T) *SelectContext[T] {
@@ -26,14 +26,6 @@ func Select[T Table](table T) *SelectContext[T] {
 		Context: newContext(table),
 	}
 }
-
-type LockType uint8
-
-const (
-	none LockType = iota
-	ForUpdate
-	ForShare
-)
 
 func (c *SelectContext[Table]) Distinct() *SelectContext[Table] {
 	if c.distinct {
@@ -136,17 +128,10 @@ func (c *SelectContext[Table]) Offset(offset uint64) *SelectContext[Table] {
 }
 
 func (c *SelectContext[Table]) Lock(lockType LockType) *SelectContext[Table] {
-	if c.lockType != none {
-		c.addError(errors.New("lock already set"))
-		return c
+	err := c.lockType.set(lockType)
+	if err != nil {
+		c.addError(fmt.Errorf("lockType: %w", err))
 	}
-
-	if lockType != ForUpdate && lockType != ForShare {
-		c.addError(errors.New("invalid lock type"))
-		return c
-	}
-
-	c.lockType = lockType
 
 	return c
 }
@@ -465,21 +450,24 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 		args = append(args, offsetArgs...)
 	}
 
-	if c.lockType != none {
-		switch c.lockType {
-		case ForUpdate:
-			str = " FOR UPDATE"
-			_, err = sb.WriteString(str)
-			if err != nil {
-				return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
-			}
-		case ForShare:
-			str = " FOR SHARE"
-			_, err = sb.WriteString(str)
-			if err != nil {
-				return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
-			}
+	if c.lockType.exists() {
+		lockQuery, lockArgs, err := c.lockType.getExpr()
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("lock: %w", err)
 		}
+
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(lockQuery)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", lockQuery, err)
+		}
+
+		args = append(args, lockArgs...)
 	}
 
 	return columns, sb.String(), args, nil
