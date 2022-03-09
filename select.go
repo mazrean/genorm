@@ -13,7 +13,7 @@ type SelectContext[T Table] struct {
 	distinct        bool
 	fields          []TableColumns[T]
 	whereCondition  whereConditionClause[T]
-	groupExpr       []TableExpr[T]
+	groupExpr       groupClause[T]
 	havingCondition whereConditionClause[T]
 	order           orderClause[T]
 	limit           limitClause
@@ -76,12 +76,10 @@ func (c *SelectContext[Table]) Where(
 }
 
 func (c *SelectContext[Table]) GroupBy(exprs ...TableExpr[Table]) *SelectContext[Table] {
-	if len(exprs) == 0 {
-		c.addError(errors.New("no group expr"))
-		return c
+	err := c.groupExpr.set(exprs)
+	if err != nil {
+		c.addError(fmt.Errorf("group by: %w", err))
 	}
-
-	c.groupExpr = append(c.groupExpr, exprs...)
 
 	return c
 }
@@ -345,29 +343,24 @@ func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error
 		args = append(args, whereArgs...)
 	}
 
-	if len(c.groupExpr) != 0 {
-		str = " GROUP BY "
+	if c.groupExpr.exists() {
+		groupExpr, groupArgs, err := c.groupExpr.getExpr()
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("group expr: %w", err)
+		}
+
+		str = " "
 		_, err = sb.WriteString(str)
 		if err != nil {
 			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		groupQueries := make([]string, 0, len(c.groupExpr))
-		for _, groupExpr := range c.groupExpr {
-			groupQuery, groupArgs, errs := groupExpr.Expr()
-			if len(errs) != 0 {
-				return nil, "", nil, errs[0]
-			}
-
-			groupQueries = append(groupQueries, groupQuery)
-			args = append(args, groupArgs...)
-		}
-
-		str = strings.Join(groupQueries, ", ")
-		_, err = sb.WriteString(str)
+		_, err = sb.WriteString(groupExpr)
 		if err != nil {
-			return nil, "", nil, fmt.Errorf("write string(%s): %w", str, err)
+			return nil, "", nil, fmt.Errorf("write string(%s): %w", groupExpr, err)
 		}
+
+		args = append(args, groupArgs...)
 	}
 
 	if c.havingCondition.exists() {
