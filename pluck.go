@@ -18,7 +18,7 @@ type PluckContext[T Table, S ExprType] struct {
 	order           orderClause[T]
 	limit           limitClause
 	offset          offsetClause
-	lockType        LockType
+	lockType        lockClause
 }
 
 func Pluck[T Table, S ExprType](table T, field TypedTableExpr[T, S]) *PluckContext[T, S] {
@@ -103,17 +103,10 @@ func (c *PluckContext[T, S]) Offset(offset uint64) *PluckContext[T, S] {
 }
 
 func (c *PluckContext[T, S]) Lock(lockType LockType) *PluckContext[T, S] {
-	if c.lockType != none {
-		c.addError(errors.New("lock already set"))
-		return c
+	err := c.lockType.set(lockType)
+	if err != nil {
+		c.addError(fmt.Errorf("lock: %w", err))
 	}
-
-	if lockType != ForUpdate && lockType != ForShare {
-		c.addError(errors.New("invalid lock type"))
-		return c
-	}
-
-	c.lockType = lockType
 
 	return c
 }
@@ -381,21 +374,24 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		args = append(args, offsetArgs...)
 	}
 
-	if c.lockType != none {
-		switch c.lockType {
-		case ForUpdate:
-			str = " FOR UPDATE"
-			_, err = sb.WriteString(str)
-			if err != nil {
-				return "", nil, fmt.Errorf("write for update(%s): %w", str, err)
-			}
-		case ForShare:
-			str = " FOR SHARE"
-			_, err = sb.WriteString(str)
-			if err != nil {
-				return "", nil, fmt.Errorf("write for share(%s): %w", str, err)
-			}
+	if c.lockType.exists() {
+		lockQuery, lockArgs, err := c.lockType.getExpr()
+		if err != nil {
+			return "", nil, fmt.Errorf("lock type: %w", err)
 		}
+
+		str = " "
+		_, err = sb.WriteString(str)
+		if err != nil {
+			return "", nil, fmt.Errorf("write lock(%s): %w", str, err)
+		}
+
+		_, err = sb.WriteString(lockQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write lock(%s): %w", lockQuery, err)
+		}
+
+		args = append(args, lockArgs...)
 	}
 
 	return sb.String(), args, nil
