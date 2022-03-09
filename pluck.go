@@ -127,7 +127,7 @@ func (c *PluckContext[T, S]) FindCtx(ctx context.Context, db DB) ([]S, error) {
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrRecordNotFound
+		return []S{}, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)

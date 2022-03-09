@@ -152,7 +152,7 @@ func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, err
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrRecordNotFound
+		return []Table{}, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
