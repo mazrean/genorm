@@ -36,6 +36,43 @@ func (c *whereConditionClause[Table]) getExpr() (string, []ExprType, error) {
 	return query, args, nil
 }
 
+type groupClause[T Table] struct {
+	exprs []TableExpr[T]
+}
+
+func (c *groupClause[T]) set(exprs []TableExpr[T]) error {
+	if len(c.exprs) != 0 {
+		return errors.New("group by already set")
+	}
+	if len(exprs) == 0 {
+		return errors.New("empty group by")
+	}
+
+	c.exprs = exprs
+
+	return nil
+}
+
+func (c *groupClause[_]) exists() bool {
+	return len(c.exprs) != 0
+}
+
+func (c *groupClause[T]) getExpr() (string, []ExprType, error) {
+	queries := make([]string, 0, len(c.exprs))
+	args := []ExprType{}
+	for _, expr := range c.exprs {
+		groupQuery, groupArgs, errs := expr.Expr()
+		if len(errs) != 0 {
+			return "", nil, errs[0]
+		}
+
+		queries = append(queries, groupQuery)
+		args = append(args, groupArgs...)
+	}
+
+	return "GROUP BY " + strings.Join(queries, ", "), args, nil
+}
+
 type orderClause[T Table] struct {
 	orderExprs []orderItem[T]
 }
