@@ -134,7 +134,7 @@ func (c *SelectContext[T]) Lock(lockType LockType) *SelectContext[T] {
 	return c
 }
 
-func (c *SelectContext[T]) FindCtx(ctx context.Context, db DB) ([]T, error) {
+func (c *SelectContext[T]) GetAllCtx(ctx context.Context, db DB) ([]T, error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return nil, errs[0]
@@ -193,11 +193,11 @@ func (c *SelectContext[T]) FindCtx(ctx context.Context, db DB) ([]T, error) {
 	return tables, nil
 }
 
-func (c *SelectContext[T]) Find(db DB) ([]T, error) {
-	return c.FindCtx(context.Background(), db)
+func (c *SelectContext[T]) GetAll(db DB) ([]T, error) {
+	return c.GetAllCtx(context.Background(), db)
 }
 
-func (c *SelectContext[T]) TakeCtx(ctx context.Context, db DB) (T, error) {
+func (c *SelectContext[T]) GetCtx(ctx context.Context, db DB) (T, error) {
 	var table T
 
 	err := c.limit.set(1)
@@ -253,8 +253,8 @@ func (c *SelectContext[T]) TakeCtx(ctx context.Context, db DB) (T, error) {
 	return table, nil
 }
 
-func (c *SelectContext[T]) Take(db DB) (T, error) {
-	return c.TakeCtx(context.Background(), db)
+func (c *SelectContext[T]) Get(db DB) (T, error) {
+	return c.GetCtx(context.Background(), db)
 }
 
 func (c *SelectContext[T]) buildQuery() ([]Column, string, []ExprType, error) {
