@@ -10,7 +10,7 @@ type whereConditionClause[T Table] struct {
 	condition TypedTableExpr[T, WrappedPrimitive[bool]]
 }
 
-func (c *whereConditionClause[Table]) set(condition TypedTableExpr[Table, WrappedPrimitive[bool]]) error {
+func (c *whereConditionClause[T]) set(condition TypedTableExpr[T, WrappedPrimitive[bool]]) error {
 	if c.condition != nil {
 		return errors.New("where conditions already set")
 	}
@@ -23,11 +23,11 @@ func (c *whereConditionClause[Table]) set(condition TypedTableExpr[Table, Wrappe
 	return nil
 }
 
-func (c *whereConditionClause[Table]) exists() bool {
+func (c *whereConditionClause[T]) exists() bool {
 	return c.condition != nil
 }
 
-func (c *whereConditionClause[Table]) getExpr() (string, []ExprType, error) {
+func (c *whereConditionClause[T]) getExpr() (string, []ExprType, error) {
 	query, args, errs := c.condition.Expr()
 	if len(errs) != 0 {
 		return "", nil, errs[0]
@@ -89,7 +89,7 @@ const (
 	Desc
 )
 
-func (c *orderClause[Table]) add(item orderItem[Table]) error {
+func (c *orderClause[T]) add(item orderItem[T]) error {
 	if item.expr == nil {
 		return errors.New("empty order expr")
 	}
@@ -103,11 +103,11 @@ func (c *orderClause[Table]) add(item orderItem[Table]) error {
 	return nil
 }
 
-func (c *orderClause[Table]) exists() bool {
+func (c *orderClause[T]) exists() bool {
 	return len(c.orderExprs) != 0
 }
 
-func (c *orderClause[Table]) getExpr() (string, []ExprType, error) {
+func (c *orderClause[T]) getExpr() (string, []ExprType, error) {
 	args := []ExprType{}
 	orderQueries := make([]string, 0, len(c.orderExprs))
 	for _, orderItem := range c.orderExprs {

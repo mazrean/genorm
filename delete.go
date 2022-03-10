@@ -21,9 +21,9 @@ func Delete[T BasicTable](table T) *DeleteContext[T] {
 	}
 }
 
-func (c *DeleteContext[Table]) Where(
-	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
-) *DeleteContext[Table] {
+func (c *DeleteContext[T]) Where(
+	condition TypedTableExpr[T, WrappedPrimitive[bool]],
+) *DeleteContext[T] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -32,8 +32,8 @@ func (c *DeleteContext[Table]) Where(
 	return c
 }
 
-func (c *DeleteContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[Table]) *DeleteContext[Table] {
-	err := c.order.add(orderItem[Table]{
+func (c *DeleteContext[T]) OrderBy(direction OrderDirection, expr TableExpr[T]) *DeleteContext[T] {
+	err := c.order.add(orderItem[T]{
 		expr:      expr,
 		direction: direction,
 	})
@@ -44,7 +44,7 @@ func (c *DeleteContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[
 	return c
 }
 
-func (c *DeleteContext[Table]) Limit(limit uint64) *DeleteContext[Table] {
+func (c *DeleteContext[T]) Limit(limit uint64) *DeleteContext[T] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -53,7 +53,7 @@ func (c *DeleteContext[Table]) Limit(limit uint64) *DeleteContext[Table] {
 	return c
 }
 
-func (c *DeleteContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
+func (c *DeleteContext[T]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -82,11 +82,11 @@ func (c *DeleteContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected i
 	return rowsAffected, nil
 }
 
-func (c *DeleteContext[Table]) Do(db DB) (rowsAffected int64, err error) {
+func (c *DeleteContext[T]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 
-func (c *DeleteContext[Table]) buildQuery() (string, []ExprType, error) {
+func (c *DeleteContext[T]) buildQuery() (string, []ExprType, error) {
 	args := []ExprType{}
 
 	sb := strings.Builder{}
