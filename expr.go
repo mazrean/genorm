@@ -55,10 +55,10 @@ func (es *ExprStruct[_, _]) Expr() (string, []ExprType, []error) {
 	return es.query, es.args, nil
 }
 
-func (es *ExprStruct[Table, _]) TableExpr(Table) (string, []ExprType, []error) {
+func (es *ExprStruct[T, _]) TableExpr(T) (string, []ExprType, []error) {
 	return es.Expr()
 }
 
-func (es *ExprStruct[_, Type]) TypedExpr(Type) (string, []ExprType, []error) {
+func (es *ExprStruct[_, S]) TypedExpr(S) (string, []ExprType, []error) {
 	return es.Expr()
 }

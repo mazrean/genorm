@@ -22,7 +22,7 @@ func Insert[T BasicTable](table T) *InsertContext[T] {
 	}
 }
 
-func (c *InsertContext[Table]) Values(tableBases ...Table) *InsertContext[Table] {
+func (c *InsertContext[T]) Values(tableBases ...T) *InsertContext[T] {
 	if len(tableBases) == 0 {
 		c.addError(errors.New("no values"))
 
@@ -39,7 +39,7 @@ func (c *InsertContext[Table]) Values(tableBases ...Table) *InsertContext[Table]
 	return c
 }
 
-func (c *InsertContext[Table]) Fields(fields ...TableColumns[Table]) *InsertContext[Table] {
+func (c *InsertContext[T]) Fields(fields ...TableColumns[T]) *InsertContext[T] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -50,7 +50,7 @@ func (c *InsertContext[Table]) Fields(fields ...TableColumns[Table]) *InsertCont
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[TableColumns[Table]]struct{}, len(fields))
+	fieldMap := make(map[TableColumns[T]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -65,7 +65,7 @@ func (c *InsertContext[Table]) Fields(fields ...TableColumns[Table]) *InsertCont
 	return c
 }
 
-func (c *InsertContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
+func (c *InsertContext[T]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -89,11 +89,11 @@ func (c *InsertContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected i
 	return rowsAffected, nil
 }
 
-func (c *InsertContext[Table]) Do(db DB) (rowsAffected int64, err error) {
+func (c *InsertContext[T]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 
-func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
+func (c *InsertContext[T]) buildQuery() (string, []any, error) {
 	args := []any{}
 
 	sb := &strings.Builder{}
@@ -152,7 +152,7 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 		}
 
 		var val any = value
-		basicTable, ok := val.(Table)
+		basicTable, ok := val.(T)
 		if !ok {
 			return "", nil, errors.New("failed to cast value to basic table")
 		}
@@ -167,7 +167,7 @@ func (c *InsertContext[Table]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *InsertContext[Table]) buildValueList(sb *strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnFieldExprType) (*strings.Builder, []any, error) {
+func (c *InsertContext[T]) buildValueList(sb *strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnFieldExprType) (*strings.Builder, []any, error) {
 	str := "("
 	_, err := sb.WriteString(str)
 	if err != nil {

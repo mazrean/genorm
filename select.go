@@ -27,7 +27,7 @@ func Select[T Table](table T) *SelectContext[T] {
 	}
 }
 
-func (c *SelectContext[Table]) Distinct() *SelectContext[Table] {
+func (c *SelectContext[T]) Distinct() *SelectContext[T] {
 	if c.distinct {
 		c.addError(errors.New("distinct already set"))
 		return c
@@ -38,7 +38,7 @@ func (c *SelectContext[Table]) Distinct() *SelectContext[Table] {
 	return c
 }
 
-func (c *SelectContext[Table]) Fields(fields ...TableColumns[Table]) *SelectContext[Table] {
+func (c *SelectContext[T]) Fields(fields ...TableColumns[T]) *SelectContext[T] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -49,7 +49,7 @@ func (c *SelectContext[Table]) Fields(fields ...TableColumns[Table]) *SelectCont
 	}
 
 	fields = append(c.fields, fields...)
-	fieldMap := make(map[TableColumns[Table]]struct{}, len(fields))
+	fieldMap := make(map[TableColumns[T]]struct{}, len(fields))
 	for _, field := range fields {
 		if _, ok := fieldMap[field]; ok {
 			c.addError(errors.New("duplicate field"))
@@ -64,9 +64,9 @@ func (c *SelectContext[Table]) Fields(fields ...TableColumns[Table]) *SelectCont
 	return c
 }
 
-func (c *SelectContext[Table]) Where(
-	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
-) *SelectContext[Table] {
+func (c *SelectContext[T]) Where(
+	condition TypedTableExpr[T, WrappedPrimitive[bool]],
+) *SelectContext[T] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -75,7 +75,7 @@ func (c *SelectContext[Table]) Where(
 	return c
 }
 
-func (c *SelectContext[Table]) GroupBy(exprs ...TableExpr[Table]) *SelectContext[Table] {
+func (c *SelectContext[T]) GroupBy(exprs ...TableExpr[T]) *SelectContext[T] {
 	err := c.groupExpr.set(exprs)
 	if err != nil {
 		c.addError(fmt.Errorf("group by: %w", err))
@@ -84,9 +84,9 @@ func (c *SelectContext[Table]) GroupBy(exprs ...TableExpr[Table]) *SelectContext
 	return c
 }
 
-func (c *SelectContext[Table]) Having(
-	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
-) *SelectContext[Table] {
+func (c *SelectContext[T]) Having(
+	condition TypedTableExpr[T, WrappedPrimitive[bool]],
+) *SelectContext[T] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("having condition: %w", err))
@@ -95,8 +95,8 @@ func (c *SelectContext[Table]) Having(
 	return c
 }
 
-func (c *SelectContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[Table]) *SelectContext[Table] {
-	err := c.order.add(orderItem[Table]{
+func (c *SelectContext[T]) OrderBy(direction OrderDirection, expr TableExpr[T]) *SelectContext[T] {
+	err := c.order.add(orderItem[T]{
 		expr:      expr,
 		direction: direction,
 	})
@@ -107,7 +107,7 @@ func (c *SelectContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[
 	return c
 }
 
-func (c *SelectContext[Table]) Limit(limit uint64) *SelectContext[Table] {
+func (c *SelectContext[T]) Limit(limit uint64) *SelectContext[T] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -116,7 +116,7 @@ func (c *SelectContext[Table]) Limit(limit uint64) *SelectContext[Table] {
 	return c
 }
 
-func (c *SelectContext[Table]) Offset(offset uint64) *SelectContext[Table] {
+func (c *SelectContext[T]) Offset(offset uint64) *SelectContext[T] {
 	err := c.offset.set(offset)
 	if err != nil {
 		c.addError(fmt.Errorf("offset: %w", err))
@@ -125,7 +125,7 @@ func (c *SelectContext[Table]) Offset(offset uint64) *SelectContext[Table] {
 	return c
 }
 
-func (c *SelectContext[Table]) Lock(lockType LockType) *SelectContext[Table] {
+func (c *SelectContext[T]) Lock(lockType LockType) *SelectContext[T] {
 	err := c.lockType.set(lockType)
 	if err != nil {
 		c.addError(fmt.Errorf("lockType: %w", err))
@@ -134,7 +134,7 @@ func (c *SelectContext[Table]) Lock(lockType LockType) *SelectContext[Table] {
 	return c
 }
 
-func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, error) {
+func (c *SelectContext[T]) FindCtx(ctx context.Context, db DB) ([]T, error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return nil, errs[0]
@@ -152,19 +152,19 @@ func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, err
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
-		return []Table{}, nil
+		return []T{}, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("query: %w", err)
 	}
 	defer rows.Close()
 
-	tables := []Table{}
+	tables := []T{}
 	for rows.Next() {
-		var table Table
+		var table T
 		iTable := table.New()
 		switch v := iTable.(type) {
-		case Table:
+		case T:
 			table = v
 		default:
 			return nil, fmt.Errorf("invalid table type: %T", iTable)
@@ -193,12 +193,12 @@ func (c *SelectContext[Table]) FindCtx(ctx context.Context, db DB) ([]Table, err
 	return tables, nil
 }
 
-func (c *SelectContext[Table]) Find(db DB) ([]Table, error) {
+func (c *SelectContext[T]) Find(db DB) ([]T, error) {
 	return c.FindCtx(context.Background(), db)
 }
 
-func (c *SelectContext[Table]) TakeCtx(ctx context.Context, db DB) (Table, error) {
-	var table Table
+func (c *SelectContext[T]) TakeCtx(ctx context.Context, db DB) (T, error) {
+	var table T
 
 	err := c.limit.set(1)
 	if err != nil {
@@ -224,7 +224,7 @@ func (c *SelectContext[Table]) TakeCtx(ctx context.Context, db DB) (Table, error
 
 	iTable := table.New()
 	switch v := iTable.(type) {
-	case Table:
+	case T:
 		table = v
 	default:
 		return table, fmt.Errorf("invalid table type: %T", iTable)
@@ -253,11 +253,11 @@ func (c *SelectContext[Table]) TakeCtx(ctx context.Context, db DB) (Table, error
 	return table, nil
 }
 
-func (c *SelectContext[Table]) Take(db DB) (Table, error) {
+func (c *SelectContext[T]) Take(db DB) (T, error) {
 	return c.TakeCtx(context.Background(), db)
 }
 
-func (c *SelectContext[Table]) buildQuery() ([]Column, string, []ExprType, error) {
+func (c *SelectContext[T]) buildQuery() ([]Column, string, []ExprType, error) {
 	sb := strings.Builder{}
 	args := []ExprType{}
 

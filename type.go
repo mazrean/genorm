@@ -190,6 +190,6 @@ func (wp WrappedPrimitive[_]) Value() (driver.Value, error) {
 	return wp.val, nil
 }
 
-func (wp WrappedPrimitive[Type]) Val() (Type, bool) {
+func (wp WrappedPrimitive[T]) Val() (T, bool) {
 	return wp.val, wp.valid
 }

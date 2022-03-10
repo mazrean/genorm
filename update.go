@@ -23,7 +23,7 @@ func Update[T Table](table T) *UpdateContext[T] {
 	}
 }
 
-func (c *UpdateContext[Table]) Set(assignExprs ...*TableAssignExpr[Table]) (res *UpdateContext[Table]) {
+func (c *UpdateContext[T]) Set(assignExprs ...*TableAssignExpr[T]) (res *UpdateContext[T]) {
 	if len(assignExprs) == 0 {
 		c.addError(errors.New("no assign expressions"))
 		return c
@@ -34,9 +34,9 @@ func (c *UpdateContext[Table]) Set(assignExprs ...*TableAssignExpr[Table]) (res 
 	return c
 }
 
-func (c *UpdateContext[Table]) Where(
-	condition TypedTableExpr[Table, WrappedPrimitive[bool]],
-) *UpdateContext[Table] {
+func (c *UpdateContext[T]) Where(
+	condition TypedTableExpr[T, WrappedPrimitive[bool]],
+) *UpdateContext[T] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -45,8 +45,8 @@ func (c *UpdateContext[Table]) Where(
 	return c
 }
 
-func (c *UpdateContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[Table]) *UpdateContext[Table] {
-	err := c.order.add(orderItem[Table]{
+func (c *UpdateContext[T]) OrderBy(direction OrderDirection, expr TableExpr[T]) *UpdateContext[T] {
+	err := c.order.add(orderItem[T]{
 		expr:      expr,
 		direction: direction,
 	})
@@ -57,7 +57,7 @@ func (c *UpdateContext[Table]) OrderBy(direction OrderDirection, expr TableExpr[
 	return c
 }
 
-func (c *UpdateContext[Table]) Limit(limit uint64) *UpdateContext[Table] {
+func (c *UpdateContext[T]) Limit(limit uint64) *UpdateContext[T] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -66,7 +66,7 @@ func (c *UpdateContext[Table]) Limit(limit uint64) *UpdateContext[Table] {
 	return c
 }
 
-func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
+func (c *UpdateContext[T]) DoCtx(ctx context.Context, db DB) (rowsAffected int64, err error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return 0, errs[0]
@@ -95,11 +95,11 @@ func (c *UpdateContext[Table]) DoCtx(ctx context.Context, db DB) (rowsAffected i
 	return rowsAffected, nil
 }
 
-func (c *UpdateContext[Table]) Do(db DB) (rowsAffected int64, err error) {
+func (c *UpdateContext[T]) Do(db DB) (rowsAffected int64, err error) {
 	return c.DoCtx(context.Background(), db)
 }
 
-func (c *UpdateContext[Table]) buildQuery() (string, []ExprType, error) {
+func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 	args := []ExprType{}
 
 	sb := strings.Builder{}
