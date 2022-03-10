@@ -109,7 +109,7 @@ func (c *PluckContext[T, S]) Lock(lockType LockType) *PluckContext[T, S] {
 	return c
 }
 
-func (c *PluckContext[T, S]) FindCtx(ctx context.Context, db DB) ([]S, error) {
+func (c *PluckContext[T, S]) GetAllCtx(ctx context.Context, db DB) ([]S, error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return nil, errs[0]
@@ -149,11 +149,11 @@ func (c *PluckContext[T, S]) FindCtx(ctx context.Context, db DB) ([]S, error) {
 	return exprs, nil
 }
 
-func (c *PluckContext[T, S]) Find(db DB) ([]S, error) {
-	return c.FindCtx(context.Background(), db)
+func (c *PluckContext[T, S]) GetAll(db DB) ([]S, error) {
+	return c.GetAllCtx(context.Background(), db)
 }
 
-func (c *PluckContext[T, S]) TakeCtx(ctx context.Context, db DB) (S, error) {
+func (c *PluckContext[T, S]) GetCtx(ctx context.Context, db DB) (S, error) {
 	var res S
 
 	err := c.limit.set(1)
@@ -189,8 +189,8 @@ func (c *PluckContext[T, S]) TakeCtx(ctx context.Context, db DB) (S, error) {
 	return res, nil
 }
 
-func (c *PluckContext[T, S]) Take(db DB) (S, error) {
-	return c.TakeCtx(context.Background(), db)
+func (c *PluckContext[T, S]) Get(db DB) (S, error) {
+	return c.GetCtx(context.Background(), db)
 }
 
 func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
