@@ -7,6 +7,11 @@ import (
 
 // Aggregate Functions
 
+/*
+	Avg
+	if (distinct) {return AVG(DISTINCT expr)}
+	else {return AVG(expr)}
+*/
 func Avg[T Table, S ExprType](expr TypedTableExpr[T, S], distinct bool) TypedTableExpr[T, WrappedPrimitive[float64]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[float64]]{
@@ -33,6 +38,11 @@ func Avg[T Table, S ExprType](expr TypedTableExpr[T, S], distinct bool) TypedTab
 	}
 }
 
+/*
+	Count
+	if (distinct) {return COUNT(DISTINCT expr)}
+	else {return COUNT(expr)}
+*/
 func Count[T Table, S ExprType](expr TypedTableExpr[T, S], distinct bool) TypedTableExpr[T, WrappedPrimitive[int64]] {
 	if expr == nil {
 		return &ExprStruct[T, WrappedPrimitive[int64]]{
@@ -59,6 +69,7 @@ func Count[T Table, S ExprType](expr TypedTableExpr[T, S], distinct bool) TypedT
 	}
 }
 
+// Max MAX(expr)
 func Max[T Table, S ExprType](expr TypedTableExpr[T, S]) TypedTableExpr[T, S] {
 	if expr == nil {
 		return &ExprStruct[T, S]{
@@ -79,6 +90,7 @@ func Max[T Table, S ExprType](expr TypedTableExpr[T, S]) TypedTableExpr[T, S] {
 	}
 }
 
+// Min MIN(expr)
 func Min[T Table, S ExprType](expr TypedTableExpr[T, S]) TypedTableExpr[T, S] {
 	if expr == nil {
 		return &ExprStruct[T, S]{
