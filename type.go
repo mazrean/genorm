@@ -36,7 +36,7 @@ func Wrap[T ExprPrimitive](val T) WrappedPrimitive[T] {
 	}
 }
 
-func (wp *WrappedPrimitive[Type]) Scan(src any) error {
+func (wp *WrappedPrimitive[T]) Scan(src any) error {
 	var dest any = wp.val
 	switch dest.(type) {
 	case bool:
@@ -174,7 +174,7 @@ func (wp *WrappedPrimitive[Type]) Scan(src any) error {
 	}
 
 	var ok bool
-	wp.val, ok = dest.(Type)
+	wp.val, ok = dest.(T)
 	if !ok {
 		return errors.New("failed to convert")
 	}
