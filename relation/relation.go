@@ -20,6 +20,7 @@ func NewRelationContext[S Table, T Table, U JoinedTable](baseTable S, refTable T
 	}
 }
 
+// Join INNER JOIN(CROSS JOIN)
 func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(
 	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
 ) JoinedTable {
@@ -43,6 +44,7 @@ func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(
 	return joinedTable
 }
 
+// LeftJoin LEFT JOIN
 func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(
 	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
 ) JoinedTable {
@@ -66,6 +68,7 @@ func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(
 	return joinedTable
 }
 
+// RightJoin RIGHT JOIN
 func (r *RelationContext[BaseTable, RefTable, JoinedTable]) RightJoin(
 	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
 ) JoinedTable {

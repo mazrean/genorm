@@ -8,6 +8,7 @@ import (
 
 // Assign Operators
 
+// Assign expr1 = expr2
 func Assign[T Table, S ExprType](
 	expr1 TypedTableColumns[T, S],
 	expr2 TypedTableExpr[T, S],
@@ -32,6 +33,7 @@ func Assign[T Table, S ExprType](
 	}
 }
 
+// AssignLit expr = literal
 func AssignLit[T Table, S ExprType](
 	expr TypedTableColumns[T, S],
 	literal S,
@@ -57,6 +59,7 @@ func AssignLit[T Table, S ExprType](
 
 // Logical Operators
 
+// And (expr1 AND expr2)
 func And[T Table](
 	expr1 TypedTableExpr[T, WrappedPrimitive[bool]],
 	expr2 TypedTableExpr[T, WrappedPrimitive[bool]],
@@ -81,6 +84,7 @@ func And[T Table](
 	}
 }
 
+// Or (expr1 OR expr2)
 func Or[T Table](
 	expr1 TypedTableExpr[T, WrappedPrimitive[bool]],
 	expr2 TypedTableExpr[T, WrappedPrimitive[bool]],
@@ -105,6 +109,7 @@ func Or[T Table](
 	}
 }
 
+// Xor (expr1 XOR expr2)
 func Xor[T Table](
 	expr1 TypedTableExpr[T, WrappedPrimitive[bool]],
 	expr2 TypedTableExpr[T, WrappedPrimitive[bool]],
@@ -129,6 +134,7 @@ func Xor[T Table](
 	}
 }
 
+// Not (NOT expr)
 func Not[T Table](
 	expr TypedTableExpr[T, WrappedPrimitive[bool]],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -153,6 +159,7 @@ func Not[T Table](
 
 // Comparison Operators
 
+// Eq (expr1 = expr2)
 func Eq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
@@ -177,6 +184,7 @@ func Eq[T Table, S ExprType](
 	}
 }
 
+// EqLit (expr = literal)
 func EqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literal S,
@@ -200,6 +208,7 @@ func EqLit[T Table, S ExprType](
 	}
 }
 
+// Neq (expr1 != expr2)
 func Neq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
@@ -224,6 +233,7 @@ func Neq[T Table, S ExprType](
 	}
 }
 
+// NeqLit (expr != literal)
 func NeqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literal S,
@@ -247,6 +257,7 @@ func NeqLit[T Table, S ExprType](
 	}
 }
 
+// Leq (expr1 <= expr2)
 func Leq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
@@ -271,6 +282,7 @@ func Leq[T Table, S ExprType](
 	}
 }
 
+// LeqLit (expr <= literal)
 func LeqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literal S,
@@ -294,6 +306,7 @@ func LeqLit[T Table, S ExprType](
 	}
 }
 
+// Geq (expr1 >= expr2)
 func Geq[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
@@ -318,6 +331,7 @@ func Geq[T Table, S ExprType](
 	}
 }
 
+// GeqLit (expr >= literal)
 func GeqLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literal S,
@@ -341,6 +355,7 @@ func GeqLit[T Table, S ExprType](
 	}
 }
 
+// Lt (expr1 < expr2)
 func Lt[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
@@ -365,6 +380,7 @@ func Lt[T Table, S ExprType](
 	}
 }
 
+// LtLit (expr < literal)
 func LtLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literal S,
@@ -388,6 +404,7 @@ func LtLit[T Table, S ExprType](
 	}
 }
 
+// Gt (expr1 > expr2)
 func Gt[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	expr2 TypedTableExpr[T, S],
@@ -412,6 +429,7 @@ func Gt[T Table, S ExprType](
 	}
 }
 
+// GtLit (expr > literal)
 func GtLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literal S,
@@ -435,6 +453,7 @@ func GtLit[T Table, S ExprType](
 	}
 }
 
+// IsNull (expr IS NULL)
 func IsNull[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -457,6 +476,7 @@ func IsNull[T Table, S ExprType](
 	}
 }
 
+// IsNotNull (expr IS NOT NULL)
 func IsNotNull[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 ) TypedTableExpr[T, WrappedPrimitive[bool]] {
@@ -479,6 +499,7 @@ func IsNotNull[T Table, S ExprType](
 	}
 }
 
+// In (expr1 IN (exprs[0], exprs[1], ...))
 func In[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	exprs ...TypedTableExpr[T, S],
@@ -528,6 +549,7 @@ func In[T Table, S ExprType](
 	}
 }
 
+// InLit (expr IN (literals[0], literal[1], ...))
 func InLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literals ...S,
@@ -561,6 +583,7 @@ func InLit[T Table, S ExprType](
 	}
 }
 
+// NotIn (expr1 NOT IN (exprs[0], exprs[1], ...))
 func NotIn[T Table, S ExprType](
 	expr1 TypedTableExpr[T, S],
 	exprs ...TypedTableExpr[T, S],
@@ -610,6 +633,7 @@ func NotIn[T Table, S ExprType](
 	}
 }
 
+// NotInLit (expr NOT IN (literals[0], literal[1], ...))
 func NotInLit[T Table, S ExprType](
 	expr TypedTableExpr[T, S],
 	literals ...S,
