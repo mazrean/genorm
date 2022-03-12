@@ -1,19 +1,19 @@
 # GenORM
 
-SQL Builder to prevent SQL mistakes using Go language generics
+SQL Builder to prevent SQL mistakes using the Golang generics
 
 #### document
 - [English](https://mazrean.github.io/genorm-docs/en/)
 - [日本語](https://mazrean.github.io/genorm-docs/ja/)
 
-### Feature
+## Feature
 
-By mapping SQL expressions to appropriate golang types using generics
+By mapping SQL expressions to appropriate golang types using generics, you can discover many SQL mistakes at the time of compilation that are not prevented by traditional Golang ORMs or query builders.
 
-* Compilation errors occur when using values of different Go types in SQL, such as for `=` comparisons or UPDATE value updates.
-* Compilation error when using column names from a table that cannot be used
+For example:
 
-Many SQL mistakes can be discovered at the time of compilation that are not prevented by traditional Go language ORMs or query builders, such as
+* Compilation error occurs when using values of different Go types in SQL for = etc. comparisons or updating values in UPDATE statements
+* Compile error occurs when using column names of unavailable tables
 
 It also supports many CRUD syntaxes in SQL.
 
