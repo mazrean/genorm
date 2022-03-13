@@ -88,3 +88,25 @@ func (c *orderClause[T]) Exists() bool {
 func (c *orderClause[T]) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
+
+func NewLimitClause(limit uint64) *limitClause {
+	return &limitClause{
+		limit: limit,
+	}
+}
+
+func (c *limitClause) GetLimit() uint64 {
+	return c.limit
+}
+
+func (c *limitClause) Set(limit uint64) error {
+	return c.set(limit)
+}
+
+func (c *limitClause) Exists() bool {
+	return c.exists()
+}
+
+func (c *limitClause) GetExpr() (string, []ExprType, error) {
+	return c.getExpr()
+}

@@ -167,6 +167,10 @@ func (l *limitClause) exists() bool {
 }
 
 func (l *limitClause) getExpr() (string, []ExprType, error) {
+	if l.limit == 0 {
+		return "", nil, errors.New("empty limit")
+	}
+
 	return fmt.Sprintf("LIMIT %d", l.limit), nil, nil
 }
 

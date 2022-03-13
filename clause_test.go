@@ -870,3 +870,122 @@ func TestOrderClauseGetExprTest(t *testing.T) {
 		})
 	}
 }
+
+func TestLimitClauseSetTest(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		before      uint64
+		set         uint64
+		err         bool
+	}{
+		{
+			description: "normal",
+			set:         1,
+		},
+		{
+			description: "limit already set",
+			before:      1,
+			set:         2,
+			err:         true,
+		},
+		{
+			description: "limit 0",
+			set:         0,
+			err:         true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			c := genorm.NewLimitClause(test.before)
+
+			err := c.Set(test.set)
+
+			if test.err {
+				assert.Error(t, err)
+				return
+			} else {
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			assert.Equal(t, test.set, c.GetLimit())
+		})
+	}
+}
+
+func TestLimitClauseExistTest(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		limit       uint64
+		exist       bool
+	}{
+		{
+			description: "normal",
+			limit:       1,
+			exist:       true,
+		},
+		{
+			description: "not exist",
+			limit:       0,
+			exist:       false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			c := genorm.NewLimitClause(test.limit)
+
+			res := c.Exists()
+
+			assert.Equal(t, test.exist, res)
+		})
+	}
+}
+
+func TestLimitClauseGetExprTest(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		limit       uint64
+		query       string
+		args        []genorm.ExprType
+		err         bool
+	}{
+		{
+			description: "normal",
+			limit:       1,
+			query:       "LIMIT 1",
+		},
+		{
+			description: "empty limit",
+			err:         true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			c := genorm.NewLimitClause(test.limit)
+
+			query, args, err := c.GetExpr()
+
+			if test.err {
+				assert.Error(t, err)
+				return
+			} else {
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			assert.Equal(t, test.query, query)
+			assert.Equal(t, test.args, args)
+		})
+	}
+}
