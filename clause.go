@@ -28,6 +28,10 @@ func (c *whereConditionClause[T]) exists() bool {
 }
 
 func (c *whereConditionClause[T]) getExpr() (string, []ExprType, error) {
+	if c.condition == nil {
+		return "", nil, errors.New("empty where condition")
+	}
+
 	query, args, errs := c.condition.Expr()
 	if len(errs) != 0 {
 		return "", nil, errs[0]
