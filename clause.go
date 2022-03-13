@@ -62,6 +62,10 @@ func (c *groupClause[_]) exists() bool {
 }
 
 func (c *groupClause[T]) getExpr() (string, []ExprType, error) {
+	if len(c.exprs) == 0 {
+		return "", nil, errors.New("empty group by")
+	}
+
 	queries := make([]string, 0, len(c.exprs))
 	args := []ExprType{}
 	for _, expr := range c.exprs {

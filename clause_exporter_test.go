@@ -21,3 +21,25 @@ func (c *whereConditionClause[T]) Exists() bool {
 func (c *whereConditionClause[T]) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
+
+func NewGroupClause[T Table](exprs []TableExpr[T]) *groupClause[T] {
+	return &groupClause[T]{
+		exprs: exprs,
+	}
+}
+
+func (c *groupClause[T]) GetCondition() []TableExpr[T] {
+	return c.exprs
+}
+
+func (c *groupClause[T]) Set(exprs []TableExpr[T]) error {
+	return c.set(exprs)
+}
+
+func (c *groupClause[T]) Exists() bool {
+	return c.exists()
+}
+
+func (c *groupClause[T]) GetExpr() (string, []ExprType, error) {
+	return c.getExpr()
+}
