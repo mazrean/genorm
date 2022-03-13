@@ -116,6 +116,10 @@ func (c *orderClause[T]) exists() bool {
 }
 
 func (c *orderClause[T]) getExpr() (string, []ExprType, error) {
+	if len(c.orderExprs) == 0 {
+		return "", nil, errors.New("empty order by")
+	}
+
 	args := []ExprType{}
 	orderQueries := make([]string, 0, len(c.orderExprs))
 	for _, orderItem := range c.orderExprs {

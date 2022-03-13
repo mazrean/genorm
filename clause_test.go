@@ -439,3 +439,434 @@ func TestGroupClauseGetExprTest(t *testing.T) {
 		})
 	}
 }
+
+func TestOrderClauseAddTest(t *testing.T) {
+	t.Parallel()
+
+	type expr struct {
+		query string
+		args  []genorm.ExprType
+		errs  []error
+	}
+
+	type orderItem struct {
+		expr      *expr
+		direction genorm.OrderDirection
+	}
+
+	tests := []struct {
+		description string
+		beforeExprs []orderItem
+		addItem     orderItem
+		afterExprs  []orderItem
+		err         bool
+	}{
+		{
+			description: "normal",
+			addItem: orderItem{
+				expr: &expr{
+					query: "(`hoge`.`huga` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(1)},
+				},
+				direction: genorm.Asc,
+			},
+			afterExprs: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Asc,
+				},
+			},
+		},
+		{
+			description: "desc",
+			addItem: orderItem{
+				expr: &expr{
+					query: "(`hoge`.`huga` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(1)},
+				},
+				direction: genorm.Desc,
+			},
+			afterExprs: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Desc,
+				},
+			},
+		},
+		{
+			description: "empty before expr",
+			beforeExprs: []orderItem{},
+			addItem: orderItem{
+				expr: &expr{
+					query: "(`hoge`.`huga` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(1)},
+				},
+				direction: genorm.Asc,
+			},
+			afterExprs: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Asc,
+				},
+			},
+		},
+		{
+			description: "condition already exists",
+			beforeExprs: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Asc,
+				},
+			},
+			addItem: orderItem{
+				expr: &expr{
+					query: "(`hoge`.`huga` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(2)},
+				},
+				direction: genorm.Asc,
+			},
+			afterExprs: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Asc,
+				},
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(2)},
+					},
+					direction: genorm.Asc,
+				},
+			},
+		},
+		{
+			description: "nil expr",
+			addItem: orderItem{
+				direction: genorm.Asc,
+			},
+			err: true,
+		},
+		{
+			description: "invalid direction",
+			addItem: orderItem{
+				expr: &expr{
+					query: "(`hoge`.`huga` = ?)",
+					args:  []genorm.ExprType{genorm.Wrap(1)},
+				},
+			},
+			err: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+
+			var beforeExprs []genorm.OrderItem[*mock.MockTable]
+			if test.beforeExprs == nil {
+				beforeExprs = nil
+			} else {
+				beforeExprs = make([]genorm.OrderItem[*mock.MockTable], 0, len(test.beforeExprs))
+				for _, item := range test.beforeExprs {
+					var expr genorm.TableExpr[*mock.MockTable]
+					if item.expr == nil {
+						expr = nil
+					} else {
+						mockExpr := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+						expr = mockExpr
+					}
+
+					beforeExprs = append(beforeExprs, genorm.NewOrderItem(expr, item.direction))
+				}
+			}
+
+			var afterExprs []genorm.OrderItem[*mock.MockTable]
+			if test.afterExprs == nil {
+				afterExprs = nil
+			} else {
+				afterExprs = make([]genorm.OrderItem[*mock.MockTable], 0, len(test.afterExprs))
+				for _, item := range test.afterExprs {
+					var expr genorm.TableExpr[*mock.MockTable]
+					if item.expr == nil {
+						expr = nil
+					} else {
+						mockExpr := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+						expr = mockExpr
+					}
+
+					afterExprs = append(afterExprs, genorm.NewOrderItem(expr, item.direction))
+				}
+			}
+
+			var expr genorm.TableExpr[*mock.MockTable]
+			if test.addItem.expr == nil {
+				expr = nil
+			} else {
+				mockExpr := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+				expr = mockExpr
+			}
+			addItem := genorm.NewOrderItem(expr, test.addItem.direction)
+
+			c := genorm.NewOrderClause(beforeExprs)
+
+			err := c.Add(addItem)
+
+			if test.err {
+				assert.Error(t, err)
+				return
+			} else {
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			afterItems := c.GetItems()
+			assert.Equal(t, len(test.afterExprs), len(afterItems))
+
+			for i, item := range afterItems {
+				expr, direction := item.Value()
+				expectExpr, expectDirection := afterExprs[i].Value()
+				assert.Equal(t, expectExpr, expr)
+				assert.Equal(t, expectDirection, direction)
+			}
+		})
+	}
+}
+
+func TestOrderClauseExistTest(t *testing.T) {
+	t.Parallel()
+
+	type expr struct {
+		query string
+		args  []genorm.ExprType
+		errs  []error
+	}
+
+	type orderItem struct {
+		expr      *expr
+		direction genorm.OrderDirection
+	}
+
+	tests := []struct {
+		description string
+		items       []orderItem
+		exist       bool
+	}{
+		{
+			description: "normal",
+			items: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Asc,
+				},
+			},
+			exist: true,
+		},
+		{
+			description: "nil expr",
+		},
+		{
+			description: "no expr",
+			items:       []orderItem{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+
+			var items []genorm.OrderItem[*mock.MockTable]
+			if test.items == nil {
+				items = nil
+			} else {
+				items = make([]genorm.OrderItem[*mock.MockTable], 0, len(test.items))
+				for _, item := range test.items {
+					var expr genorm.TableExpr[*mock.MockTable]
+					if item.expr == nil {
+						expr = nil
+					} else {
+						mockExpr := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+						expr = mockExpr
+					}
+
+					items = append(items, genorm.NewOrderItem(expr, item.direction))
+				}
+			}
+
+			c := genorm.NewOrderClause(items)
+
+			res := c.Exists()
+
+			assert.Equal(t, test.exist, res)
+		})
+	}
+}
+
+func TestOrderClauseGetExprTest(t *testing.T) {
+	t.Parallel()
+
+	type expr struct {
+		query string
+		args  []genorm.ExprType
+		errs  []error
+	}
+
+	type orderItem struct {
+		expr      *expr
+		direction genorm.OrderDirection
+	}
+
+	tests := []struct {
+		description string
+		items       []orderItem
+		query       string
+		args        []genorm.ExprType
+		err         bool
+	}{
+		{
+			description: "normal",
+			items: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Asc,
+				},
+			},
+			query: "ORDER BY (`hoge`.`huga` = ?) ASC",
+			args:  []genorm.ExprType{genorm.Wrap(1)},
+		},
+		{
+			description: "desc",
+			items: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Desc,
+				},
+			},
+			query: "ORDER BY (`hoge`.`huga` = ?) DESC",
+			args:  []genorm.ExprType{genorm.Wrap(1)},
+		},
+		{
+			description: "invlid direction",
+			items: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+				},
+			},
+			err: true,
+		},
+		{
+			description: "multi exprs",
+			items: []orderItem{
+				{
+					expr: &expr{
+						query: "(`hoge`.`huga` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(1)},
+					},
+					direction: genorm.Asc,
+				},
+				{
+					expr: &expr{
+						query: "(`hoge`.`nya` = ?)",
+						args:  []genorm.ExprType{genorm.Wrap(2)},
+					},
+					direction: genorm.Asc,
+				},
+			},
+			query: "ORDER BY (`hoge`.`huga` = ?) ASC, (`hoge`.`nya` = ?) ASC",
+			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
+		},
+		{
+			description: "nil expr",
+			err:         true,
+		},
+		{
+			description: "no expr",
+			items:       []orderItem{},
+			err:         true,
+		},
+		{
+			description: "error condition",
+			items: []orderItem{
+				{
+					expr: &expr{
+						errs: []error{errors.New("error")},
+					},
+					direction: genorm.Asc,
+				},
+			},
+			err: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+
+			var items []genorm.OrderItem[*mock.MockTable]
+			if test.items == nil {
+				items = nil
+			} else {
+				items = make([]genorm.OrderItem[*mock.MockTable], 0, len(test.items))
+				for _, item := range test.items {
+					var expr genorm.TableExpr[*mock.MockTable]
+					if item.expr == nil {
+						expr = nil
+					} else {
+						mockExpr := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+						expr = mockExpr
+
+						mockExpr.
+							EXPECT().
+							Expr().
+							Return(item.expr.query, item.expr.args, item.expr.errs)
+					}
+
+					items = append(items, genorm.NewOrderItem(expr, item.direction))
+				}
+			}
+
+			c := genorm.NewOrderClause(items)
+
+			query, args, err := c.GetExpr()
+
+			if test.err {
+				assert.Error(t, err)
+				return
+			} else {
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			assert.Equal(t, test.query, query)
+			assert.Equal(t, test.args, args)
+		})
+	}
+}
