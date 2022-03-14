@@ -132,3 +132,25 @@ func (c *offsetClause) Exists() bool {
 func (c *offsetClause) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
+
+func NewLockClause(lockType LockType) *lockClause {
+	return &lockClause{
+		lockType: lockType,
+	}
+}
+
+func (c *lockClause) GetLockType() LockType {
+	return c.lockType
+}
+
+func (c *lockClause) Set(lockType LockType) error {
+	return c.set(lockType)
+}
+
+func (c *lockClause) Exists() bool {
+	return c.exists()
+}
+
+func (c *lockClause) GetExpr() (string, []ExprType, error) {
+	return c.getExpr()
+}

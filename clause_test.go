@@ -1108,3 +1108,141 @@ func TestOffsetClauseGetExprTest(t *testing.T) {
 		})
 	}
 }
+
+func TestLockClauseSetTest(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		before      genorm.LockType
+		set         genorm.LockType
+		err         bool
+	}{
+		{
+			description: "normal",
+			set:         genorm.ForUpdate,
+		},
+		{
+			description: "for share",
+			set:         genorm.ForShare,
+		},
+		{
+			description: "invalid lock type",
+			set:         100,
+			err:         true,
+		},
+		{
+			description: "lockType already set",
+			before:      genorm.ForUpdate,
+			set:         genorm.ForUpdate,
+			err:         true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			c := genorm.NewLockClause(test.before)
+
+			err := c.Set(test.set)
+
+			if test.err {
+				assert.Error(t, err)
+				return
+			} else {
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			assert.Equal(t, test.set, c.GetLockType())
+		})
+	}
+}
+
+func TestLockClauseExistTest(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		lockType    genorm.LockType
+		exist       bool
+	}{
+		{
+			description: "normal",
+			lockType:    genorm.ForUpdate,
+			exist:       true,
+		},
+		{
+			description: "for share",
+			lockType:    genorm.ForShare,
+			exist:       true,
+		},
+		{
+			description: "not exist",
+			lockType:    0,
+			exist:       false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			c := genorm.NewLockClause(test.lockType)
+
+			res := c.Exists()
+
+			assert.Equal(t, test.exist, res)
+		})
+	}
+}
+
+func TestLockClauseGetExprTest(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description string
+		lockType    genorm.LockType
+		query       string
+		args        []genorm.ExprType
+		err         bool
+	}{
+		{
+			description: "normal",
+			lockType:    genorm.ForUpdate,
+			query:       "FOR UPDATE",
+		},
+		{
+			description: "for share",
+			lockType:    genorm.ForShare,
+			query:       "FOR SHARE",
+		},
+		{
+			description: "invalid lock type",
+			lockType:    100,
+			err:         true,
+		},
+		{
+			description: "empty lock type",
+			err:         true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			c := genorm.NewLockClause(test.lockType)
+
+			query, args, err := c.GetExpr()
+
+			if test.err {
+				assert.Error(t, err)
+				return
+			} else {
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			assert.Equal(t, test.query, query)
+			assert.Equal(t, test.args, args)
+		})
+	}
+}

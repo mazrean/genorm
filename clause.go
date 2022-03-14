@@ -238,8 +238,6 @@ func (l *lockClause) getExpr() (string, []ExprType, error) {
 		return "FOR UPDATE", nil, nil
 	case ForShare:
 		return "FOR SHARE", nil, nil
-	case none:
-		return "", nil, nil
 	}
 
 	return "", nil, errors.New("invalid lock type")
