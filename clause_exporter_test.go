@@ -110,3 +110,25 @@ func (c *limitClause) Exists() bool {
 func (c *limitClause) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
+
+func NewOffsetClause(offset uint64) *offsetClause {
+	return &offsetClause{
+		offset: offset,
+	}
+}
+
+func (c *offsetClause) GetOffset() uint64 {
+	return c.offset
+}
+
+func (c *offsetClause) Set(offset uint64) error {
+	return c.set(offset)
+}
+
+func (c *offsetClause) Exists() bool {
+	return c.exists()
+}
+
+func (c *offsetClause) GetExpr() (string, []ExprType, error) {
+	return c.getExpr()
+}

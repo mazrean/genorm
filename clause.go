@@ -196,6 +196,10 @@ func (o *offsetClause) exists() bool {
 }
 
 func (o *offsetClause) getExpr() (string, []ExprType, error) {
+	if o.offset == 0 {
+		return "", nil, errors.New("empty offset")
+	}
+
 	return fmt.Sprintf("OFFSET %d", o.offset), nil, nil
 }
 
