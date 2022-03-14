@@ -28,6 +28,10 @@ func (c *whereConditionClause[T]) exists() bool {
 }
 
 func (c *whereConditionClause[T]) getExpr() (string, []ExprType, error) {
+	if c.condition == nil {
+		return "", nil, errors.New("empty where condition")
+	}
+
 	query, args, errs := c.condition.Expr()
 	if len(errs) != 0 {
 		return "", nil, errs[0]
@@ -58,6 +62,10 @@ func (c *groupClause[_]) exists() bool {
 }
 
 func (c *groupClause[T]) getExpr() (string, []ExprType, error) {
+	if len(c.exprs) == 0 {
+		return "", nil, errors.New("empty group by")
+	}
+
 	queries := make([]string, 0, len(c.exprs))
 	args := []ExprType{}
 	for _, expr := range c.exprs {
@@ -108,6 +116,10 @@ func (c *orderClause[T]) exists() bool {
 }
 
 func (c *orderClause[T]) getExpr() (string, []ExprType, error) {
+	if len(c.orderExprs) == 0 {
+		return "", nil, errors.New("empty order by")
+	}
+
 	args := []ExprType{}
 	orderQueries := make([]string, 0, len(c.orderExprs))
 	for _, orderItem := range c.orderExprs {
@@ -155,6 +167,10 @@ func (l *limitClause) exists() bool {
 }
 
 func (l *limitClause) getExpr() (string, []ExprType, error) {
+	if l.limit == 0 {
+		return "", nil, errors.New("empty limit")
+	}
+
 	return fmt.Sprintf("LIMIT %d", l.limit), nil, nil
 }
 
@@ -180,6 +196,10 @@ func (o *offsetClause) exists() bool {
 }
 
 func (o *offsetClause) getExpr() (string, []ExprType, error) {
+	if o.offset == 0 {
+		return "", nil, errors.New("empty offset")
+	}
+
 	return fmt.Sprintf("OFFSET %d", o.offset), nil, nil
 }
 
@@ -218,8 +238,6 @@ func (l *lockClause) getExpr() (string, []ExprType, error) {
 		return "FOR UPDATE", nil, nil
 	case ForShare:
 		return "FOR SHARE", nil, nil
-	case none:
-		return "", nil, nil
 	}
 
 	return "", nil, errors.New("invalid lock type")
