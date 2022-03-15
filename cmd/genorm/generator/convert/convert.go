@@ -154,6 +154,10 @@ func createJoinedTables(tables []*converterTable, joinNum int) ([]*converterTabl
 	for i := 1; i < joinNum-1; i++ {
 		for _, table := range tables {
 			joinedTableMap := map[int64]*converterJoinedTable{}
+			table.joinTablesList = append(table.joinTablesList, joinedTableMap)
+		}
+
+		for _, table := range tables {
 			for _, refConverterTable := range table.refTables {
 				for _, refJoinedTable := range refConverterTable.refTable.joinTablesList[i-1] {
 					// skip if containing the same table
@@ -193,16 +197,17 @@ func createJoinedTables(tables []*converterTable, joinNum int) ([]*converterTabl
 					joinedTable := newConverterJoinedTable(joinTables, joinedTableRefs)
 					joinedTableHash := joinedTable.tablesHash(len(tables))
 
-					if _, ok := joinedTableMap[joinedTableHash]; ok {
-						continue
-					}
-					joinedTableMap[joinedTableHash] = joinedTable
-
 					if _, ok := joinedTableHashMap[joinedTableHash]; ok {
 						continue
 					}
-
 					joinedTableHashMap[joinedTableHash] = joinedTable
+
+					for _, table := range joinTables {
+						if _, ok := table.joinTablesList[i][joinedTableHash]; ok {
+							continue
+						}
+						table.joinTablesList[i][joinedTableHash] = joinedTable
+					}
 				}
 			}
 
@@ -245,20 +250,19 @@ func createJoinedTables(tables []*converterTable, joinNum int) ([]*converterTabl
 					joinedTable := newConverterJoinedTable(joinTables, joinedTableRefs)
 					joinedTableHash := joinedTable.tablesHash(len(tables))
 
-					if _, ok := joinedTableMap[joinedTableHash]; ok {
-						continue
-					}
-					joinedTableMap[joinedTableHash] = joinedTable
-
 					if _, ok := joinedTableHashMap[joinedTableHash]; ok {
 						continue
 					}
-
 					joinedTableHashMap[joinedTableHash] = joinedTable
+
+					for _, table := range joinTables {
+						if _, ok := table.joinTablesList[i][joinedTableHash]; ok {
+							continue
+						}
+						table.joinTablesList[i][joinedTableHash] = joinedTable
+					}
 				}
 			}
-
-			table.joinTablesList = append(table.joinTablesList, joinedTableMap)
 		}
 	}
 
