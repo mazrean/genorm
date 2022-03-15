@@ -31,6 +31,7 @@ func TestInsertBuildQuery(t *testing.T) {
 
 	columnFieldExpr1 := genorm.Wrap(1)
 	columnFieldExpr2 := genorm.Wrap(2)
+	columnFieldNull := genorm.WrappedPrimitive[int]{}
 
 	tests := []struct {
 		description string
@@ -81,6 +82,18 @@ func TestInsertBuildQuery(t *testing.T) {
 			},
 			query: "INSERT INTO `hoge` (`hoge`.`huga`) VALUES (?), (?)",
 			args:  []any{&columnFieldExpr1, &columnFieldExpr2},
+		},
+		{
+			description: "null value",
+			tableName:   "hoge",
+			fields:      []string{"`hoge`.`huga`"},
+			values: []map[string]genorm.ColumnFieldExprType{
+				{
+					"`hoge`.`huga`": &columnFieldNull,
+				},
+			},
+			query: "INSERT INTO `hoge` (`hoge`.`huga`) VALUES (NULL)",
+			args:  []any{},
 		},
 	}
 

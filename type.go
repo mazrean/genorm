@@ -184,7 +184,7 @@ func (wp *WrappedPrimitive[T]) Scan(src any) error {
 
 func (wp WrappedPrimitive[_]) Value() (driver.Value, error) {
 	if !wp.valid {
-		return nil, nil
+		return nil, ErrNullValue
 	}
 
 	return wp.val, nil

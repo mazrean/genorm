@@ -188,12 +188,12 @@ func (c *InsertContext[T]) buildValueList(sb *strings.Builder, args []any, field
 			return sb, nil, fmt.Errorf("field(%s) not found", columnName)
 		}
 
-		fieldValue, err := columnField.Value()
-		if err != nil {
+		_, err := columnField.Value()
+		if err != nil && !errors.Is(err, ErrNullValue) {
 			return sb, nil, fmt.Errorf("failed to get field value: %w", err)
 		}
 
-		if fieldValue == nil {
+		if errors.Is(err, ErrNullValue) {
 			str = "NULL"
 			_, err = sb.WriteString(str)
 			if err != nil {
