@@ -98,13 +98,19 @@ func (c *InsertContext[T]) buildQuery() (string, []any, error) {
 
 	sb := &strings.Builder{}
 
-	str := "INSERT INTO "
+	str := "INSERT INTO `"
 	_, err := sb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
 	str = c.table.TableName()
+	_, err = sb.WriteString(str)
+	if err != nil {
+		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
+	}
+
+	str = "`"
 	_, err = sb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
@@ -151,14 +157,8 @@ func (c *InsertContext[T]) buildQuery() (string, []any, error) {
 			}
 		}
 
-		var val any = value
-		basicTable, ok := val.(T)
-		if !ok {
-			return "", nil, errors.New("failed to cast value to basic table")
-		}
-
 		var err error
-		sb, args, err = c.buildValueList(sb, args, fields, basicTable.ColumnMap())
+		sb, args, err = c.buildValueList(sb, args, fields, value.ColumnMap())
 		if err != nil {
 			return "", nil, fmt.Errorf("build value list: %w", err)
 		}
@@ -206,7 +206,7 @@ func (c *InsertContext[T]) buildValueList(sb *strings.Builder, args []any, field
 				return sb, nil, fmt.Errorf("write string(%s): %w", str, err)
 			}
 
-			args = append(args, fieldValue)
+			args = append(args, columnField)
 		}
 	}
 
