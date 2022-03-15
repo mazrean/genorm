@@ -6,16 +6,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 
 	"github.com/mazrean/genorm/cmd/genorm/generator"
 )
 
 var (
-	// Set at build time.
-	version string
-	commit  string
-	date    string
-
 	// flags
 	showVersionInfo bool
 	source          string
@@ -38,7 +34,7 @@ func main() {
 	flag.Parse()
 
 	if showVersionInfo {
-		err := printVersionInfo(version, commit, date)
+		err := printVersionInfo()
 		if err != nil {
 			panic(err)
 		}
@@ -69,11 +65,13 @@ func main() {
 	}
 }
 
-func printVersionInfo(version string, commit string, date string) error {
-	_, err := io.WriteString(os.Stderr, fmt.Sprintf(`Version: %s
-Commit: %s
-Date: %s
-`, version, commit, date))
+func printVersionInfo() error {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		return errors.New("no build info")
+	}
+
+	_, err := io.WriteString(os.Stderr, fmt.Sprintf("Version: %s\n", buildInfo.Main.Version))
 	if err != nil {
 		return fmt.Errorf("print version info: %w", err)
 	}
