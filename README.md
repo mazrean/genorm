@@ -58,10 +58,10 @@ userValues, err := genorm.
 	GetAll(db)
 ```
 
-# Differences from existing tools
+## Differences from existing tools
 Explain how this differs from existing GORM and ent.
 
-## GORM
+### GORM
 GORM uses `interface{}` to flexibly accept arguments, allowing for intuitive query construction.
 On the other hand, type constraints are very weak.
 For this reason, there are few bugs that can be played at compile time, and bugs can easily be introduced.
@@ -72,7 +72,7 @@ We are also conscious of making it easy to imagine the SQL to be executed from t
 
 Thus, GenORM and GORM differ greatly in both philosophy and function.
 
-## ent
+### ent
 We believe that the most significant difference in functionality between Go and ent is the Golang types that can be used.
 In ent, only a finite number of types can be used, including types corresponding to primitive types such as int and bool, plus time.Time and UUID.
 In contrast, GenORM allows any type[^2] that satisfies the conditions of the `genorm.ExprType`interface, and then sets restrictions such as only types of the same type can be compared.
@@ -119,7 +119,7 @@ In this respect, GenORM makes it easy to understand the SQL to be executed, so s
 [^2]: See https://mazrean.github.io/genorm-docs/en/usage/value-type.html for more information
 [^3]: See https://mazrean.github.io/genorm-docs/en/advanced-usage/defined-type.html for more information
 
-# Mechanism
+## Mechanism
 This section explains how the code example works.
 The definition of `genorm.EqLit` is as follows.
 ```go
