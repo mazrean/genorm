@@ -38,76 +38,76 @@ func TestUpdateBuildQuery(t *testing.T) {
 		{
 			description: "normal",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
-			query: "UPDATE `hoge` SET `hoge`.`huga` = ?",
+			query: "UPDATE hoge SET hoge.huga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "joined table",
 			tableExpr: expr{
-				query: "`hoge` JOIN `fuga` ON `hoge`.`id` = `fuga`.`id` AND `hoge`.`huga` = ?",
+				query: "hoge JOIN fuga ON hoge.id = fuga.id AND hoge.huga = ?",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			query: "UPDATE `hoge` JOIN `fuga` ON `hoge`.`id` = `fuga`.`id` AND `hoge`.`huga` = ? SET `hoge`.`huga` = ?",
+			query: "UPDATE hoge JOIN fuga ON hoge.id = fuga.id AND hoge.huga = ? SET hoge.huga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "multi assign",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 				{
-					query: "`hoge`.`nya` = ?",
+					query: "hoge.nya = ?",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			query: "UPDATE `hoge` SET `hoge`.`huga` = ?, `hoge`.`nya` = ?",
+			query: "UPDATE hoge SET hoge.huga = ?, hoge.nya = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "where",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
 			whereCondition: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(2)},
 			},
-			query: "UPDATE `hoge` SET `hoge`.`huga` = ? WHERE (`hoge`.`huga` = ?)",
+			query: "UPDATE hoge SET hoge.huga = ? WHERE (hoge.huga = ?)",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "where error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -119,11 +119,11 @@ func TestUpdateBuildQuery(t *testing.T) {
 		{
 			description: "order by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -131,22 +131,22 @@ func TestUpdateBuildQuery(t *testing.T) {
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(2)},
 					},
 				},
 			},
-			query: "UPDATE `hoge` SET `hoge`.`huga` = ? ORDER BY (`hoge`.`huga` = ?) ASC",
+			query: "UPDATE hoge SET hoge.huga = ? ORDER BY (hoge.huga = ?) ASC",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "order by error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -163,11 +163,11 @@ func TestUpdateBuildQuery(t *testing.T) {
 		{
 			description: "multi order by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -175,34 +175,34 @@ func TestUpdateBuildQuery(t *testing.T) {
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(2)},
 					},
 				},
 				{
 					direction: genorm.Desc,
 					expr: expr{
-						query: "(`hoge`.`nya` = ?)",
+						query: "(hoge.nya = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(3)},
 					},
 				},
 			},
-			query: "UPDATE `hoge` SET `hoge`.`huga` = ? ORDER BY (`hoge`.`huga` = ?) ASC, (`hoge`.`nya` = ?) DESC",
+			query: "UPDATE hoge SET hoge.huga = ? ORDER BY (hoge.huga = ?) ASC, (hoge.nya = ?) DESC",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2), genorm.Wrap(3)},
 		},
 		{
 			description: "limit",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			assignExprs: []expr{
 				{
-					query: "`hoge`.`huga` = ?",
+					query: "hoge.huga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
 			limit: 1,
-			query: "UPDATE `hoge` SET `hoge`.`huga` = ? LIMIT 1",
+			query: "UPDATE hoge SET hoge.huga = ? LIMIT 1",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}

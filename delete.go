@@ -91,19 +91,13 @@ func (c *DeleteContext[T]) buildQuery() (string, []ExprType, error) {
 
 	sb := strings.Builder{}
 
-	str := "DELETE FROM `"
+	str := "DELETE FROM "
 	_, err := sb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
 	str = c.table.TableName()
-	_, err = sb.WriteString(str)
-	if err != nil {
-		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
-	}
-
-	str = "`"
 	_, err = sb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)

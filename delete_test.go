@@ -37,17 +37,17 @@ func TestDeleteBuildQuery(t *testing.T) {
 		{
 			description: "normal",
 			tableName:   "hoge",
-			query:       "DELETE FROM `hoge`",
+			query:       "DELETE FROM hoge",
 			args:        []genorm.ExprType{},
 		},
 		{
 			description: "where",
 			tableName:   "hoge",
 			whereCondition: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
-			query: "DELETE FROM `hoge` WHERE (`hoge`.`huga` = ?)",
+			query: "DELETE FROM hoge WHERE (hoge.huga = ?)",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -65,12 +65,12 @@ func TestDeleteBuildQuery(t *testing.T) {
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 				},
 			},
-			query: "DELETE FROM `hoge` ORDER BY (`hoge`.`huga` = ?) ASC",
+			query: "DELETE FROM hoge ORDER BY (hoge.huga = ?) ASC",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -93,26 +93,26 @@ func TestDeleteBuildQuery(t *testing.T) {
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 				},
 				{
 					direction: genorm.Desc,
 					expr: expr{
-						query: "(`hoge`.`nya` = ?)",
+						query: "(hoge.nya = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(2)},
 					},
 				},
 			},
-			query: "DELETE FROM `hoge` ORDER BY (`hoge`.`huga` = ?) ASC, (`hoge`.`nya` = ?) DESC",
+			query: "DELETE FROM hoge ORDER BY (hoge.huga = ?) ASC, (hoge.nya = ?) DESC",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "limit",
 			tableName:   "hoge",
 			limit:       1,
-			query:       "DELETE FROM `hoge` LIMIT 1",
+			query:       "DELETE FROM hoge LIMIT 1",
 			args:        []genorm.ExprType{},
 		},
 	}

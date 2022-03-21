@@ -24,7 +24,7 @@ It also supports many CRUD syntaxes in SQL.
 ## Example
 #### Example 1
 
-String column `` `users`. `name` `` can be compared to a `string` value, but comparing it to an `int` value will result in a compile error.
+String column `users.name` can be compared to a `string` value, but comparing it to an `int` value will result in a compile error.
 
 ```go
 // correct
@@ -114,7 +114,7 @@ db, err := sql.Open("mysql", "user:pass@tcp(host:port)/database?parseTime=true&l
 
 ### Insert
 ```go
-// INSERT INTO `users` (`id`, `name`, `created_at`) VALUES ({{uuid.New()}}, "name1", {{time.Now()}}), ({{uuid.New()}}, "name2", {{time.Now()}})
+// INSERT INTO users (id, name, created_at) VALUES ({{uuid.New()}}, "name1", {{time.Now()}}), ({{uuid.New()}}, "name2", {{time.Now()}})
 affectedRows, err := genorm.
     Insert(orm.User()).
     Values(&orm.UserTable{
@@ -132,25 +132,25 @@ affectedRows, err := genorm.
 ### Select
 
 ```go
-// SELECT `id`, `name`, `created_at` FROM `users`
+// SELECT id, name, created_at FROM users
 // userValues: []orm.UserTable
 userValues, err := genorm.
 	Select(orm.User()).
 	GetAll(db)
 
-// SELECT `id`, `name`, `created_at` FROM `users` LIMIT 1
+// SELECT id, name, created_at FROM users LIMIT 1
 // userValue: orm.UserTable
 userValue, err := genorm.
 	Select(orm.User()).
 	Get(db)
 
-// SELECT `id` FROM `users`
+// SELECT id FROM users
 // userIDs: []uuid.UUID
 userIDs, err := genorm.
 	Pluck(orm.User(), user.IDExpr).
 	GetAll(db)
 
-// SELECT COUNT(`id`) AS `result` FROM `users` LIMIT 1
+// SELECT COUNT(id) AS result FROM users LIMIT 1
 // userNum: int64
 userNum, err := genorm.
 	Pluck(orm.User(), genorm.Count(user.IDExpr, false)).
@@ -159,7 +159,7 @@ userNum, err := genorm.
 
 ### Update
 ```go
-// UPDATE `users` SET `name`="name"
+// UPDATE users SET name="name"
 affectedRows, err = genorm.
     Update(orm.User()).
     Set(
@@ -171,7 +171,7 @@ affectedRows, err = genorm.
 
 ### Delete
 ```go
-// DELETE FROM `users`
+// DELETE FROM users
 affectedRows, err = genorm.
     Delete(orm.User()).
     Do(db)
@@ -180,7 +180,7 @@ affectedRows, err = genorm.
 ### Join
 #### Select
 ```go
-// SELECT `users`.`name`, `messages`.`content` FROM `users` INNER JOIN `messages` ON `users`.`id` = `messages`.`user_id`
+// SELECT users.name, messages.content FROM users INNER JOIN messages ON users.id = messages.user_id
 // messageUserValues: []orm.MessageUserTable
 userID := orm.MessageUserParseExpr(user.ID)
 userName := orm.MessageUserParse(user.Name)
@@ -195,7 +195,7 @@ messageUserValues, err := genorm.
 
 #### Update
 ```go
-// UPDATE `users` INNER JOIN `messages` ON `users.id` = `messages`.`id` SET `content`="hello world"
+// UPDATE users INNER JOIN messages ON users.id = messages.id SET content="hello world"
 userIDColumn := orm.MessageUserParseExpr(user.ID)
 messageUserIDColumn := orm.MessageUserParseExpr(message.UserID)
 messageContent := orm.MessageUserParse(message.Content)
@@ -239,7 +239,7 @@ if err != nil {
 ### Context
 
 ```go
-// SELECT `id`, `name`, `created_at` FROM `users`
+// SELECT id, name, created_at FROM users
 // userValues: []orm.UserTable
 userValues, err := genorm.
 	Select(orm.User()).
@@ -247,7 +247,7 @@ userValues, err := genorm.
 ```
 
 ```go
-// INSERT INTO `users` (`id`, `name`, `created_at`) VALUES ({{uuid.New()}}, "name", {{time.Now()}})
+// INSERT INTO users (id, name, created_at) VALUES ({{uuid.New()}}, "name", {{time.Now()}})
 affectedRows, err := genorm.
     Insert(orm.User()).
     Values(&orm.UserTable{

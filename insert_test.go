@@ -46,53 +46,53 @@ func TestInsertBuildQuery(t *testing.T) {
 		{
 			description: "normal",
 			tableName:   "hoge",
-			fields:      []string{"`hoge`.`huga`"},
+			fields:      []string{"hoge.huga"},
 			values: []map[string]genorm.ColumnFieldExprType{
 				{
-					"`hoge`.`huga`": &columnFieldExpr1,
+					"hoge.huga": &columnFieldExpr1,
 				},
 			},
-			query: "INSERT INTO `hoge` (`hoge`.`huga`) VALUES (?)",
+			query: "INSERT INTO hoge (hoge.huga) VALUES (?)",
 			args:  []any{&columnFieldExpr1},
 		},
 		{
 			description: "multi fields",
 			tableName:   "hoge",
-			fields:      []string{"`hoge`.`huga`", "`hoge`.`piyo`"},
+			fields:      []string{"hoge.huga", "hoge.piyo"},
 			values: []map[string]genorm.ColumnFieldExprType{
 				{
-					"`hoge`.`huga`": &columnFieldExpr1,
-					"`hoge`.`piyo`": &columnFieldExpr2,
+					"hoge.huga": &columnFieldExpr1,
+					"hoge.piyo": &columnFieldExpr2,
 				},
 			},
-			query: "INSERT INTO `hoge` (`hoge`.`huga`, `hoge`.`piyo`) VALUES (?, ?)",
+			query: "INSERT INTO hoge (hoge.huga, hoge.piyo) VALUES (?, ?)",
 			args:  []any{&columnFieldExpr1, &columnFieldExpr2},
 		},
 		{
 			description: "multi values",
 			tableName:   "hoge",
-			fields:      []string{"`hoge`.`huga`"},
+			fields:      []string{"hoge.huga"},
 			values: []map[string]genorm.ColumnFieldExprType{
 				{
-					"`hoge`.`huga`": &columnFieldExpr1,
+					"hoge.huga": &columnFieldExpr1,
 				},
 				{
-					"`hoge`.`huga`": &columnFieldExpr2,
+					"hoge.huga": &columnFieldExpr2,
 				},
 			},
-			query: "INSERT INTO `hoge` (`hoge`.`huga`) VALUES (?), (?)",
+			query: "INSERT INTO hoge (hoge.huga) VALUES (?), (?)",
 			args:  []any{&columnFieldExpr1, &columnFieldExpr2},
 		},
 		{
 			description: "null value",
 			tableName:   "hoge",
-			fields:      []string{"`hoge`.`huga`"},
+			fields:      []string{"hoge.huga"},
 			values: []map[string]genorm.ColumnFieldExprType{
 				{
-					"`hoge`.`huga`": &columnFieldNull,
+					"hoge.huga": &columnFieldNull,
 				},
 			},
-			query: "INSERT INTO `hoge` (`hoge`.`huga`) VALUES (NULL)",
+			query: "INSERT INTO hoge (hoge.huga) VALUES (NULL)",
 			args:  []any{},
 		},
 	}

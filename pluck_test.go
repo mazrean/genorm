@@ -43,12 +43,12 @@ func TestPluckBuildQuery(t *testing.T) {
 		{
 			description: "normal",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge`",
+			query: "SELECT hoge.huga AS res FROM hoge",
 			args:  []genorm.ExprType{},
 		},
 		{
@@ -57,26 +57,26 @@ func TestPluckBuildQuery(t *testing.T) {
 				errs: []error{errors.New("table error")},
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			err: true,
 		},
 		{
 			description: "joined table",
 			tableExpr: expr{
-				query: "`hoge` JOIN `fuga` ON `hoge`.`id` = `fuga`.`id` AND `hoge`.`huga` = ?",
+				query: "hoge JOIN fuga ON hoge.id = fuga.id AND hoge.huga = ?",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` JOIN `fuga` ON `hoge`.`id` = `fuga`.`id` AND `hoge`.`huga` = ?",
+			query: "SELECT hoge.huga AS res FROM hoge JOIN fuga ON hoge.id = fuga.id AND hoge.huga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "field error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
 				errs: []error{errors.New("field error")},
@@ -86,55 +86,55 @@ func TestPluckBuildQuery(t *testing.T) {
 		{
 			description: "distinct",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			distinct: true,
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
-			query: "SELECT DISTINCT `hoge`.`huga` AS res FROM `hoge`",
+			query: "SELECT DISTINCT hoge.huga AS res FROM hoge",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "group by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga`",
+					query: "hoge.fuga",
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` GROUP BY `hoge`.`fuga`",
+			query: "SELECT hoge.huga AS res FROM hoge GROUP BY hoge.fuga",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "group by with args",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga` = ?",
+					query: "hoge.fuga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` GROUP BY `hoge`.`fuga` = ?",
+			query: "SELECT hoge.huga AS res FROM hoge GROUP BY hoge.fuga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "group by error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			groupExprs: []expr{
 				{
@@ -146,55 +146,55 @@ func TestPluckBuildQuery(t *testing.T) {
 		{
 			description: "multiple group by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga` = ?",
+					query: "hoge.fuga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 				{
-					query: "`hoge`.`piyo` = ?",
+					query: "hoge.piyo = ?",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` GROUP BY `hoge`.`fuga` = ?, `hoge`.`piyo` = ?",
+			query: "SELECT hoge.huga AS res FROM hoge GROUP BY hoge.fuga = ?, hoge.piyo = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "having",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga`",
+					query: "hoge.fuga",
 				},
 			},
 			havingCondition: &expr{
-				query: "`hoge`.`huga` = ?",
+				query: "hoge.huga = ?",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` GROUP BY `hoge`.`fuga` HAVING `hoge`.`huga` = ?",
+			query: "SELECT hoge.huga AS res FROM hoge GROUP BY hoge.fuga HAVING hoge.huga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "having error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga`",
+					query: "hoge.fuga",
 				},
 			},
 			havingCondition: &expr{
@@ -205,25 +205,25 @@ func TestPluckBuildQuery(t *testing.T) {
 		{
 			description: "where",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			whereCondition: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` WHERE (`hoge`.`huga` = ?)",
+			query: "SELECT hoge.huga AS res FROM hoge WHERE (hoge.huga = ?)",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "where error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			whereCondition: &expr{
 				errs: []error{errors.New("where error")},
@@ -233,30 +233,30 @@ func TestPluckBuildQuery(t *testing.T) {
 		{
 			description: "order by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			orderItems: []orderItem{
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` ORDER BY (`hoge`.`huga` = ?) ASC",
+			query: "SELECT hoge.huga AS res FROM hoge ORDER BY (hoge.huga = ?) ASC",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "order by error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			orderItems: []orderItem{
 				{
@@ -271,76 +271,76 @@ func TestPluckBuildQuery(t *testing.T) {
 		{
 			description: "multi order by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			orderItems: []orderItem{
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 				},
 				{
 					direction: genorm.Desc,
 					expr: expr{
-						query: "(`hoge`.`nya` = ?)",
+						query: "(hoge.nya = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(2)},
 					},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` ORDER BY (`hoge`.`huga` = ?) ASC, (`hoge`.`nya` = ?) DESC",
+			query: "SELECT hoge.huga AS res FROM hoge ORDER BY (hoge.huga = ?) ASC, (hoge.nya = ?) DESC",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "limit",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			limit: 1,
-			query: "SELECT `hoge`.`huga` AS res FROM `hoge` LIMIT 1",
+			query: "SELECT hoge.huga AS res FROM hoge LIMIT 1",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "offset",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			offset: 1,
-			query:  "SELECT `hoge`.`huga` AS res FROM `hoge` OFFSET 1",
+			query:  "SELECT hoge.huga AS res FROM hoge OFFSET 1",
 			args:   []genorm.ExprType{},
 		},
 		{
 			description: "for update",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			lockType: genorm.ForUpdate,
-			query:    "SELECT `hoge`.`huga` AS res FROM `hoge` FOR UPDATE",
+			query:    "SELECT hoge.huga AS res FROM hoge FOR UPDATE",
 			args:     []genorm.ExprType{},
 		},
 		{
 			description: "for share",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fieldExpr: expr{
-				query: "`hoge`.`huga`",
+				query: "hoge.huga",
 			},
 			lockType: genorm.ForShare,
-			query:    "SELECT `hoge`.`huga` AS res FROM `hoge` FOR SHARE",
+			query:    "SELECT hoge.huga AS res FROM hoge FOR SHARE",
 			args:     []genorm.ExprType{},
 		},
 	}

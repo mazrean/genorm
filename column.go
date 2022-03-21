@@ -2,7 +2,7 @@ package genorm
 
 type Column interface {
 	Expr
-	// SQLColumnName `table_name`.`column_name`
+	// SQLColumnName table_name.column_name
 	SQLColumnName() string
 	// TableName table_name
 	TableName() string

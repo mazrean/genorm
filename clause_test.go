@@ -127,7 +127,7 @@ func TestWhereConditionClauseGetExprTest(t *testing.T) {
 		{
 			description: "normal",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 		},
@@ -199,7 +199,7 @@ func TestGroupClauseSetTest(t *testing.T) {
 			description: "normal",
 			setExprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -209,7 +209,7 @@ func TestGroupClauseSetTest(t *testing.T) {
 			beforeExprs: []*expr{},
 			setExprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -218,13 +218,13 @@ func TestGroupClauseSetTest(t *testing.T) {
 			description: "condition already set",
 			beforeExprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
 			setExprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
@@ -301,7 +301,7 @@ func TestGroupClauseExistTest(t *testing.T) {
 			description: "normal",
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -359,26 +359,26 @@ func TestGroupClauseGetExprTest(t *testing.T) {
 			description: "normal",
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
-			query: "GROUP BY (`hoge`.`huga` = ?)",
+			query: "GROUP BY (hoge.huga = ?)",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "multi exprs",
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 				{
-					query: "(`hoge`.`nya` = ?)",
+					query: "(hoge.nya = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			query: "GROUP BY (`hoge`.`huga` = ?), (`hoge`.`nya` = ?)",
+			query: "GROUP BY (hoge.huga = ?), (hoge.nya = ?)",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
@@ -465,7 +465,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			description: "normal",
 			addItem: orderItem{
 				expr: &expr{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 				direction: genorm.Asc,
@@ -473,7 +473,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			afterExprs: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Asc,
@@ -484,7 +484,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			description: "desc",
 			addItem: orderItem{
 				expr: &expr{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 				direction: genorm.Desc,
@@ -492,7 +492,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			afterExprs: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Desc,
@@ -504,7 +504,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			beforeExprs: []orderItem{},
 			addItem: orderItem{
 				expr: &expr{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 				direction: genorm.Asc,
@@ -512,7 +512,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			afterExprs: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Asc,
@@ -524,7 +524,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			beforeExprs: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Asc,
@@ -532,7 +532,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			},
 			addItem: orderItem{
 				expr: &expr{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 				direction: genorm.Asc,
@@ -540,14 +540,14 @@ func TestOrderClauseAddTest(t *testing.T) {
 			afterExprs: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Asc,
 				},
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(2)},
 					},
 					direction: genorm.Asc,
@@ -565,7 +565,7 @@ func TestOrderClauseAddTest(t *testing.T) {
 			description: "invalid direction",
 			addItem: orderItem{
 				expr: &expr{
-					query: "(`hoge`.`huga` = ?)",
+					query: "(hoge.huga = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
@@ -672,7 +672,7 @@ func TestOrderClauseExistTest(t *testing.T) {
 			items: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Asc,
@@ -746,13 +746,13 @@ func TestOrderClauseGetExprTest(t *testing.T) {
 			items: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Asc,
 				},
 			},
-			query: "ORDER BY (`hoge`.`huga` = ?) ASC",
+			query: "ORDER BY (hoge.huga = ?) ASC",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -760,13 +760,13 @@ func TestOrderClauseGetExprTest(t *testing.T) {
 			items: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Desc,
 				},
 			},
-			query: "ORDER BY (`hoge`.`huga` = ?) DESC",
+			query: "ORDER BY (hoge.huga = ?) DESC",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -774,7 +774,7 @@ func TestOrderClauseGetExprTest(t *testing.T) {
 			items: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 				},
@@ -786,20 +786,20 @@ func TestOrderClauseGetExprTest(t *testing.T) {
 			items: []orderItem{
 				{
 					expr: &expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 					direction: genorm.Asc,
 				},
 				{
 					expr: &expr{
-						query: "(`hoge`.`nya` = ?)",
+						query: "(hoge.nya = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(2)},
 					},
 					direction: genorm.Asc,
 				},
 			},
-			query: "ORDER BY (`hoge`.`huga` = ?) ASC, (`hoge`.`nya` = ?) ASC",
+			query: "ORDER BY (hoge.huga = ?) ASC, (hoge.nya = ?) ASC",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
