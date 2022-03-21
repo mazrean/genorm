@@ -26,17 +26,17 @@ func TestAvg(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
-			expectedQuery: "AVG((`hoge`.`huga` = ?))",
+			expectedQuery: "AVG((hoge.huga = ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description:   "distinct",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
 			distinct:      true,
-			expectedQuery: "AVG(DISTINCT (`hoge`.`huga` = ?))",
+			expectedQuery: "AVG(DISTINCT (hoge.huga = ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -51,9 +51,9 @@ func TestAvg(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			exprQuery:     "(`hoge`.`huga` = `hoge`.`huga`)",
+			exprQuery:     "(hoge.huga = hoge.huga)",
 			exprArgs:      nil,
-			expectedQuery: "AVG((`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "AVG((hoge.huga = hoge.huga))",
 			expectedArgs:  nil,
 		},
 	}
@@ -113,17 +113,17 @@ func TestCount(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
-			expectedQuery: "COUNT((`hoge`.`huga` = ?))",
+			expectedQuery: "COUNT((hoge.huga = ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description:   "distinct",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
 			distinct:      true,
-			expectedQuery: "COUNT(DISTINCT (`hoge`.`huga` = ?))",
+			expectedQuery: "COUNT(DISTINCT (hoge.huga = ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -138,9 +138,9 @@ func TestCount(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			exprQuery:     "(`hoge`.`huga` = `hoge`.`huga`)",
+			exprQuery:     "(hoge.huga = hoge.huga)",
 			exprArgs:      nil,
-			expectedQuery: "COUNT((`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "COUNT((hoge.huga = hoge.huga))",
 			expectedArgs:  nil,
 		},
 	}
@@ -199,9 +199,9 @@ func TestMax(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
-			expectedQuery: "MAX((`hoge`.`huga` = ?))",
+			expectedQuery: "MAX((hoge.huga = ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -216,9 +216,9 @@ func TestMax(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			exprQuery:     "(`hoge`.`huga` = `hoge`.`huga`)",
+			exprQuery:     "(hoge.huga = hoge.huga)",
 			exprArgs:      nil,
-			expectedQuery: "MAX((`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "MAX((hoge.huga = hoge.huga))",
 			expectedArgs:  nil,
 		},
 	}
@@ -277,9 +277,9 @@ func TestMin(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
-			expectedQuery: "MIN((`hoge`.`huga` = ?))",
+			expectedQuery: "MIN((hoge.huga = ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -294,9 +294,9 @@ func TestMin(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			exprQuery:     "(`hoge`.`huga` = `hoge`.`huga`)",
+			exprQuery:     "(hoge.huga = hoge.huga)",
 			exprArgs:      nil,
-			expectedQuery: "MIN((`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "MIN((hoge.huga = hoge.huga))",
 			expectedArgs:  nil,
 		},
 	}

@@ -28,12 +28,12 @@ func TestAssign(t *testing.T) {
 	}{
 		{
 			description: "normal",
-			expr1Query:  "`hoge`.`huga`",
+			expr1Query:  "hoge.huga",
 			expr1Args:   nil,
-			expr2Query:  "(`hoge`.`huga` + ?)",
+			expr2Query:  "(hoge.huga + ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expected: genorm.NewTableAssignExpr[*mock.MockTable](
-				"`hoge`.`huga` = (`hoge`.`huga` + ?)",
+				"hoge.huga = (hoge.huga + ?)",
 				[]genorm.ExprType{genorm.Wrap(1)},
 				nil,
 			),
@@ -41,13 +41,13 @@ func TestAssign(t *testing.T) {
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` + ?)",
+			expr2Query:  "(hoge.huga + ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(1)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "`hoge`.`huga`",
+			expr1Query:  "hoge.huga",
 			expr1Args:   nil,
 			expr2IsNil:  true,
 			isError:     true,
@@ -55,37 +55,37 @@ func TestAssign(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` + ?)",
+			expr2Query:  "(hoge.huga + ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(1)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "`hoge`.`huga`",
+			expr1Query:  "hoge.huga",
 			expr1Args:   nil,
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description: "expr1 with args",
-			expr1Query:  "`hoge`.`huga`",
+			expr1Query:  "hoge.huga",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(2)},
-			expr2Query:  "(`hoge`.`huga` + ?)",
+			expr2Query:  "(hoge.huga + ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expected: genorm.NewTableAssignExpr[*mock.MockTable](
-				"`hoge`.`huga` = (`hoge`.`huga` + ?)",
+				"hoge.huga = (hoge.huga + ?)",
 				[]genorm.ExprType{genorm.Wrap(2), genorm.Wrap(1)},
 				nil,
 			),
 		},
 		{
 			description: "expr2 no args",
-			expr1Query:  "`hoge`.`huga`",
+			expr1Query:  "hoge.huga",
 			expr1Args:   nil,
-			expr2Query:  "(`hoge`.`huga` + `hoge`.`huga`)",
+			expr2Query:  "(hoge.huga + hoge.huga)",
 			expr2Args:   nil,
 			expected: genorm.NewTableAssignExpr[*mock.MockTable](
-				"`hoge`.`huga` = (`hoge`.`huga` + `hoge`.`huga`)",
+				"hoge.huga = (hoge.huga + hoge.huga)",
 				nil,
 				nil,
 			),
@@ -165,11 +165,11 @@ func TestAssignLit(t *testing.T) {
 	}{
 		{
 			description: "normal",
-			expr1Query:  "`hoge`.`huga`",
+			expr1Query:  "hoge.huga",
 			expr1Args:   nil,
 			lit:         genorm.Wrap(1),
 			expected: genorm.NewTableAssignExpr[*mock.MockTable](
-				"`hoge`.`huga` = ?",
+				"hoge.huga = ?",
 				[]genorm.ExprType{genorm.Wrap(1)},
 				nil,
 			),
@@ -188,11 +188,11 @@ func TestAssignLit(t *testing.T) {
 		},
 		{
 			description: "expr1 with args",
-			expr1Query:  "`hoge`.`huga`",
+			expr1Query:  "hoge.huga",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(2)},
 			lit:         genorm.Wrap(1),
 			expected: genorm.NewTableAssignExpr[*mock.MockTable](
-				"`hoge`.`huga` = ?",
+				"hoge.huga = ?",
 				[]genorm.ExprType{genorm.Wrap(2), genorm.Wrap(1)},
 				nil,
 			),
@@ -259,23 +259,23 @@ func TestAnd(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) AND (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) AND (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -283,33 +283,33 @@ func TestAnd(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) AND (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) AND (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) AND (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) AND (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -389,23 +389,23 @@ func TestOr(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) OR (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) OR (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -413,33 +413,33 @@ func TestOr(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) OR (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) OR (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) OR (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) OR (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -519,23 +519,23 @@ func TestXor(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) XOR (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) XOR (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -543,33 +543,33 @@ func TestXor(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) XOR (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) XOR (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) XOR (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) XOR (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -645,9 +645,9 @@ func TestNot(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
-			expectedQuery: "(NOT (`hoge`.`huga` = ?))",
+			expectedQuery: "(NOT (hoge.huga = ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -662,9 +662,9 @@ func TestNot(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			exprQuery:     "(`hoge`.`huga` = `hoge`.`huga`)",
+			exprQuery:     "(hoge.huga = hoge.huga)",
 			exprArgs:      nil,
-			expectedQuery: "(NOT (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "(NOT (hoge.huga = hoge.huga))",
 			expectedArgs:  nil,
 		},
 	}
@@ -727,23 +727,23 @@ func TestEq(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) = (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) = (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -751,33 +751,33 @@ func TestEq(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) = (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) = (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) = (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) = (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -854,10 +854,10 @@ func TestEqLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = ?) = ?)",
+			expectedQuery: "((hoge.huga = ?) = ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -874,10 +874,10 @@ func TestEqLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) = ?)",
+			expectedQuery: "((hoge.huga = hoge.huga) = ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 	}
@@ -940,23 +940,23 @@ func TestNeq(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) != (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) != (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -964,33 +964,33 @@ func TestNeq(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) != (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) != (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) != (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) != (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -1067,10 +1067,10 @@ func TestNeqLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = ?) != ?)",
+			expectedQuery: "((hoge.huga = ?) != ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -1087,10 +1087,10 @@ func TestNeqLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) != ?)",
+			expectedQuery: "((hoge.huga = hoge.huga) != ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 	}
@@ -1153,23 +1153,23 @@ func TestLeq(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) <= (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) <= (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -1177,33 +1177,33 @@ func TestLeq(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) <= (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) <= (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) <= (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) <= (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -1280,10 +1280,10 @@ func TestLeqLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = ?) <= ?)",
+			expectedQuery: "((hoge.huga = ?) <= ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -1300,10 +1300,10 @@ func TestLeqLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) <= ?)",
+			expectedQuery: "((hoge.huga = hoge.huga) <= ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 	}
@@ -1366,23 +1366,23 @@ func TestGeq(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) >= (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) >= (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -1390,33 +1390,33 @@ func TestGeq(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) >= (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) >= (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) >= (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) >= (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -1493,10 +1493,10 @@ func TestGeqLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = ?) >= ?)",
+			expectedQuery: "((hoge.huga = ?) >= ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -1513,10 +1513,10 @@ func TestGeqLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) >= ?)",
+			expectedQuery: "((hoge.huga = hoge.huga) >= ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 	}
@@ -1579,23 +1579,23 @@ func TestLt(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) < (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) < (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -1603,33 +1603,33 @@ func TestLt(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) < (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) < (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) < (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) < (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -1706,10 +1706,10 @@ func TestLtLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = ?) < ?)",
+			expectedQuery: "((hoge.huga = ?) < ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -1726,10 +1726,10 @@ func TestLtLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) < ?)",
+			expectedQuery: "((hoge.huga = hoge.huga) < ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 	}
@@ -1792,23 +1792,23 @@ func TestGt(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = ?) > (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = ?) > (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr1",
 			expr1IsNil:  true,
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "nil expr2",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2IsNil:  true,
 			isError:     true,
@@ -1816,33 +1816,33 @@ func TestGt(t *testing.T) {
 		{
 			description: "expr1 error",
 			expr1Errs:   []error{errors.New("expr1 error")},
-			expr2Query:  "(`hoge`.`huga` > ?)",
+			expr2Query:  "(hoge.huga > ?)",
 			expr2Args:   []genorm.ExprType{genorm.Wrap(2)},
 			isError:     true,
 		},
 		{
 			description: "expr2 error",
-			expr1Query:  "(`hoge`.`huga` = ?)",
+			expr1Query:  "(hoge.huga = ?)",
 			expr1Args:   []genorm.ExprType{genorm.Wrap(1)},
 			expr2Errs:   []error{errors.New("expr2 error")},
 			isError:     true,
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
-			expr2Query:    "(`hoge`.`huga` > ?)",
+			expr2Query:    "(hoge.huga > ?)",
 			expr2Args:     []genorm.ExprType{genorm.Wrap(2)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) > (`hoge`.`huga` > ?))",
+			expectedQuery: "((hoge.huga = hoge.huga) > (hoge.huga > ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description:   "expr2 no args",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
-			expr2Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr2Query:    "(hoge.huga = hoge.huga)",
 			expr2Args:     nil,
-			expectedQuery: "((`hoge`.`huga` = ?) > (`hoge`.`huga` = `hoge`.`huga`))",
+			expectedQuery: "((hoge.huga = ?) > (hoge.huga = hoge.huga))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 	}
@@ -1919,10 +1919,10 @@ func TestGtLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = ?) > ?)",
+			expectedQuery: "((hoge.huga = ?) > ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -1939,10 +1939,10 @@ func TestGtLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lit:           genorm.Wrap(true),
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) > ?)",
+			expectedQuery: "((hoge.huga = hoge.huga) > ?)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 	}
@@ -2001,9 +2001,9 @@ func TestIsNull(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
-			expectedQuery: "((`hoge`.`huga` = ?) IS NULL)",
+			expectedQuery: "((hoge.huga = ?) IS NULL)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -2018,9 +2018,9 @@ func TestIsNull(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			exprQuery:     "(`hoge`.`huga` = `hoge`.`huga`)",
+			exprQuery:     "(hoge.huga = hoge.huga)",
 			exprArgs:      nil,
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) IS NULL)",
+			expectedQuery: "((hoge.huga = hoge.huga) IS NULL)",
 			expectedArgs:  nil,
 		},
 	}
@@ -2079,9 +2079,9 @@ func TestIsNotNull(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			exprQuery:     "(`hoge`.`huga` = ?)",
+			exprQuery:     "(hoge.huga = ?)",
 			exprArgs:      []genorm.ExprType{genorm.Wrap(1)},
-			expectedQuery: "((`hoge`.`huga` = ?) IS NOT NULL)",
+			expectedQuery: "((hoge.huga = ?) IS NOT NULL)",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -2096,9 +2096,9 @@ func TestIsNotNull(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			exprQuery:     "(`hoge`.`huga` = `hoge`.`huga`)",
+			exprQuery:     "(hoge.huga = hoge.huga)",
 			exprArgs:      nil,
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) IS NOT NULL)",
+			expectedQuery: "((hoge.huga = hoge.huga) IS NOT NULL)",
 			expectedArgs:  nil,
 		},
 	}
@@ -2162,23 +2162,23 @@ func TestIn(t *testing.T) {
 		{
 			description: "normal",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) IN ((`hoge`.`nyan` = ?)))",
+			expectedQuery: "((hoge.huga = ?) IN ((hoge.nyan = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr",
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
@@ -2187,7 +2187,7 @@ func TestIn(t *testing.T) {
 		{
 			description: "nil exprs",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			isError: true,
@@ -2199,7 +2199,7 @@ func TestIn(t *testing.T) {
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
@@ -2208,7 +2208,7 @@ func TestIn(t *testing.T) {
 		{
 			description: "exprs error",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
@@ -2221,78 +2221,78 @@ func TestIn(t *testing.T) {
 		{
 			description: "expr no args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = `hoge`.`huga`)",
+				query: "(hoge.huga = hoge.huga)",
 				args:  []genorm.ExprType{},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) IN ((`hoge`.`nyan` = ?)))",
+			expectedQuery: "((hoge.huga = hoge.huga) IN ((hoge.nyan = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description: "exprs no args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = `hoge`.`huga`)",
+					query: "(hoge.huga = hoge.huga)",
 					args:  []genorm.ExprType{},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) IN ((`hoge`.`huga` = `hoge`.`huga`)))",
+			expectedQuery: "((hoge.huga = ?) IN ((hoge.huga = hoge.huga)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "expr nil args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = `hoge`.`huga`)",
+				query: "(hoge.huga = hoge.huga)",
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) IN ((`hoge`.`nyan` = ?)))",
+			expectedQuery: "((hoge.huga = hoge.huga) IN ((hoge.nyan = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description: "exprs nil args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = `hoge`.`huga`)",
+					query: "(hoge.huga = hoge.huga)",
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) IN ((`hoge`.`huga` = `hoge`.`huga`)))",
+			expectedQuery: "((hoge.huga = ?) IN ((hoge.huga = hoge.huga)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "multiple exprs",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 				{
-					query: "(`hoge`.`nyanya` = ?)",
+					query: "(hoge.nyanya = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(3)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) IN ((`hoge`.`nyan` = ?), (`hoge`.`nyanya` = ?)))",
+			expectedQuery: "((hoge.huga = ?) IN ((hoge.nyan = ?), (hoge.nyanya = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2), genorm.Wrap(3)},
 		},
 	}
@@ -2375,23 +2375,23 @@ func TestNotIn(t *testing.T) {
 		{
 			description: "normal",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`nyan` = ?)))",
+			expectedQuery: "((hoge.huga = ?) NOT IN ((hoge.nyan = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "nil expr",
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
@@ -2400,7 +2400,7 @@ func TestNotIn(t *testing.T) {
 		{
 			description: "nil exprs",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			isError: true,
@@ -2412,7 +2412,7 @@ func TestNotIn(t *testing.T) {
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
@@ -2421,7 +2421,7 @@ func TestNotIn(t *testing.T) {
 		{
 			description: "exprs error",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
@@ -2434,78 +2434,78 @@ func TestNotIn(t *testing.T) {
 		{
 			description: "expr no args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = `hoge`.`huga`)",
+				query: "(hoge.huga = hoge.huga)",
 				args:  []genorm.ExprType{},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) NOT IN ((`hoge`.`nyan` = ?)))",
+			expectedQuery: "((hoge.huga = hoge.huga) NOT IN ((hoge.nyan = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description: "exprs no args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = `hoge`.`huga`)",
+					query: "(hoge.huga = hoge.huga)",
 					args:  []genorm.ExprType{},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`huga` = `hoge`.`huga`)))",
+			expectedQuery: "((hoge.huga = ?) NOT IN ((hoge.huga = hoge.huga)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "expr nil args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = `hoge`.`huga`)",
+				query: "(hoge.huga = hoge.huga)",
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) NOT IN ((`hoge`.`nyan` = ?)))",
+			expectedQuery: "((hoge.huga = hoge.huga) NOT IN ((hoge.nyan = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(2)},
 		},
 		{
 			description: "exprs nil args",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`huga` = `hoge`.`huga`)",
+					query: "(hoge.huga = hoge.huga)",
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`huga` = `hoge`.`huga`)))",
+			expectedQuery: "((hoge.huga = ?) NOT IN ((hoge.huga = hoge.huga)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "multiple exprs",
 			expr: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			exprs: []*expr{
 				{
-					query: "(`hoge`.`nyan` = ?)",
+					query: "(hoge.nyan = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 				{
-					query: "(`hoge`.`nyanya` = ?)",
+					query: "(hoge.nyanya = ?)",
 					args:  []genorm.ExprType{genorm.Wrap(3)},
 				},
 			},
-			expectedQuery: "((`hoge`.`huga` = ?) NOT IN ((`hoge`.`nyan` = ?), (`hoge`.`nyanya` = ?)))",
+			expectedQuery: "((hoge.huga = ?) NOT IN ((hoge.nyan = ?), (hoge.nyanya = ?)))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2), genorm.Wrap(3)},
 		},
 	}
@@ -2584,10 +2584,10 @@ func TestInLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lits:          []genorm.WrappedPrimitive[bool]{genorm.Wrap(true)},
-			expectedQuery: "((`hoge`.`huga` = ?) IN (?))",
+			expectedQuery: "((hoge.huga = ?) IN (?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -2616,18 +2616,18 @@ func TestInLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lits:          []genorm.WrappedPrimitive[bool]{genorm.Wrap(true)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) IN (?))",
+			expectedQuery: "((hoge.huga = hoge.huga) IN (?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 		{
 			description:   "multiple lits",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lits:          []genorm.WrappedPrimitive[bool]{genorm.Wrap(true), genorm.Wrap(false)},
-			expectedQuery: "((`hoge`.`huga` = ?) IN (?, ?))",
+			expectedQuery: "((hoge.huga = ?) IN (?, ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true), genorm.Wrap(false)},
 		},
 	}
@@ -2689,10 +2689,10 @@ func TestNotInLit(t *testing.T) {
 	}{
 		{
 			description:   "normal",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lits:          []genorm.WrappedPrimitive[bool]{genorm.Wrap(true)},
-			expectedQuery: "((`hoge`.`huga` = ?) NOT IN (?))",
+			expectedQuery: "((hoge.huga = ?) NOT IN (?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true)},
 		},
 		{
@@ -2721,18 +2721,18 @@ func TestNotInLit(t *testing.T) {
 		},
 		{
 			description:   "expr1 no args",
-			expr1Query:    "(`hoge`.`huga` = `hoge`.`huga`)",
+			expr1Query:    "(hoge.huga = hoge.huga)",
 			expr1Args:     nil,
 			lits:          []genorm.WrappedPrimitive[bool]{genorm.Wrap(true)},
-			expectedQuery: "((`hoge`.`huga` = `hoge`.`huga`) NOT IN (?))",
+			expectedQuery: "((hoge.huga = hoge.huga) NOT IN (?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(true)},
 		},
 		{
 			description:   "multiple lits",
-			expr1Query:    "(`hoge`.`huga` = ?)",
+			expr1Query:    "(hoge.huga = ?)",
 			expr1Args:     []genorm.ExprType{genorm.Wrap(1)},
 			lits:          []genorm.WrappedPrimitive[bool]{genorm.Wrap(true), genorm.Wrap(false)},
-			expectedQuery: "((`hoge`.`huga` = ?) NOT IN (?, ?))",
+			expectedQuery: "((hoge.huga = ?) NOT IN (?, ?))",
 			expectedArgs:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(true), genorm.Wrap(false)},
 		},
 	}

@@ -98,19 +98,13 @@ func (c *InsertContext[T]) buildQuery() (string, []any, error) {
 
 	sb := &strings.Builder{}
 
-	str := "INSERT INTO `"
+	str := "INSERT INTO "
 	_, err := sb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
 	str = c.table.TableName()
-	_, err = sb.WriteString(str)
-	if err != nil {
-		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
-	}
-
-	str = "`"
 	_, err = sb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)

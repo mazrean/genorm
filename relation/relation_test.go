@@ -33,53 +33,53 @@ func TestJoinedTableName(t *testing.T) {
 			description:  "normal",
 			relationType: join,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
-			query: "(`hoge` CROSS JOIN `fuga`)",
+			query: "(hoge CROSS JOIN fuga)",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description:  "onExpr",
 			relationType: join,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
 			onExpr: &expr{
-				query: "(`hoge`.`id` = `fuga`.`id`)",
+				query: "(hoge.id = fuga.id)",
 			},
-			query: "(`hoge` INNER JOIN `fuga` ON (`hoge`.`id` = `fuga`.`id`))",
+			query: "(hoge INNER JOIN fuga ON (hoge.id = fuga.id))",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description:  "onExpr with args",
 			relationType: join,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
 			onExpr: &expr{
-				query: "(`hoge`.`id` = ?)",
+				query: "(hoge.id = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
-			query: "(`hoge` INNER JOIN `fuga` ON (`hoge`.`id` = ?))",
+			query: "(hoge INNER JOIN fuga ON (hoge.id = ?))",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description:  "onExpr with error",
 			relationType: join,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
 			onExpr: &expr{
 				errs: []error{errors.New("onExpr error")},
@@ -90,13 +90,13 @@ func TestJoinedTableName(t *testing.T) {
 			description:  "baseTable with args",
 			relationType: join,
 			baseExpr: expr{
-				query: "(`hoge` INNER JOIN `fuga` ON (`fuga`.`id` = ?))",
+				query: "(hoge INNER JOIN fuga ON (fuga.id = ?))",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
-			query: "((`hoge` INNER JOIN `fuga` ON (`fuga`.`id` = ?)) CROSS JOIN `fuga`)",
+			query: "((hoge INNER JOIN fuga ON (fuga.id = ?)) CROSS JOIN fuga)",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
@@ -106,7 +106,7 @@ func TestJoinedTableName(t *testing.T) {
 				errs: []error{errors.New("error")},
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
 			err: true,
 		},
@@ -114,20 +114,20 @@ func TestJoinedTableName(t *testing.T) {
 			description:  "refTable with args",
 			relationType: join,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
-				query: "(`fuga` INNER JOIN `piyo` ON (`piyo`.`id` = ?))",
+				query: "(fuga INNER JOIN piyo ON (piyo.id = ?))",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
-			query: "(`hoge` CROSS JOIN (`fuga` INNER JOIN `piyo` ON (`piyo`.`id` = ?)))",
+			query: "(hoge CROSS JOIN (fuga INNER JOIN piyo ON (piyo.id = ?)))",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description:  "refTable with error",
 			relationType: join,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
 				errs: []error{errors.New("error")},
@@ -138,30 +138,30 @@ func TestJoinedTableName(t *testing.T) {
 			description:  "left join",
 			relationType: leftJoin,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
 			onExpr: &expr{
-				query: "(`hoge`.`id` = `fuga`.`id`)",
+				query: "(hoge.id = fuga.id)",
 			},
-			query: "(`hoge` LEFT JOIN `fuga` ON (`hoge`.`id` = `fuga`.`id`))",
+			query: "(hoge LEFT JOIN fuga ON (hoge.id = fuga.id))",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description:  "right join",
 			relationType: rightJoin,
 			baseExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			refTableExpr: expr{
-				query: "`fuga`",
+				query: "fuga",
 			},
 			onExpr: &expr{
-				query: "(`hoge`.`id` = `fuga`.`id`)",
+				query: "(hoge.id = fuga.id)",
 			},
-			query: "(`hoge` RIGHT JOIN `fuga` ON (`hoge`.`id` = `fuga`.`id`))",
+			query: "(hoge RIGHT JOIN fuga ON (hoge.id = fuga.id))",
 			args:  []genorm.ExprType{},
 		},
 	}

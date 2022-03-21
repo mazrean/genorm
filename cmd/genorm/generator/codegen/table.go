@@ -227,20 +227,8 @@ func (tbl *table) exprDecl() ast.Decl {
 					Results: []ast.Expr{
 						&ast.CallExpr{
 							Fun: &ast.SelectorExpr{
-								X:   fmtIdent,
-								Sel: ast.NewIdent("Sprintf"),
-							},
-							Args: []ast.Expr{
-								&ast.BasicLit{
-									Kind:  token.STRING,
-									Value: "\"`%s`\"",
-								},
-								&ast.CallExpr{
-									Fun: &ast.SelectorExpr{
-										X:   tbl.recvIdent,
-										Sel: basicTableTableNameIdent,
-									},
-								},
+								X:   tbl.recvIdent,
+								Sel: basicTableTableNameIdent,
 							},
 						},
 						ast.NewIdent("nil"),

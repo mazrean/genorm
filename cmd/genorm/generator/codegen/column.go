@@ -197,7 +197,7 @@ func (clmn *column) sqlColumnsDecl() ast.Decl {
 							Args: []ast.Expr{
 								&ast.BasicLit{
 									Kind:  token.STRING,
-									Value: "\"`%s`.`%s`\"",
+									Value: `"%s.%s"`,
 								},
 								&ast.CallExpr{
 									Fun: &ast.SelectorExpr{

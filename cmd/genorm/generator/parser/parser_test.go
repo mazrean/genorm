@@ -497,6 +497,68 @@ func TestParseStructType(t *testing.T) {
 			},
 		},
 		{
+			description: "struct type(tag with double quotes exist) -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+							},
+							Type: fieldType,
+							Tag: &ast.BasicLit{
+								Kind:  token.STRING,
+								Value: "`genorm:\"\\\"t\\\"\"`",
+							},
+						},
+					},
+				},
+			},
+			table: &parserTable{
+				StructName: "a",
+				Columns: []*parserColumn{
+					{
+						Name:      "\"t\"",
+						FieldName: "s",
+						Type:      fieldType,
+					},
+				},
+				RefTables: []*parserRefTable{},
+			},
+		},
+		{
+			description: "struct type(tag with back quotes exist) -> success",
+			name:        "a",
+			s: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{
+								ast.NewIdent("s"),
+							},
+							Type: fieldType,
+							Tag: &ast.BasicLit{
+								Kind:  token.STRING,
+								Value: "\"genorm:\\\"`t`\\\"\"",
+							},
+						},
+					},
+				},
+			},
+			table: &parserTable{
+				StructName: "a",
+				Columns: []*parserColumn{
+					{
+						Name:      "`t`",
+						FieldName: "s",
+						Type:      fieldType,
+					},
+				},
+				RefTables: []*parserRefTable{},
+			},
+		},
+		{
 			description: "struct type(ref exist) -> success",
 			name:        "a",
 			s: &ast.StructType{

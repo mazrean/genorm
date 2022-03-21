@@ -50,16 +50,16 @@ func TestSelectBuildQuery(t *testing.T) {
 		{
 			description: "normal",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge`",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge",
 			args:  []genorm.ExprType{},
 		},
 		{
@@ -71,7 +71,7 @@ func TestSelectBuildQuery(t *testing.T) {
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			err: true,
@@ -79,143 +79,143 @@ func TestSelectBuildQuery(t *testing.T) {
 		{
 			description: "multiple fields",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 				{
 					tableName:     "hoge",
 					columnName:    "piyo",
-					sqlColumnName: "`hoge`.`piyo`",
+					sqlColumnName: "hoge.piyo",
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0, `hoge`.`piyo` AS hoge_piyo_0 FROM `hoge`",
+			query: "SELECT hoge.huga AS hoge_huga_0, hoge.piyo AS hoge_piyo_0 FROM hoge",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "field set",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			isFieldSet: true,
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge`",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "multiple fields set",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			isFieldSet: true,
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 				{
 					tableName:     "hoge",
 					columnName:    "piyo",
-					sqlColumnName: "`hoge`.`piyo`",
+					sqlColumnName: "hoge.piyo",
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0, `hoge`.`piyo` AS hoge_piyo_0 FROM `hoge`",
+			query: "SELECT hoge.huga AS hoge_huga_0, hoge.piyo AS hoge_piyo_0 FROM hoge",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "joined table",
 			tableExpr: expr{
-				query: "`hoge` JOIN `fuga` ON `hoge`.`id` = `fuga`.`id` AND `hoge`.`huga` = ?",
+				query: "hoge JOIN fuga ON hoge.id = fuga.id AND hoge.huga = ?",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` JOIN `fuga` ON `hoge`.`id` = `fuga`.`id` AND `hoge`.`huga` = ?",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge JOIN fuga ON hoge.id = fuga.id AND hoge.huga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "distinct",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			distinct: true,
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
-			query: "SELECT DISTINCT `hoge`.`huga` AS hoge_huga_0 FROM `hoge`",
+			query: "SELECT DISTINCT hoge.huga AS hoge_huga_0 FROM hoge",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "group by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga`",
+					query: "hoge.fuga",
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` GROUP BY `hoge`.`fuga`",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge GROUP BY hoge.fuga",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "group by with args",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga` = ?",
+					query: "hoge.fuga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` GROUP BY `hoge`.`fuga` = ?",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge GROUP BY hoge.fuga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "group by error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			groupExprs: []expr{
@@ -228,67 +228,67 @@ func TestSelectBuildQuery(t *testing.T) {
 		{
 			description: "multiple group by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga` = ?",
+					query: "hoge.fuga = ?",
 					args:  []genorm.ExprType{genorm.Wrap(1)},
 				},
 				{
-					query: "`hoge`.`piyo` = ?",
+					query: "hoge.piyo = ?",
 					args:  []genorm.ExprType{genorm.Wrap(2)},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` GROUP BY `hoge`.`fuga` = ?, `hoge`.`piyo` = ?",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge GROUP BY hoge.fuga = ?, hoge.piyo = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "having",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga`",
+					query: "hoge.fuga",
 				},
 			},
 			havingCondition: &expr{
-				query: "`hoge`.`huga` = ?",
+				query: "hoge.huga = ?",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` GROUP BY `hoge`.`fuga` HAVING `hoge`.`huga` = ?",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge GROUP BY hoge.fuga HAVING hoge.huga = ?",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "having error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			groupExprs: []expr{
 				{
-					query: "`hoge`.`fuga`",
+					query: "hoge.fuga",
 				},
 			},
 			havingCondition: &expr{
@@ -299,32 +299,32 @@ func TestSelectBuildQuery(t *testing.T) {
 		{
 			description: "where",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			whereCondition: &expr{
-				query: "(`hoge`.`huga` = ?)",
+				query: "(hoge.huga = ?)",
 				args:  []genorm.ExprType{genorm.Wrap(1)},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` WHERE (`hoge`.`huga` = ?)",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge WHERE (hoge.huga = ?)",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "where error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			whereCondition: &expr{
@@ -335,37 +335,37 @@ func TestSelectBuildQuery(t *testing.T) {
 		{
 			description: "order by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			orderItems: []orderItem{
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` ORDER BY (`hoge`.`huga` = ?) ASC",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge ORDER BY (hoge.huga = ?) ASC",
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
 			description: "order by error",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			orderItems: []orderItem{
@@ -381,96 +381,96 @@ func TestSelectBuildQuery(t *testing.T) {
 		{
 			description: "multi order by",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			orderItems: []orderItem{
 				{
 					direction: genorm.Asc,
 					expr: expr{
-						query: "(`hoge`.`huga` = ?)",
+						query: "(hoge.huga = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(1)},
 					},
 				},
 				{
 					direction: genorm.Desc,
 					expr: expr{
-						query: "(`hoge`.`nya` = ?)",
+						query: "(hoge.nya = ?)",
 						args:  []genorm.ExprType{genorm.Wrap(2)},
 					},
 				},
 			},
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` ORDER BY (`hoge`.`huga` = ?) ASC, (`hoge`.`nya` = ?) DESC",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge ORDER BY (hoge.huga = ?) ASC, (hoge.nya = ?) DESC",
 			args:  []genorm.ExprType{genorm.Wrap(1), genorm.Wrap(2)},
 		},
 		{
 			description: "limit",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			limit: 1,
-			query: "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` LIMIT 1",
+			query: "SELECT hoge.huga AS hoge_huga_0 FROM hoge LIMIT 1",
 			args:  []genorm.ExprType{},
 		},
 		{
 			description: "offset",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			offset: 1,
-			query:  "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` OFFSET 1",
+			query:  "SELECT hoge.huga AS hoge_huga_0 FROM hoge OFFSET 1",
 			args:   []genorm.ExprType{},
 		},
 		{
 			description: "for update",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			lockType: genorm.ForUpdate,
-			query:    "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` FOR UPDATE",
+			query:    "SELECT hoge.huga AS hoge_huga_0 FROM hoge FOR UPDATE",
 			args:     []genorm.ExprType{},
 		},
 		{
 			description: "for share",
 			tableExpr: expr{
-				query: "`hoge`",
+				query: "hoge",
 			},
 			fields: []field{
 				{
 					tableName:     "hoge",
 					columnName:    "huga",
-					sqlColumnName: "`hoge`.`huga`",
+					sqlColumnName: "hoge.huga",
 				},
 			},
 			lockType: genorm.ForShare,
-			query:    "SELECT `hoge`.`huga` AS hoge_huga_0 FROM `hoge` FOR SHARE",
+			query:    "SELECT hoge.huga AS hoge_huga_0 FROM hoge FOR SHARE",
 			args:     []genorm.ExprType{},
 		},
 	}
