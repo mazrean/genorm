@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"strings"
 
 	"github.com/mazrean/genorm/cmd/genorm/generator/types"
 )
@@ -289,13 +290,17 @@ func (clmn *column) columnNameDecl() ast.Decl {
 					Results: []ast.Expr{
 						&ast.BasicLit{
 							Kind:  token.STRING,
-							Value: fmt.Sprintf(`"%s"`, clmn.columnName),
+							Value: fmt.Sprintf(`"%s"`, escapeTag(clmn.columnName)),
 						},
 					},
 				},
 			},
 		},
 	}
+}
+
+func escapeTag(tag string) string {
+	return strings.ReplaceAll(tag, `"`, `\"`)
 }
 
 func (clmn *column) tableExprDecl() ast.Decl {
