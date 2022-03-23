@@ -1,5 +1,5 @@
 package genorm
 
-func (c *SelectContext[T]) BuildQuery() ([]Column, string, []ExprType, error) {
+func (c *SelectContext[_, _]) BuildQuery() ([]Column, string, []ExprType, error) {
 	return c.buildQuery()
 }
