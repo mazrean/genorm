@@ -66,7 +66,6 @@ func (jt *joinedTable) decl() []ast.Decl {
 	decls = append(
 		decls,
 		jt.structDecl(),
-		jt.newDecl(),
 		jt.exprDecl(),
 		jt.columnsDecl(),
 		jt.columnMapDecl(),
@@ -105,9 +104,7 @@ func (jt *joinedTable) structDecl() ast.Decl {
 	fields := make([]*ast.Field, 0, len(jt.tables)+2)
 	for _, table := range jt.tables {
 		fields = append(fields, &ast.Field{
-			Type: &ast.StarExpr{
-				X: table.structIdent,
-			},
+			Type: table.structIdent,
 		})
 	}
 	fields = append(fields, &ast.Field{
@@ -133,60 +130,6 @@ func (jt *joinedTable) structDecl() ast.Decl {
 				Type: &ast.StructType{
 					Fields: &ast.FieldList{
 						List: fields,
-					},
-				},
-			},
-		},
-	}
-}
-
-func (jt *joinedTable) newDecl() ast.Decl {
-	elts := make([]ast.Expr, 0, len(jt.tables))
-	for _, table := range jt.tables {
-		elts = append(elts, &ast.KeyValueExpr{
-			Key: table.structIdent,
-			Value: &ast.UnaryExpr{
-				Op: token.AND,
-				X: &ast.CompositeLit{
-					Type: table.structIdent,
-					Elts: []ast.Expr{},
-				},
-			},
-		})
-	}
-
-	return &ast.FuncDecl{
-		Recv: &ast.FieldList{
-			List: []*ast.Field{
-				{
-					Names: []*ast.Ident{jt.recvIdent},
-					Type: &ast.StarExpr{
-						X: jt.structIdent,
-					},
-				},
-			},
-		},
-		Name: tableNewIdent,
-		Type: &ast.FuncType{
-			Results: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Type: tableTypeExpr,
-					},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.UnaryExpr{
-							Op: token.AND,
-							X: &ast.CompositeLit{
-								Type: jt.structIdent,
-								Elts: elts,
-							},
-						},
 					},
 				},
 			},
@@ -415,9 +358,12 @@ func (jt *joinedTable) columnMapDecl() ast.Decl {
 func (jt *joinedTable) baseTables() ast.Decl {
 	baseTables := make([]ast.Expr, 0, len(jt.tables))
 	for _, table := range jt.tables {
-		baseTables = append(baseTables, &ast.SelectorExpr{
-			X:   jt.recvIdent,
-			Sel: table.structIdent,
+		baseTables = append(baseTables, &ast.UnaryExpr{
+			Op: token.AND,
+			X: &ast.SelectorExpr{
+				X:   jt.recvIdent,
+				Sel: table.structIdent,
+			},
 		})
 	}
 
@@ -621,9 +567,9 @@ func (jt *joinedTable) tableJoinDecl(ref *refTable) ast.Decl {
 							X: jt.structIdent,
 						}, &ast.StarExpr{
 							X: ref.refTable.structIdent,
-						}, &ast.StarExpr{
-							X: ref.joinedTable.structIdent,
-						}),
+						},
+							ref.joinedTable.structIdent,
+						),
 					},
 				},
 			},
@@ -647,9 +593,9 @@ func (jt *joinedTable) tableJoinDecl(ref *refTable) ast.Decl {
 								X: jt.structIdent,
 							}, &ast.StarExpr{
 								X: ref.refTable.structIdent,
-							}, &ast.StarExpr{
-								X: ref.joinedTable.structIdent,
-							}),
+							},
+								ref.joinedTable.structIdent,
+							),
 							Args: []ast.Expr{
 								jt.recvIdent,
 								&ast.UnaryExpr{
@@ -699,9 +645,9 @@ func (jt *joinedTable) joinedTableJoinDecl(ref *refJoinedTable) ast.Decl {
 							X: jt.structIdent,
 						}, &ast.StarExpr{
 							X: ref.refTable.structIdent,
-						}, &ast.StarExpr{
-							X: ref.joinedTable.structIdent,
-						}),
+						},
+							ref.joinedTable.structIdent,
+						),
 					},
 				},
 			},
@@ -715,9 +661,9 @@ func (jt *joinedTable) joinedTableJoinDecl(ref *refJoinedTable) ast.Decl {
 								X: jt.structIdent,
 							}, &ast.StarExpr{
 								X: ref.refTable.structIdent,
-							}, &ast.StarExpr{
-								X: ref.joinedTable.structIdent,
-							}),
+							},
+								ref.joinedTable.structIdent,
+							),
 							Args: []ast.Expr{
 								jt.recvIdent,
 								refIdent,
