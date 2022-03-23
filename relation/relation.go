@@ -8,88 +8,67 @@ import (
 	"github.com/mazrean/genorm"
 )
 
-type RelationContext[BaseTable Table, RefTable Table, _ JoinedTable] struct {
-	baseTable BaseTable
-	refTable  RefTable
+type RelationContext[S Table, T Table, _ JoinedTablePointer[V], V any] struct {
+	baseTable S
+	refTable  T
 }
 
-func NewRelationContext[S Table, T Table, U JoinedTable](baseTable S, refTable T) *RelationContext[S, T, U] {
-	return &RelationContext[S, T, U]{
+func NewRelationContext[S Table, T Table, U JoinedTablePointer[V], V any](baseTable S, refTable T) *RelationContext[S, T, U, V] {
+	return &RelationContext[S, T, U, V]{
 		baseTable: baseTable,
 		refTable:  refTable,
 	}
 }
 
 // Join INNER JOIN(CROSS JOIN)
-func (r *RelationContext[BaseTable, RefTable, JoinedTable]) Join(
-	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
-) JoinedTable {
-	var joinedTable JoinedTable
-	iJoinedTable := joinedTable.New()
-	switch v := iJoinedTable.(type) {
-	case JoinedTable:
-		joinedTable = v
-	default:
-		return joinedTable
-	}
+func (r *RelationContext[S, T, U, V]) Join(
+	expr genorm.TypedTableExpr[U, genorm.WrappedPrimitive[bool]],
+) U {
+	var joinedTable V
 
 	relation, err := newRelation(join, r.baseTable, r.refTable, expr)
 	if err != nil {
-		joinedTable.AddError(err)
-		return joinedTable
+		U(&joinedTable).AddError(err)
+		return &joinedTable
 	}
 
-	joinedTable.SetRelation(relation)
+	U(&joinedTable).SetRelation(relation)
 
-	return joinedTable
+	return &joinedTable
 }
 
 // LeftJoin LEFT JOIN
-func (r *RelationContext[BaseTable, RefTable, JoinedTable]) LeftJoin(
-	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
-) JoinedTable {
-	var joinedTable JoinedTable
-	iJoinedTable := joinedTable.New()
-	switch v := iJoinedTable.(type) {
-	case JoinedTable:
-		joinedTable = v
-	default:
-		return joinedTable
-	}
+func (r *RelationContext[S, T, U, V]) LeftJoin(
+	expr genorm.TypedTableExpr[U, genorm.WrappedPrimitive[bool]],
+) U {
+	var joinedTable V
 
 	relation, err := newRelation(leftJoin, r.baseTable, r.refTable, expr)
 	if err != nil {
-		joinedTable.AddError(err)
-		return joinedTable
+		U(&joinedTable).AddError(err)
+		return &joinedTable
 	}
 
-	joinedTable.SetRelation(relation)
+	U(&joinedTable).SetRelation(relation)
 
-	return joinedTable
+	return &joinedTable
 }
 
 // RightJoin RIGHT JOIN
-func (r *RelationContext[BaseTable, RefTable, JoinedTable]) RightJoin(
-	expr genorm.TypedTableExpr[JoinedTable, genorm.WrappedPrimitive[bool]],
-) JoinedTable {
-	var joinedTable JoinedTable
-	iJoinedTable := joinedTable.New()
-	switch v := iJoinedTable.(type) {
-	case JoinedTable:
-		joinedTable = v
-	default:
-		return joinedTable
-	}
+func (r *RelationContext[S, T, U, V]) RightJoin(
+	expr genorm.TypedTableExpr[U, genorm.WrappedPrimitive[bool]],
+) U {
+	var joinedTable V
 
 	relation, err := newRelation(rightJoin, r.baseTable, r.refTable, expr)
 	if err != nil {
-		joinedTable.AddError(err)
-		return joinedTable
+		U(&joinedTable).AddError(err)
+		return &joinedTable
 	}
 
-	joinedTable.SetRelation(relation)
+	U(&joinedTable).SetRelation(relation)
 
-	return joinedTable
+	return &joinedTable
 }
 
 type Relation struct {

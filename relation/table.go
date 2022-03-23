@@ -18,3 +18,8 @@ type JoinedTable interface {
 	genorm.JoinedTable
 	SetRelation(*Relation)
 }
+
+type JoinedTablePointer[T any] interface {
+	JoinedTable
+	*T
+}

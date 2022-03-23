@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type SelectContext[T Table] struct {
+type SelectContext[S any, T TablePointer[S]] struct {
 	*Context[T]
 	distinct        bool
 	fields          []TableColumns[T]
@@ -21,13 +21,13 @@ type SelectContext[T Table] struct {
 	lockType        lockClause
 }
 
-func Select[T Table](table T) *SelectContext[T] {
-	return &SelectContext[T]{
+func Select[S any, T TablePointer[S]](table T) *SelectContext[S, T] {
+	return &SelectContext[S, T]{
 		Context: newContext(table),
 	}
 }
 
-func (c *SelectContext[T]) Distinct() *SelectContext[T] {
+func (c *SelectContext[S, T]) Distinct() *SelectContext[S, T] {
 	if c.distinct {
 		c.addError(errors.New("distinct already set"))
 		return c
@@ -38,7 +38,7 @@ func (c *SelectContext[T]) Distinct() *SelectContext[T] {
 	return c
 }
 
-func (c *SelectContext[T]) Fields(fields ...TableColumns[T]) *SelectContext[T] {
+func (c *SelectContext[S, T]) Fields(fields ...TableColumns[T]) *SelectContext[S, T] {
 	if c.fields != nil {
 		c.addError(errors.New("fields already set"))
 		return c
@@ -64,9 +64,9 @@ func (c *SelectContext[T]) Fields(fields ...TableColumns[T]) *SelectContext[T] {
 	return c
 }
 
-func (c *SelectContext[T]) Where(
+func (c *SelectContext[S, T]) Where(
 	condition TypedTableExpr[T, WrappedPrimitive[bool]],
-) *SelectContext[T] {
+) *SelectContext[S, T] {
 	err := c.whereCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("where condition: %w", err))
@@ -75,7 +75,7 @@ func (c *SelectContext[T]) Where(
 	return c
 }
 
-func (c *SelectContext[T]) GroupBy(exprs ...TableExpr[T]) *SelectContext[T] {
+func (c *SelectContext[S, T]) GroupBy(exprs ...TableExpr[T]) *SelectContext[S, T] {
 	err := c.groupExpr.set(exprs)
 	if err != nil {
 		c.addError(fmt.Errorf("group by: %w", err))
@@ -84,9 +84,9 @@ func (c *SelectContext[T]) GroupBy(exprs ...TableExpr[T]) *SelectContext[T] {
 	return c
 }
 
-func (c *SelectContext[T]) Having(
+func (c *SelectContext[S, T]) Having(
 	condition TypedTableExpr[T, WrappedPrimitive[bool]],
-) *SelectContext[T] {
+) *SelectContext[S, T] {
 	err := c.havingCondition.set(condition)
 	if err != nil {
 		c.addError(fmt.Errorf("having condition: %w", err))
@@ -95,7 +95,7 @@ func (c *SelectContext[T]) Having(
 	return c
 }
 
-func (c *SelectContext[T]) OrderBy(direction OrderDirection, expr TableExpr[T]) *SelectContext[T] {
+func (c *SelectContext[S, T]) OrderBy(direction OrderDirection, expr TableExpr[T]) *SelectContext[S, T] {
 	err := c.order.add(orderItem[T]{
 		expr:      expr,
 		direction: direction,
@@ -107,7 +107,7 @@ func (c *SelectContext[T]) OrderBy(direction OrderDirection, expr TableExpr[T]) 
 	return c
 }
 
-func (c *SelectContext[T]) Limit(limit uint64) *SelectContext[T] {
+func (c *SelectContext[S, T]) Limit(limit uint64) *SelectContext[S, T] {
 	err := c.limit.set(limit)
 	if err != nil {
 		c.addError(fmt.Errorf("limit: %w", err))
@@ -116,7 +116,7 @@ func (c *SelectContext[T]) Limit(limit uint64) *SelectContext[T] {
 	return c
 }
 
-func (c *SelectContext[T]) Offset(offset uint64) *SelectContext[T] {
+func (c *SelectContext[S, T]) Offset(offset uint64) *SelectContext[S, T] {
 	err := c.offset.set(offset)
 	if err != nil {
 		c.addError(fmt.Errorf("offset: %w", err))
@@ -125,7 +125,7 @@ func (c *SelectContext[T]) Offset(offset uint64) *SelectContext[T] {
 	return c
 }
 
-func (c *SelectContext[T]) Lock(lockType LockType) *SelectContext[T] {
+func (c *SelectContext[S, T]) Lock(lockType LockType) *SelectContext[S, T] {
 	err := c.lockType.set(lockType)
 	if err != nil {
 		c.addError(fmt.Errorf("lockType: %w", err))
@@ -134,7 +134,7 @@ func (c *SelectContext[T]) Lock(lockType LockType) *SelectContext[T] {
 	return c
 }
 
-func (c *SelectContext[T]) GetAllCtx(ctx context.Context, db DB) ([]T, error) {
+func (c *SelectContext[S, T]) GetAllCtx(ctx context.Context, db DB) ([]T, error) {
 	errs := c.Errors()
 	if len(errs) != 0 {
 		return nil, errs[0]
@@ -161,16 +161,8 @@ func (c *SelectContext[T]) GetAllCtx(ctx context.Context, db DB) ([]T, error) {
 
 	tables := []T{}
 	for rows.Next() {
-		var table T
-		iTable := table.New()
-		switch v := iTable.(type) {
-		case T:
-			table = v
-		default:
-			return nil, fmt.Errorf("invalid table type: %T", iTable)
-		}
-
-		columnMap := table.ColumnMap()
+		var table S
+		columnMap := T(&table).ColumnMap()
 
 		dests := make([]any, 0, len(columns))
 		for _, column := range columns {
@@ -187,32 +179,30 @@ func (c *SelectContext[T]) GetAllCtx(ctx context.Context, db DB) ([]T, error) {
 			return nil, fmt.Errorf("scan: %w", err)
 		}
 
-		tables = append(tables, table)
+		tables = append(tables, &table)
 	}
 
 	return tables, nil
 }
 
-func (c *SelectContext[T]) GetAll(db DB) ([]T, error) {
+func (c *SelectContext[S, T]) GetAll(db DB) ([]T, error) {
 	return c.GetAllCtx(context.Background(), db)
 }
 
-func (c *SelectContext[T]) GetCtx(ctx context.Context, db DB) (T, error) {
-	var table T
-
+func (c *SelectContext[S, T]) GetCtx(ctx context.Context, db DB) (T, error) {
 	err := c.limit.set(1)
 	if err != nil {
-		return table, fmt.Errorf("set limit 1: %w", err)
+		return nil, fmt.Errorf("set limit 1: %w", err)
 	}
 
 	errs := c.Errors()
 	if len(errs) != 0 {
-		return table, errs[0]
+		return nil, errs[0]
 	}
 
 	columns, query, exprArgs, err := c.buildQuery()
 	if err != nil {
-		return table, fmt.Errorf("build query: %w", err)
+		return nil, fmt.Errorf("build query: %w", err)
 	}
 
 	args := make([]any, 0, len(exprArgs))
@@ -222,21 +212,14 @@ func (c *SelectContext[T]) GetCtx(ctx context.Context, db DB) (T, error) {
 
 	row := db.QueryRowContext(ctx, query, args...)
 
-	iTable := table.New()
-	switch v := iTable.(type) {
-	case T:
-		table = v
-	default:
-		return table, fmt.Errorf("invalid table type: %T", iTable)
-	}
-
-	columnMap := table.ColumnMap()
+	var table S
+	columnMap := T(&table).ColumnMap()
 
 	dests := make([]any, 0, len(columns))
 	for _, column := range columns {
 		columnField, ok := columnMap[column.SQLColumnName()]
 		if !ok {
-			return table, fmt.Errorf("column %s not found", column)
+			return nil, fmt.Errorf("column %s not found", column)
 		}
 
 		dests = append(dests, columnField)
@@ -244,20 +227,20 @@ func (c *SelectContext[T]) GetCtx(ctx context.Context, db DB) (T, error) {
 
 	err = row.Scan(dests...)
 	if errors.Is(err, sql.ErrNoRows) {
-		return table, ErrRecordNotFound
+		return nil, ErrRecordNotFound
 	}
 	if err != nil {
-		return table, fmt.Errorf("query: %w", err)
+		return nil, fmt.Errorf("query: %w", err)
 	}
 
-	return table, nil
+	return &table, nil
 }
 
-func (c *SelectContext[T]) Get(db DB) (T, error) {
+func (c *SelectContext[S, T]) Get(db DB) (T, error) {
 	return c.GetCtx(context.Background(), db)
 }
 
-func (c *SelectContext[T]) buildQuery() ([]Column, string, []ExprType, error) {
+func (c *SelectContext[S, T]) buildQuery() ([]Column, string, []ExprType, error) {
 	sb := strings.Builder{}
 	args := []ExprType{}
 

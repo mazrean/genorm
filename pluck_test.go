@@ -361,13 +361,14 @@ func TestPluckBuildQuery(t *testing.T) {
 				GetErrors().
 				Return(nil)
 
-			field := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[int]](ctrl)
-			field.
+			mockField := mock.NewMockTypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[int]](ctrl)
+			mockField.
 				EXPECT().
 				Expr().
 				Return(test.fieldExpr.query, test.fieldExpr.args, test.fieldExpr.errs)
+			var field genorm.TypedTableExpr[*mock.MockTable, genorm.WrappedPrimitive[int]] = mockField
 
-			builder := genorm.Pluck[*mock.MockTable, genorm.WrappedPrimitive[int]](table, field)
+			builder := genorm.Pluck(table, field)
 
 			if test.distinct {
 				builder = builder.Distinct()

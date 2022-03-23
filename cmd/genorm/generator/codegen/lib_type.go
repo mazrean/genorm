@@ -34,7 +34,6 @@ var (
 	tableExprTableExprIdent = ast.NewIdent("TableExpr")
 	typedExprTypedExprIdent = ast.NewIdent("TypedExpr")
 
-	tableNewIdent               = ast.NewIdent("New")
 	tableColumnsIdent           = ast.NewIdent("Columns")
 	tableGetErrorsIdent         = ast.NewIdent("GetErrors")
 	tableAddErrorIdent          = ast.NewIdent("AddError")
@@ -96,6 +95,9 @@ func relationContext(baseTable ast.Expr, refTable ast.Expr, joinedTable ast.Expr
 			Indices: []ast.Expr{
 				baseTable,
 				refTable,
+				&ast.StarExpr{
+					X: joinedTable,
+				},
 				joinedTable,
 			},
 		},
@@ -111,6 +113,9 @@ func newRelationContext(baseTable ast.Expr, refTable ast.Expr, joinedTable ast.E
 		Indices: []ast.Expr{
 			baseTable,
 			refTable,
+			&ast.StarExpr{
+				X: joinedTable,
+			},
 			joinedTable,
 		},
 	}
