@@ -16,6 +16,11 @@ type ColumnFieldExprType interface {
 	driver.Valuer
 }
 
+type ColumnFieldExprTypePointer[T ExprType] interface {
+	ColumnFieldExprType
+	*T
+}
+
 type ExprPrimitive interface {
 	bool |
 		int | int8 | int16 | int32 | int64 |
