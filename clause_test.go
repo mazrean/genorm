@@ -766,7 +766,7 @@ func TestOrderClauseGetExprTest(t *testing.T) {
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
-			description: "invlid direction",
+			description: "invalid direction",
 			items: []orderItem{
 				{
 					expr: &expr{
