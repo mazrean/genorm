@@ -45,10 +45,7 @@ func Parse(f *ast.File) ([]*types.Table, error) {
 				continue
 			}
 
-			method, isMethod, err := parseFuncDecl(funcDecl)
-			if err != nil {
-				return nil, fmt.Errorf("parse func: %w", err)
-			}
+			method, isMethod := parseFuncDecl(funcDecl)
 
 			if isMethod {
 				methodMap[method.StructName] = append(methodMap[method.StructName], method)
