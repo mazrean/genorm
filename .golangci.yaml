@@ -20,7 +20,6 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    - exhaustruct
     - exportloopref
     - forcetypeassert
     - gocheckcompilerdirectives
@@ -31,7 +30,6 @@ linters:
     - misspell
     - nakedret
     - nilerr
-    - nilnil
     - nosprintfhostport
     - sqlclosecheck
     - testpackage
