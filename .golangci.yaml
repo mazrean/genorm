@@ -30,7 +30,6 @@ linters:
     - goheader
     - goimports
     - gosec
-    - gosmopolitan
     - misspell
     - nakedret
     - nilerr
