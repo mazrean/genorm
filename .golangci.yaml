@@ -24,9 +24,7 @@ linters:
     - exportloopref
     - forcetypeassert
     - gocheckcompilerdirectives
-    - goconst
     - gocritic
-    - goerr113
     - goheader
     - goimports
     - gosec
@@ -40,4 +38,3 @@ linters:
     - unconvert
     - unparam
     - whitespace
-    - wrapcheck
