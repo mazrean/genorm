@@ -182,7 +182,6 @@ func TestGroupClauseSetTest(t *testing.T) {
 	type expr struct {
 		query string
 		args  []genorm.ExprType
-		errs  []error
 	}
 
 	tests := []struct {
@@ -285,7 +284,6 @@ func TestGroupClauseExistTest(t *testing.T) {
 	type expr struct {
 		query string
 		args  []genorm.ExprType
-		errs  []error
 	}
 
 	tests := []struct {
@@ -442,7 +440,6 @@ func TestOrderClauseAddTest(t *testing.T) {
 	type expr struct {
 		query string
 		args  []genorm.ExprType
-		errs  []error
 	}
 
 	type orderItem struct {

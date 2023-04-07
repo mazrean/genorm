@@ -12,23 +12,6 @@ import (
 func TestInsertBuildQuery(t *testing.T) {
 	t.Parallel()
 
-	type field struct {
-		tableName     string
-		columnName    string
-		sqlColumnName string
-	}
-
-	type expr struct {
-		query string
-		args  []genorm.ExprType
-		errs  []error
-	}
-
-	type orderItem struct {
-		direction genorm.OrderDirection
-		expr      expr
-	}
-
 	columnFieldExpr1 := genorm.Wrap(1)
 	columnFieldExpr2 := genorm.Wrap(2)
 	columnFieldNull := genorm.WrappedPrimitive[int]{}
