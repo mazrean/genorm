@@ -20,6 +20,23 @@ jobs:
         with:
           name: genorm
           path: ./genorm
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      # go generate用に、golangci-lintの前にGoのinstallをする
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - run: go generate ./...
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v2.2
+        with:
+          go_version_file: go.mod
+          reporter: github-pr-check
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: true
   test:
     name: Test
     runs-on: ubuntu-latest

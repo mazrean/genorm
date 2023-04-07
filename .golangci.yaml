@@ -1,0 +1,44 @@
+run:
+  skip-dirs:
+    - mock
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - structcheck
+    - varcheck
+    - ineffassign
+    - typecheck
+    - revive
+    - gofmt
+    - asasalint
+    - asciicheck
+    - bidichk
+    - errname
+    - errorlint
+    - exhaustive
+    - exhaustruct
+    - exportloopref
+    - forcetypeassert
+    - gocheckcompilerdirectives
+    - goconst
+    - gocritic
+    - goerr113
+    - goheader
+    - goimports
+    - gosec
+    - gosmopolitan
+    - misspell
+    - nakedret
+    - nilerr
+    - nilnil
+    - nosprintfhostport
+    - sqlclosecheck
+    - testpackage
+    - unconvert
+    - unparam
+    - whitespace
+    - wrapcheck
