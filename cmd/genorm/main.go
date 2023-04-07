@@ -81,7 +81,7 @@ func printVersionInfo() error {
 
 func openSource(source string) (io.ReadCloser, error) {
 	if len(source) == 0 {
-		return nil, errors.New("Source file is required.")
+		return nil, errors.New("empty source file")
 	}
 
 	file, err := os.Open(source)

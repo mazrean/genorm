@@ -138,14 +138,14 @@ func convertTable(table *parserTable) *types.Table {
 	}
 }
 
-func parseFuncDecl(f *ast.FuncDecl) (*parserMethod, bool, error) {
+func parseFuncDecl(f *ast.FuncDecl) (*parserMethod, bool) {
 	recv := f.Recv
 	if recv == nil {
-		return nil, false, nil
+		return nil, false
 	}
 
 	if len(recv.List) == 0 {
-		return nil, false, nil
+		return nil, false
 	}
 
 	recvType := recv.List[0].Type
@@ -153,26 +153,26 @@ func parseFuncDecl(f *ast.FuncDecl) (*parserMethod, bool, error) {
 	if !ok {
 		starType, ok := recvType.(*ast.StarExpr)
 		if !ok {
-			return nil, false, nil
+			return nil, false
 		}
 
 		identType, ok = starType.X.(*ast.Ident)
 		if !ok {
-			return nil, false, nil
+			return nil, false
 		}
 
 		return &parserMethod{
 			StructName: identType.Name,
 			Type:       types.MethodTypeStar,
 			Decl:       f,
-		}, true, nil
+		}, true
 	}
 
 	return &parserMethod{
 		StructName: identType.Name,
 		Type:       types.MethodTypeIdentifier,
 		Decl:       f,
-	}, true, nil
+	}, true
 }
 
 func parseGenDecl(g *ast.GenDecl) ([]*parserTable, error) {
