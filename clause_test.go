@@ -1215,7 +1215,7 @@ func TestLockClauseGetExprTest(t *testing.T) {
 		},
 		{
 			description: "empty lock type",
-			err:         true,
+			query:       "",
 		},
 	}
 
