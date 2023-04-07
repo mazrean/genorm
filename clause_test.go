@@ -62,10 +62,8 @@ func TestWhereConditionClauseSetTest(t *testing.T) {
 			if test.err {
 				assert.Error(t, err)
 				return
-			} else {
-				if !assert.NoError(t, err) {
-					return
-				}
+			} else if !assert.NoError(t, err) {
+				return
 			}
 
 			assert.Equal(t, setExpr, c.GetCondition())
@@ -168,10 +166,8 @@ func TestWhereConditionClauseGetExprTest(t *testing.T) {
 			if test.err {
 				assert.Error(t, err)
 				return
-			} else {
-				if !assert.NoError(t, err) {
-					return
-				}
+			} else if !assert.NoError(t, err) {
+				return
 			}
 
 			assert.Equal(t, test.expr.query, query)

@@ -207,10 +207,8 @@ func TestJoinedTableName(t *testing.T) {
 			if test.err {
 				assert.Greater(t, len(errs), 0)
 				return
-			} else {
-				if !assert.Len(t, errs, 0) {
-					return
-				}
+			} else if !assert.Len(t, errs, 0) {
+				return
 			}
 
 			assert.Equal(t, test.query, query)
