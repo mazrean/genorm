@@ -1,5 +1,6 @@
 package genorm
 
+//nolint:revive
 func NewWhereConditionClause[T Table](condition TypedTableExpr[T, WrappedPrimitive[bool]]) *whereConditionClause[T] {
 	return &whereConditionClause[T]{
 		condition: condition,
@@ -22,6 +23,7 @@ func (c *whereConditionClause[T]) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
 
+//nolint:revive
 func NewGroupClause[T Table](exprs []TableExpr[T]) *groupClause[T] {
 	return &groupClause[T]{
 		exprs: exprs,
@@ -57,6 +59,7 @@ func (c *OrderItem[T]) Value() (TableExpr[T], OrderDirection) {
 	return c.expr, c.direction
 }
 
+//nolint:revive
 func NewOrderClause[T Table](items []OrderItem[T]) *orderClause[T] {
 	orderItems := make([]orderItem[T], 0, len(items))
 	for _, item := range items {
@@ -89,6 +92,7 @@ func (c *orderClause[T]) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
 
+//nolint:revive
 func NewLimitClause(limit uint64) *limitClause {
 	return &limitClause{
 		limit: limit,
@@ -111,6 +115,7 @@ func (c *limitClause) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
 
+//nolint:revive
 func NewOffsetClause(offset uint64) *offsetClause {
 	return &offsetClause{
 		offset: offset,
@@ -133,6 +138,7 @@ func (c *offsetClause) GetExpr() (string, []ExprType, error) {
 	return c.getExpr()
 }
 
+//nolint:revive
 func NewLockClause(lockType LockType) *lockClause {
 	return &lockClause{
 		lockType: lockType,

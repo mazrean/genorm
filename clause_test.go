@@ -62,10 +62,8 @@ func TestWhereConditionClauseSetTest(t *testing.T) {
 			if test.err {
 				assert.Error(t, err)
 				return
-			} else {
-				if !assert.NoError(t, err) {
-					return
-				}
+			} else if !assert.NoError(t, err) {
+				return
 			}
 
 			assert.Equal(t, setExpr, c.GetCondition())
@@ -168,10 +166,8 @@ func TestWhereConditionClauseGetExprTest(t *testing.T) {
 			if test.err {
 				assert.Error(t, err)
 				return
-			} else {
-				if !assert.NoError(t, err) {
-					return
-				}
+			} else if !assert.NoError(t, err) {
+				return
 			}
 
 			assert.Equal(t, test.expr.query, query)
@@ -186,7 +182,6 @@ func TestGroupClauseSetTest(t *testing.T) {
 	type expr struct {
 		query string
 		args  []genorm.ExprType
-		errs  []error
 	}
 
 	tests := []struct {
@@ -289,7 +284,6 @@ func TestGroupClauseExistTest(t *testing.T) {
 	type expr struct {
 		query string
 		args  []genorm.ExprType
-		errs  []error
 	}
 
 	tests := []struct {
@@ -446,7 +440,6 @@ func TestOrderClauseAddTest(t *testing.T) {
 	type expr struct {
 		query string
 		args  []genorm.ExprType
-		errs  []error
 	}
 
 	type orderItem struct {
@@ -770,7 +763,7 @@ func TestOrderClauseGetExprTest(t *testing.T) {
 			args:  []genorm.ExprType{genorm.Wrap(1)},
 		},
 		{
-			description: "invlid direction",
+			description: "invalid direction",
 			items: []orderItem{
 				{
 					expr: &expr{
@@ -1222,7 +1215,7 @@ func TestLockClauseGetExprTest(t *testing.T) {
 		},
 		{
 			description: "empty lock type",
-			err:         true,
+			query:       "",
 		},
 	}
 

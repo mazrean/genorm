@@ -8,6 +8,7 @@ import (
 	"github.com/mazrean/genorm"
 )
 
+//nolint:revive
 type RelationContext[S Table, T Table, _ JoinedTablePointer[V], V any] struct {
 	baseTable S
 	refTable  T
@@ -185,6 +186,7 @@ func (r *Relation) JoinedTableName() (string, []genorm.ExprType, []error) {
 	return sb.String(), args, nil
 }
 
+//nolint:revive
 type RelationType int8
 
 const (

@@ -205,7 +205,6 @@ func TestParseFuncDecl(t *testing.T) {
 		f           *ast.FuncDecl
 		method      *parserMethod
 		isMethod    bool
-		err         bool
 	}{
 		{
 			description: "normal func -> not method",
@@ -253,17 +252,7 @@ func TestParseFuncDecl(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			method, isMethod, err := parseFuncDecl(test.f)
-			if err != nil {
-				if !test.err {
-					t.Fatalf("failed to parse func decl: %s", err)
-				}
-				return
-			}
-
-			if test.err {
-				t.Fatalf("expected error but got no error")
-			}
+			method, isMethod := parseFuncDecl(test.f)
 
 			if isMethod != test.isMethod {
 				t.Fatalf("is method is not match")

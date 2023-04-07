@@ -68,6 +68,7 @@ func (cjt *converterJoinedTable) tablesHash(tableNum int) int64 {
 		return joinedTableIDs[i] < joinedTableIDs[j]
 	})
 
+	//nolint:revive
 	var joinedTableHash int64 = 0
 	var key int64 = 1
 	for _, joinTableID := range joinedTableIDs {
