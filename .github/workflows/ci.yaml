@@ -48,7 +48,7 @@ jobs:
       - run: go generate ./...
       - run: go test ./... -v -coverprofile=./coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v3.1.3
         with:
           file: ./coverage.txt
       - uses: actions/upload-artifact@v3
