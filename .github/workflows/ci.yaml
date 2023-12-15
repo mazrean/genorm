@@ -16,7 +16,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go build -o genorm ./cmd/genorm/
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: genorm
           path: ./genorm
@@ -51,7 +51,7 @@ jobs:
         uses: codecov/codecov-action@v3.1.4
         with:
           file: ./coverage.txt
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage.txt
           path: coverage.txt
