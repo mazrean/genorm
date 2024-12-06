@@ -48,7 +48,7 @@ jobs:
       - run: go generate ./...
       - run: go test ./... -v -coverprofile=./coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5.0.7
+        uses: codecov/codecov-action@v5.1.1
         with:
           file: ./coverage.txt
           fail_ci_if_error: true
