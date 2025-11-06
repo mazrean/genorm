@@ -79,305 +79,291 @@ func (c *testColumn) Expr() (string, []genorm.ExprType, []error) {
 	return c.sqlColumn, nil, nil
 }
 
-func TestSelectGetAll_SingleRow(t *testing.T) {
+func TestSelectGetAll(t *testing.T) {
 	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
 
 	createdAt := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
-
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	}).AddRow(
-		int64(1), "Alice", int32(30), float64(95.5), true, createdAt,
-	)
-
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`).
-		WillReturnRows(rows)
-
-	ctx := context.Background()
-	results, err := genorm.Select(&TestUserTable{}).GetAllCtx(ctx, db)
-
-	require.NoError(t, err)
-	require.Len(t, results, 1)
-
-	// Verify the values are correctly bound
-	id, valid := results[0].ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(1), id)
-
-	name, valid := results[0].Name.Val()
-	assert.True(t, valid)
-	assert.Equal(t, "Alice", name)
-
-	age, valid := results[0].Age.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int32(30), age)
-
-	score, valid := results[0].Score.Val()
-	assert.True(t, valid)
-	assert.Equal(t, 95.5, score)
-
-	active, valid := results[0].Active.Val()
-	assert.True(t, valid)
-	assert.True(t, active)
-
-	createdAtVal, valid := results[0].CreatedAt.Val()
-	assert.True(t, valid)
-	assert.Equal(t, createdAt, createdAtVal)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestSelectGetAll_MultipleRows(t *testing.T) {
-	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
 	createdAt1 := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
 	createdAt2 := time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC)
 	createdAt3 := time.Date(2024, 1, 3, 12, 0, 0, 0, time.UTC)
 
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	}).AddRow(
-		int64(1), "Alice", int32(30), float64(95.5), true, createdAt1,
-	).AddRow(
-		int64(2), "Bob", int32(25), float64(88.0), false, createdAt2,
-	).AddRow(
-		int64(3), "Charlie", int32(35), float64(92.3), true, createdAt3,
-	)
+	tests := []struct {
+		description   string
+		mockRows      func() *sqlmock.Rows
+		expectedQuery string
+		expectError   bool
+		validate      func(t *testing.T, results []*TestUserTable, err error)
+	}{
+		{
+			description: "single row",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				}).AddRow(
+					int64(1), "Alice", int32(30), float64(95.5), true, createdAt,
+				)
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`,
+			validate: func(t *testing.T, results []*TestUserTable, err error) {
+				require.NoError(t, err)
+				require.Len(t, results, 1)
 
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`).
-		WillReturnRows(rows)
+				id, valid := results[0].ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(1), id)
 
-	ctx := context.Background()
-	results, err := genorm.Select(&TestUserTable{}).GetAllCtx(ctx, db)
+				name, valid := results[0].Name.Val()
+				assert.True(t, valid)
+				assert.Equal(t, "Alice", name)
 
-	require.NoError(t, err)
-	require.Len(t, results, 3)
+				age, valid := results[0].Age.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int32(30), age)
 
-	// Verify first row
-	id, valid := results[0].ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(1), id)
-	name, valid := results[0].Name.Val()
-	assert.True(t, valid)
-	assert.Equal(t, "Alice", name)
+				score, valid := results[0].Score.Val()
+				assert.True(t, valid)
+				assert.Equal(t, 95.5, score)
 
-	// Verify second row
-	id, valid = results[1].ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(2), id)
-	name, valid = results[1].Name.Val()
-	assert.True(t, valid)
-	assert.Equal(t, "Bob", name)
+				active, valid := results[0].Active.Val()
+				assert.True(t, valid)
+				assert.True(t, active)
 
-	// Verify third row
-	id, valid = results[2].ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(3), id)
-	name, valid = results[2].Name.Val()
-	assert.True(t, valid)
-	assert.Equal(t, "Charlie", name)
+				createdAtVal, valid := results[0].CreatedAt.Val()
+				assert.True(t, valid)
+				assert.Equal(t, createdAt, createdAtVal)
+			},
+		},
+		{
+			description: "multiple rows",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				}).AddRow(
+					int64(1), "Alice", int32(30), float64(95.5), true, createdAt1,
+				).AddRow(
+					int64(2), "Bob", int32(25), float64(88.0), false, createdAt2,
+				).AddRow(
+					int64(3), "Charlie", int32(35), float64(92.3), true, createdAt3,
+				)
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`,
+			validate: func(t *testing.T, results []*TestUserTable, err error) {
+				require.NoError(t, err)
+				require.Len(t, results, 3)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+				// Verify first row
+				id, valid := results[0].ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(1), id)
+				name, valid := results[0].Name.Val()
+				assert.True(t, valid)
+				assert.Equal(t, "Alice", name)
+
+				// Verify second row
+				id, valid = results[1].ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(2), id)
+				name, valid = results[1].Name.Val()
+				assert.True(t, valid)
+				assert.Equal(t, "Bob", name)
+
+				// Verify third row
+				id, valid = results[2].ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(3), id)
+				name, valid = results[2].Name.Val()
+				assert.True(t, valid)
+				assert.Equal(t, "Charlie", name)
+			},
+		},
+		{
+			description: "empty result",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				})
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`,
+			validate: func(t *testing.T, results []*TestUserTable, err error) {
+				require.NoError(t, err)
+				assert.Len(t, results, 0)
+			},
+		},
+		{
+			description: "null values",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				}).AddRow(
+					int64(1), sql.NullString{Valid: false}, sql.NullInt32{Valid: false}, sql.NullFloat64{Valid: false}, sql.NullBool{Valid: false}, sql.NullTime{Valid: false},
+				)
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`,
+			validate: func(t *testing.T, results []*TestUserTable, err error) {
+				require.NoError(t, err)
+				require.Len(t, results, 1)
+
+				// ID should be valid
+				id, valid := results[0].ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(1), id)
+
+				// Other fields should be invalid (null)
+				_, valid = results[0].Name.Val()
+				assert.False(t, valid)
+
+				_, valid = results[0].Age.Val()
+				assert.False(t, valid)
+
+				_, valid = results[0].Score.Val()
+				assert.False(t, valid)
+
+				_, valid = results[0].Active.Val()
+				assert.False(t, valid)
+
+				_, valid = results[0].CreatedAt.Val()
+				assert.False(t, valid)
+			},
+		},
+		{
+			description: "scan error",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				}).AddRow(
+					int64(1), "Alice", "invalid_age", float64(95.5), true, time.Now(),
+				)
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`,
+			expectError:   true,
+			validate: func(t *testing.T, results []*TestUserTable, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, results)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			defer db.Close()
+
+			rows := test.mockRows()
+			mock.ExpectQuery(test.expectedQuery).WillReturnRows(rows)
+
+			ctx := context.Background()
+			results, err := genorm.Select(&TestUserTable{}).GetAllCtx(ctx, db)
+
+			test.validate(t, results, err)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
 
-func TestSelectGetAll_EmptyResult(t *testing.T) {
+func TestSelectGet(t *testing.T) {
 	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	})
-
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`).
-		WillReturnRows(rows)
-
-	ctx := context.Background()
-	results, err := genorm.Select(&TestUserTable{}).GetAllCtx(ctx, db)
-
-	require.NoError(t, err)
-	assert.Len(t, results, 0)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestSelectGetAll_NullValues(t *testing.T) {
-	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	}).AddRow(
-		int64(1), sql.NullString{Valid: false}, sql.NullInt32{Valid: false}, sql.NullFloat64{Valid: false}, sql.NullBool{Valid: false}, sql.NullTime{Valid: false},
-	)
-
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`).
-		WillReturnRows(rows)
-
-	ctx := context.Background()
-	results, err := genorm.Select(&TestUserTable{}).GetAllCtx(ctx, db)
-
-	require.NoError(t, err)
-	require.Len(t, results, 1)
-
-	// ID should be valid
-	id, valid := results[0].ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(1), id)
-
-	// Other fields should be invalid (null)
-	_, valid = results[0].Name.Val()
-	assert.False(t, valid)
-
-	_, valid = results[0].Age.Val()
-	assert.False(t, valid)
-
-	_, valid = results[0].Score.Val()
-	assert.False(t, valid)
-
-	_, valid = results[0].Active.Val()
-	assert.False(t, valid)
-
-	_, valid = results[0].CreatedAt.Val()
-	assert.False(t, valid)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestSelectGet_SingleRow(t *testing.T) {
-	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
 
 	createdAt := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
 
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	}).AddRow(
-		int64(1), "Alice", int32(30), float64(95.5), true, createdAt,
-	)
+	tests := []struct {
+		description   string
+		mockRows      func() *sqlmock.Rows
+		expectedQuery string
+		expectError   bool
+		validate      func(t *testing.T, result *TestUserTable, err error)
+	}{
+		{
+			description: "single row",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				}).AddRow(
+					int64(1), "Alice", int32(30), float64(95.5), true, createdAt,
+				)
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users LIMIT 1`,
+			validate: func(t *testing.T, result *TestUserTable, err error) {
+				require.NoError(t, err)
 
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users LIMIT 1`).
-		WillReturnRows(rows)
+				id, valid := result.ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(1), id)
 
-	ctx := context.Background()
-	result, err := genorm.Select(&TestUserTable{}).GetCtx(ctx, db)
+				name, valid := result.Name.Val()
+				assert.True(t, valid)
+				assert.Equal(t, "Alice", name)
 
-	require.NoError(t, err)
+				age, valid := result.Age.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int32(30), age)
 
-	// Verify the values are correctly bound
-	id, valid := result.ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(1), id)
+				score, valid := result.Score.Val()
+				assert.True(t, valid)
+				assert.Equal(t, 95.5, score)
 
-	name, valid := result.Name.Val()
-	assert.True(t, valid)
-	assert.Equal(t, "Alice", name)
+				active, valid := result.Active.Val()
+				assert.True(t, valid)
+				assert.True(t, active)
 
-	age, valid := result.Age.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int32(30), age)
+				createdAtVal, valid := result.CreatedAt.Val()
+				assert.True(t, valid)
+				assert.Equal(t, createdAt, createdAtVal)
+			},
+		},
+		{
+			description: "no rows",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				})
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users LIMIT 1`,
+			expectError:   true,
+			validate: func(t *testing.T, result *TestUserTable, err error) {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, genorm.ErrRecordNotFound)
+				assert.Nil(t, result)
+			},
+		},
+		{
+			description: "scan error",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
+				}).AddRow(
+					int64(1), "Alice", "invalid_age", float64(95.5), true, time.Now(),
+				)
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users LIMIT 1`,
+			expectError:   true,
+			validate: func(t *testing.T, result *TestUserTable, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			},
+		},
+	}
 
-	score, valid := result.Score.Val()
-	assert.True(t, valid)
-	assert.Equal(t, 95.5, score)
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 
-	active, valid := result.Active.Val()
-	assert.True(t, valid)
-	assert.True(t, active)
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			defer db.Close()
 
-	createdAtVal, valid := result.CreatedAt.Val()
-	assert.True(t, valid)
-	assert.Equal(t, createdAt, createdAtVal)
+			rows := test.mockRows()
+			mock.ExpectQuery(test.expectedQuery).WillReturnRows(rows)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
+			ctx := context.Background()
+			result, err := genorm.Select(&TestUserTable{}).GetCtx(ctx, db)
 
-func TestSelectGet_NoRows(t *testing.T) {
-	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	})
-
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users LIMIT 1`).
-		WillReturnRows(rows)
-
-	ctx := context.Background()
-	result, err := genorm.Select(&TestUserTable{}).GetCtx(ctx, db)
-
-	assert.Error(t, err)
-	assert.ErrorIs(t, err, genorm.ErrRecordNotFound)
-	assert.Nil(t, result)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestSelectGetAll_ScanError(t *testing.T) {
-	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
-	// Return wrong type for age field (string instead of int)
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	}).AddRow(
-		int64(1), "Alice", "invalid_age", float64(95.5), true, time.Now(),
-	)
-
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users`).
-		WillReturnRows(rows)
-
-	ctx := context.Background()
-	results, err := genorm.Select(&TestUserTable{}).GetAllCtx(ctx, db)
-
-	assert.Error(t, err)
-	assert.Nil(t, results)
-}
-
-func TestSelectGet_ScanError(t *testing.T) {
-	t.Parallel()
-
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
-
-	// Return wrong type for age field (string instead of int)
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0", "users_age_0", "users_score_0", "users_active_0", "users_created_at_0",
-	}).AddRow(
-		int64(1), "Alice", "invalid_age", float64(95.5), true, time.Now(),
-	)
-
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0, users\.age AS users_age_0, users\.score AS users_score_0, users\.active AS users_active_0, users\.created_at AS users_created_at_0 FROM users LIMIT 1`).
-		WillReturnRows(rows)
-
-	ctx := context.Background()
-	result, err := genorm.Select(&TestUserTable{}).GetCtx(ctx, db)
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
+			test.validate(t, result, err)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
 
 // TestPartialUserTable is a test table struct for partial column selection tests
@@ -415,44 +401,65 @@ func (t *TestPartialUserTable) GetErrors() []error {
 func TestSelectGetAll_PartialColumns(t *testing.T) {
 	t.Parallel()
 
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
+	tests := []struct {
+		description   string
+		mockRows      func() *sqlmock.Rows
+		expectedQuery string
+		validate      func(t *testing.T, results []*TestPartialUserTable, err error)
+	}{
+		{
+			description: "partial columns",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"users_id_0", "users_name_0",
+				}).AddRow(
+					int64(1), "Alice",
+				).AddRow(
+					int64(2), "Bob",
+				)
+			},
+			expectedQuery: `SELECT users\.id AS users_id_0, users\.name AS users_name_0 FROM users`,
+			validate: func(t *testing.T, results []*TestPartialUserTable, err error) {
+				require.NoError(t, err)
+				require.Len(t, results, 2)
 
-	rows := sqlmock.NewRows([]string{
-		"users_id_0", "users_name_0",
-	}).AddRow(
-		int64(1), "Alice",
-	).AddRow(
-		int64(2), "Bob",
-	)
+				// Verify first row
+				id, valid := results[0].ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(1), id)
+				name, valid := results[0].Name.Val()
+				assert.True(t, valid)
+				assert.Equal(t, "Alice", name)
 
-	mock.ExpectQuery(`SELECT users\.id AS users_id_0, users\.name AS users_name_0 FROM users`).
-		WillReturnRows(rows)
+				// Verify second row
+				id, valid = results[1].ID.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(2), id)
+				name, valid = results[1].Name.Val()
+				assert.True(t, valid)
+				assert.Equal(t, "Bob", name)
+			},
+		},
+	}
 
-	ctx := context.Background()
-	results, err := genorm.Select(&TestPartialUserTable{}).GetAllCtx(ctx, db)
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 
-	require.NoError(t, err)
-	require.Len(t, results, 2)
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			defer db.Close()
 
-	// Verify first row
-	id, valid := results[0].ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(1), id)
-	name, valid := results[0].Name.Val()
-	assert.True(t, valid)
-	assert.Equal(t, "Alice", name)
+			rows := test.mockRows()
+			mock.ExpectQuery(test.expectedQuery).WillReturnRows(rows)
 
-	// Verify second row
-	id, valid = results[1].ID.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(2), id)
-	name, valid = results[1].Name.Val()
-	assert.True(t, valid)
-	assert.Equal(t, "Bob", name)
+			ctx := context.Background()
+			results, err := genorm.Select(&TestPartialUserTable{}).GetAllCtx(ctx, db)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+			test.validate(t, results, err)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
 
 // TestNumericTypes tests various numeric type bindings
@@ -514,69 +521,90 @@ func (t *TestNumericTable) GetErrors() []error {
 func TestSelectGetAll_NumericTypes(t *testing.T) {
 	t.Parallel()
 
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
+	tests := []struct {
+		description   string
+		mockRows      func() *sqlmock.Rows
+		expectedQuery string
+		validate      func(t *testing.T, results []*TestNumericTable, err error)
+	}{
+		{
+			description: "numeric types",
+			mockRows: func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{
+					"numeric_test_int8_val_0", "numeric_test_int16_val_0", "numeric_test_int32_val_0", "numeric_test_int64_val_0",
+					"numeric_test_uint8_val_0", "numeric_test_uint16_val_0", "numeric_test_uint32_val_0", "numeric_test_uint64_val_0",
+					"numeric_test_float32_0", "numeric_test_float64_0",
+				}).AddRow(
+					int8(127), int16(32767), int32(2147483647), int64(9223372036854775807),
+					uint8(255), uint16(65535), uint32(4294967295), uint64(1234567890),
+					float32(3.14), float64(2.718281828),
+				)
+			},
+			expectedQuery: `SELECT numeric_test\.int8_val AS numeric_test_int8_val_0, numeric_test\.int16_val AS numeric_test_int16_val_0, numeric_test\.int32_val AS numeric_test_int32_val_0, numeric_test\.int64_val AS numeric_test_int64_val_0, numeric_test\.uint8_val AS numeric_test_uint8_val_0, numeric_test\.uint16_val AS numeric_test_uint16_val_0, numeric_test\.uint32_val AS numeric_test_uint32_val_0, numeric_test\.uint64_val AS numeric_test_uint64_val_0, numeric_test\.float32 AS numeric_test_float32_0, numeric_test\.float64 AS numeric_test_float64_0 FROM numeric_test`,
+			validate: func(t *testing.T, results []*TestNumericTable, err error) {
+				require.NoError(t, err)
+				require.Len(t, results, 1)
 
-	rows := sqlmock.NewRows([]string{
-		"numeric_test_int8_val_0", "numeric_test_int16_val_0", "numeric_test_int32_val_0", "numeric_test_int64_val_0",
-		"numeric_test_uint8_val_0", "numeric_test_uint16_val_0", "numeric_test_uint32_val_0", "numeric_test_uint64_val_0",
-		"numeric_test_float32_0", "numeric_test_float64_0",
-	}).AddRow(
-		int8(127), int16(32767), int32(2147483647), int64(9223372036854775807),
-		uint8(255), uint16(65535), uint32(4294967295), uint64(1234567890),
-		float32(3.14), float64(2.718281828),
-	)
+				// Verify all numeric types are correctly bound
+				int8Val, valid := results[0].Int8Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int8(127), int8Val)
 
-	mock.ExpectQuery(`SELECT numeric_test\.int8_val AS numeric_test_int8_val_0, numeric_test\.int16_val AS numeric_test_int16_val_0, numeric_test\.int32_val AS numeric_test_int32_val_0, numeric_test\.int64_val AS numeric_test_int64_val_0, numeric_test\.uint8_val AS numeric_test_uint8_val_0, numeric_test\.uint16_val AS numeric_test_uint16_val_0, numeric_test\.uint32_val AS numeric_test_uint32_val_0, numeric_test\.uint64_val AS numeric_test_uint64_val_0, numeric_test\.float32 AS numeric_test_float32_0, numeric_test\.float64 AS numeric_test_float64_0 FROM numeric_test`).
-		WillReturnRows(rows)
+				int16Val, valid := results[0].Int16Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int16(32767), int16Val)
 
-	ctx := context.Background()
-	results, err := genorm.Select(&TestNumericTable{}).GetAllCtx(ctx, db)
+				int32Val, valid := results[0].Int32Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int32(2147483647), int32Val)
 
-	require.NoError(t, err)
-	require.Len(t, results, 1)
+				int64Val, valid := results[0].Int64Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, int64(9223372036854775807), int64Val)
 
-	// Verify all numeric types are correctly bound
-	int8Val, valid := results[0].Int8Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int8(127), int8Val)
+				uint8Val, valid := results[0].Uint8Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, uint8(255), uint8Val)
 
-	int16Val, valid := results[0].Int16Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int16(32767), int16Val)
+				uint16Val, valid := results[0].Uint16Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, uint16(65535), uint16Val)
 
-	int32Val, valid := results[0].Int32Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int32(2147483647), int32Val)
+				uint32Val, valid := results[0].Uint32Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, uint32(4294967295), uint32Val)
 
-	int64Val, valid := results[0].Int64Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, int64(9223372036854775807), int64Val)
+				uint64Val, valid := results[0].Uint64Val.Val()
+				assert.True(t, valid)
+				assert.Equal(t, uint64(1234567890), uint64Val)
 
-	uint8Val, valid := results[0].Uint8Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, uint8(255), uint8Val)
+				float32Val, valid := results[0].Float32.Val()
+				assert.True(t, valid)
+				assert.InDelta(t, float32(3.14), float32Val, 0.01)
 
-	uint16Val, valid := results[0].Uint16Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, uint16(65535), uint16Val)
+				float64Val, valid := results[0].Float64.Val()
+				assert.True(t, valid)
+				assert.InDelta(t, 2.718281828, float64Val, 0.00001)
+			},
+		},
+	}
 
-	uint32Val, valid := results[0].Uint32Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, uint32(4294967295), uint32Val)
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			t.Parallel()
 
-	uint64Val, valid := results[0].Uint64Val.Val()
-	assert.True(t, valid)
-	assert.Equal(t, uint64(1234567890), uint64Val)
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			defer db.Close()
 
-	float32Val, valid := results[0].Float32.Val()
-	assert.True(t, valid)
-	assert.InDelta(t, float32(3.14), float32Val, 0.01)
+			rows := test.mockRows()
+			mock.ExpectQuery(test.expectedQuery).WillReturnRows(rows)
 
-	float64Val, valid := results[0].Float64.Val()
-	assert.True(t, valid)
-	assert.InDelta(t, 2.718281828, float64Val, 0.00001)
+			ctx := context.Background()
+			results, err := genorm.Select(&TestNumericTable{}).GetAllCtx(ctx, db)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+			test.validate(t, results, err)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
