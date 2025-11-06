@@ -3,12 +3,12 @@ module github.com/mazrean/genorm
 go 1.24.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.11.1
 )
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 )

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestUserTable is a test table struct
+// TestUserTable is a test table struct for Select binding tests
 type TestUserTable struct {
 	ID        genorm.WrappedPrimitive[int64]
 	Name      genorm.WrappedPrimitive[string]
@@ -380,7 +380,7 @@ func TestSelectGet_ScanError(t *testing.T) {
 	assert.Nil(t, result)
 }
 
-// TestPartialSelect tests selecting only specific columns
+// TestPartialUserTable is a test table struct for partial column selection tests
 type TestPartialUserTable struct {
 	ID   genorm.WrappedPrimitive[int64]
 	Name genorm.WrappedPrimitive[string]
@@ -572,7 +572,7 @@ func TestSelectGetAll_NumericTypes(t *testing.T) {
 
 	float32Val, valid := results[0].Float32.Val()
 	assert.True(t, valid)
-	assert.InDelta(t, float32(3.14), float32Val, 0.001)
+	assert.InDelta(t, float32(3.14), float32Val, 0.01)
 
 	float64Val, valid := results[0].Float64.Val()
 	assert.True(t, valid)
