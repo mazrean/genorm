@@ -8,9 +8,9 @@ import (
 // Aggregate Functions
 
 /*
-Avg
-if (distinct) {return AVG(DISTINCT expr)}
-else {return AVG(expr)}
+	Avg
+	if (distinct) {return AVG(DISTINCT expr)}
+	else {return AVG(expr)}
 */
 func Avg[T Table, S ExprType](expr TypedTableExpr[T, S], distinct bool) TypedTableExpr[T, WrappedPrimitive[float64]] {
 	if expr == nil {
@@ -39,9 +39,9 @@ func Avg[T Table, S ExprType](expr TypedTableExpr[T, S], distinct bool) TypedTab
 }
 
 /*
-Count
-if (distinct) {return COUNT(DISTINCT expr)}
-else {return COUNT(expr)}
+	Count
+	if (distinct) {return COUNT(DISTINCT expr)}
+	else {return COUNT(expr)}
 */
 func Count[T Table, S ExprType](expr TypedTableExpr[T, S], distinct bool) TypedTableExpr[T, WrappedPrimitive[int64]] {
 	if expr == nil {
