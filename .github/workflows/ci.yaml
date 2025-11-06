@@ -16,7 +16,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go build -o genorm ./cmd/genorm/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: genorm
           path: ./genorm
@@ -53,7 +53,7 @@ jobs:
           file: ./coverage.txt
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: coverage.txt
           path: coverage.txt
