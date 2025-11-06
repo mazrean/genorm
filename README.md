@@ -3,6 +3,7 @@
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 [![](https://pkg.go.dev/badge/github.com/mazrean/genorm)](https://pkg.go.dev/github.com/mazrean/genorm)
 [![](https://github.com/mazrean/genorm/workflows/CI/badge.svg)](https://github.com/mazrean/genorm/actions)
+<a href="https://flatt.tech/oss/gmo/trampoline" target="_blank"><img src="https://flatt.tech/assets/images/badges/gmo-oss.svg" height="24px"/></a>
 
 SQL Builder to prevent SQL mistakes using the Golang generics
 
