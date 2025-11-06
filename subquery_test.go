@@ -256,3 +256,171 @@ func TestSubQueryWithOperators(t *testing.T) {
 		assert.Equal(t, []genorm.ExprType{}, args)
 	})
 }
+
+// TestSubQueryExampleUsage demonstrates typical usage patterns for SubQuery
+func TestSubQueryExampleUsage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("find users with value greater than subquery max", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+
+		// Inner table for subquery - finds max value from statistics
+		mockStatsTable := mock.NewMockTable(ctrl)
+		mockStatsMaxValue := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[int]](ctrl)
+		mockStatsStatusColumn := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+
+		mockStatsTable.
+			EXPECT().
+			GetErrors().
+			Return(nil).
+			AnyTimes()
+
+		mockStatsTable.
+			EXPECT().
+			Expr().
+			Return("statistics", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		mockStatsMaxValue.
+			EXPECT().
+			Expr().
+			Return("MAX(statistics.value)", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		mockStatsStatusColumn.
+			EXPECT().
+			Expr().
+			Return("(statistics.active = ?)", []genorm.ExprType{genorm.Wrap(true)}, []error{}).
+			AnyTimes()
+
+		// Outer table column - user value
+		mockUserValue := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[int]](ctrl)
+		mockUserValue.
+			EXPECT().
+			Expr().
+			Return("users.value", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		// Create subquery: SELECT MAX(value) FROM statistics WHERE active = true
+		subQuery := genorm.SubQuery[*mock.MockTable](
+			genorm.Pluck(mockStatsTable, mockStatsMaxValue).
+				Where(mockStatsStatusColumn),
+		)
+
+		// Use in comparison: users.value > (SELECT MAX(value) FROM statistics WHERE active = true)
+		condition := genorm.Gt(mockUserValue, subQuery)
+
+		query, args, errs := condition.Expr()
+		assert.Nil(t, errs)
+		assert.Equal(t, "(users.value > (SELECT MAX(statistics.value) AS res FROM statistics WHERE (statistics.active = ?)))", query)
+		assert.Equal(t, []genorm.ExprType{genorm.Wrap(true)}, args)
+	})
+
+	t.Run("find records where column equals subquery result", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+
+		// Inner table for subquery
+		mockInnerTable := mock.NewMockTable(ctrl)
+		mockInnerColumn := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[int]](ctrl)
+
+		mockInnerTable.
+			EXPECT().
+			GetErrors().
+			Return(nil).
+			AnyTimes()
+
+		mockInnerTable.
+			EXPECT().
+			Expr().
+			Return("inner_table", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		mockInnerColumn.
+			EXPECT().
+			Expr().
+			Return("inner_table.target_id", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		// Outer table column
+		mockOuterColumn := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[int]](ctrl)
+		mockOuterColumn.
+			EXPECT().
+			Expr().
+			Return("outer_table.id", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		// Create subquery with LIMIT to get single value
+		pluckCtx := genorm.Pluck(mockInnerTable, mockInnerColumn).Limit(1)
+		subQuery := genorm.SubQuery[*mock.MockTable](pluckCtx)
+
+		// Use in equality comparison
+		condition := genorm.Eq(mockOuterColumn, subQuery)
+
+		query, args, errs := condition.Expr()
+		assert.Nil(t, errs)
+		assert.Equal(t, "(outer_table.id = (SELECT inner_table.target_id AS res FROM inner_table LIMIT 1))", query)
+		assert.Equal(t, []genorm.ExprType{}, args)
+	})
+
+	t.Run("subquery with count aggregate", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+
+		// Inner table for subquery
+		mockInnerTable := mock.NewMockTable(ctrl)
+		mockInnerIDColumn := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[int]](ctrl)
+		mockInnerStatusColumn := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[bool]](ctrl)
+
+		mockInnerTable.
+			EXPECT().
+			GetErrors().
+			Return(nil).
+			AnyTimes()
+
+		mockInnerTable.
+			EXPECT().
+			Expr().
+			Return("orders", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		mockInnerIDColumn.
+			EXPECT().
+			Expr().
+			Return("orders.id", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		mockInnerStatusColumn.
+			EXPECT().
+			Expr().
+			Return("(orders.status = ?)", []genorm.ExprType{genorm.Wrap("completed")}, []error{}).
+			AnyTimes()
+
+		// Outer table column
+		mockOuterThreshold := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[int64]](ctrl)
+		mockOuterThreshold.
+			EXPECT().
+			Expr().
+			Return("users.order_threshold", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		// Create COUNT subquery
+		mockCountExpr := mock.NewMockTypedTableColumn[*mock.MockTable, genorm.WrappedPrimitive[int64]](ctrl)
+		mockCountExpr.
+			EXPECT().
+			Expr().
+			Return("COUNT(orders.id)", []genorm.ExprType{}, []error{}).
+			AnyTimes()
+
+		subQuery := genorm.SubQuery[*mock.MockTable](
+			genorm.Pluck(mockInnerTable, mockCountExpr).
+				Where(mockInnerStatusColumn),
+		)
+
+		// Use in comparison: threshold < (SELECT COUNT(id) FROM orders WHERE status = 'completed')
+		condition := genorm.Lt(mockOuterThreshold, subQuery)
+
+		query, args, errs := condition.Expr()
+		assert.Nil(t, errs)
+		assert.Equal(t, "(users.order_threshold < (SELECT COUNT(orders.id) AS res FROM orders WHERE (orders.status = ?)))", query)
+		assert.Equal(t, []genorm.ExprType{genorm.Wrap("completed")}, args)
+	})
+}
