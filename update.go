@@ -15,8 +15,8 @@ type UpdateContext[T Table] struct {
 	limit          limitClause
 }
 
-func Update[T Table](table T) *UpdateContext[T] {
-	ctx := newContext(table)
+func Update[T Table](table T, options ...Option) *UpdateContext[T] {
+	ctx := newContext(table, options...)
 
 	return &UpdateContext[T]{
 		Context: ctx,
@@ -81,6 +81,8 @@ func (c *UpdateContext[T]) DoCtx(ctx context.Context, db DB) (rowsAffected int64
 	for _, arg := range exprArgs {
 		args = append(args, arg)
 	}
+
+	query = c.config.formatQuery(query)
 
 	result, err := db.ExecContext(ctx, query, args...)
 	if err != nil {

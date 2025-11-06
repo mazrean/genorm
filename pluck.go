@@ -21,9 +21,9 @@ type PluckContext[T Table, S ExprType] struct {
 	lockType        lockClause
 }
 
-func Pluck[T Table, S ExprType](table T, field TypedTableExpr[T, S]) *PluckContext[T, S] {
+func Pluck[T Table, S ExprType](table T, field TypedTableExpr[T, S], options ...Option) *PluckContext[T, S] {
 	return &PluckContext[T, S]{
-		Context: newContext(table),
+		Context: newContext(table, options...),
 		field:   field,
 	}
 }
@@ -125,6 +125,8 @@ func (c *PluckContext[T, S]) GetAllCtx(ctx context.Context, db DB) ([]S, error) 
 		args = append(args, arg)
 	}
 
+	query = c.config.formatQuery(query)
+
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
 		return []S{}, nil
@@ -175,6 +177,8 @@ func (c *PluckContext[T, S]) GetCtx(ctx context.Context, db DB) (S, error) {
 	for _, arg := range queryArgs {
 		args = append(args, arg)
 	}
+
+	query = c.config.formatQuery(query)
 
 	row := db.QueryRowContext(ctx, query, args...)
 

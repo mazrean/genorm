@@ -1,14 +1,21 @@
 package genorm
 
 type Context[T Table] struct {
-	table T
-	errs  []error
+	table  T
+	errs   []error
+	config genormConfig
 }
 
-func newContext[T Table](table T) *Context[T] {
+func newContext[T Table](table T, options ...Option) *Context[T] {
+	config := defaultConfig()
+	for _, option := range options {
+		option(&config)
+	}
+
 	return &Context[T]{
-		table: table,
-		errs:  table.GetErrors(),
+		table:  table,
+		errs:   table.GetErrors(),
+		config: config,
 	}
 }
 

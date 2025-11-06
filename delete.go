@@ -13,8 +13,8 @@ type DeleteContext[T BasicTable] struct {
 	limit          limitClause
 }
 
-func Delete[T BasicTable](table T) *DeleteContext[T] {
-	ctx := newContext(table)
+func Delete[T BasicTable](table T, options ...Option) *DeleteContext[T] {
+	ctx := newContext(table, options...)
 
 	return &DeleteContext[T]{
 		Context: ctx,
@@ -68,6 +68,8 @@ func (c *DeleteContext[T]) DoCtx(ctx context.Context, db DB) (rowsAffected int64
 	for _, arg := range exprArgs {
 		args = append(args, arg)
 	}
+
+	query = c.config.formatQuery(query)
 
 	result, err := db.ExecContext(ctx, query, args...)
 	if err != nil {

@@ -21,9 +21,9 @@ type SelectContext[S any, T TablePointer[S]] struct {
 	lockType        lockClause
 }
 
-func Select[S any, T TablePointer[S]](table T) *SelectContext[S, T] {
+func Select[S any, T TablePointer[S]](table T, options ...Option) *SelectContext[S, T] {
 	return &SelectContext[S, T]{
-		Context: newContext(table),
+		Context: newContext(table, options...),
 	}
 }
 
@@ -150,6 +150,8 @@ func (c *SelectContext[S, T]) GetAllCtx(ctx context.Context, db DB) ([]T, error)
 		args = append(args, arg)
 	}
 
+	query = c.config.formatQuery(query)
+
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
 		return []T{}, nil
@@ -209,6 +211,8 @@ func (c *SelectContext[S, T]) GetCtx(ctx context.Context, db DB) (T, error) {
 	for _, arg := range exprArgs {
 		args = append(args, arg)
 	}
+
+	query = c.config.formatQuery(query)
 
 	row := db.QueryRowContext(ctx, query, args...)
 

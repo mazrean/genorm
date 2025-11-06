@@ -13,8 +13,8 @@ type InsertContext[T BasicTable] struct {
 	fields []TableColumns[T]
 }
 
-func Insert[T BasicTable](table T) *InsertContext[T] {
-	ctx := newContext(table)
+func Insert[T BasicTable](table T, options ...Option) *InsertContext[T] {
+	ctx := newContext(table, options...)
 
 	return &InsertContext[T]{
 		Context: ctx,
@@ -75,6 +75,8 @@ func (c *InsertContext[T]) DoCtx(ctx context.Context, db DB) (rowsAffected int64
 	if err != nil {
 		return 0, fmt.Errorf("build query: %w", err)
 	}
+
+	query = c.config.formatQuery(query)
 
 	result, err := db.ExecContext(ctx, query, args...)
 	if err != nil {
