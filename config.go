@@ -1,6 +1,9 @@
 package genorm
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Ref[T any] struct{}
 
@@ -41,20 +44,6 @@ func WithDBType(dbType DBType) Option {
 	}
 }
 
-// formatPlaceholder formats a placeholder based on the database type.
-// For MySQL/SQLite: returns "?"
-// For PostgreSQL: returns "$n" where n is the argument index (1-based).
-func (c *genormConfig) formatPlaceholder(index int) string {
-	switch c.dbType {
-	case PostgreSQL:
-		return fmt.Sprintf("$%d", index)
-	case MySQL, SQLite:
-		return "?"
-	default:
-		return "?"
-	}
-}
-
 // formatQuery replaces all '?' placeholders in the query with the appropriate
 // placeholder format based on the database type.
 func (c *genormConfig) formatQuery(query string) string {
@@ -63,15 +52,16 @@ func (c *genormConfig) formatQuery(query string) string {
 	}
 
 	// For PostgreSQL, replace ? with $1, $2, $3, ...
-	result := ""
+	var result strings.Builder
+	result.Grow(len(query) + 10) // Pre-allocate with some extra space for $N placeholders
 	index := 1
 	for i := 0; i < len(query); i++ {
 		if query[i] == '?' {
-			result += fmt.Sprintf("$%d", index)
+			result.WriteString(fmt.Sprintf("$%d", index))
 			index++
 		} else {
-			result += string(query[i])
+			result.WriteByte(query[i])
 		}
 	}
-	return result
+	return result.String()
 }
