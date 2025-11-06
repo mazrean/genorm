@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 )
 
 type PluckContext[T Table, S ExprType] struct {
@@ -125,7 +124,6 @@ func (c *PluckContext[T, S]) GetAllCtx(ctx context.Context, db DB) ([]S, error) 
 		args = append(args, arg)
 	}
 
-	query = c.config.formatQuery(query)
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -178,7 +176,6 @@ func (c *PluckContext[T, S]) GetCtx(ctx context.Context, db DB) (S, error) {
 		args = append(args, arg)
 	}
 
-	query = c.config.formatQuery(query)
 
 	row := db.QueryRowContext(ctx, query, args...)
 
@@ -198,18 +195,18 @@ func (c *PluckContext[T, S]) Get(db DB) (S, error) {
 }
 
 func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
-	sb := strings.Builder{}
+	qb := c.config.newQueryBuilder()
 	args := []ExprType{}
 
 	str := "SELECT "
-	_, err := sb.WriteString(str)
+	err := qb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write select(%s): %w", str, err)
 	}
 
 	if c.distinct {
 		str = "DISTINCT "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write distinct(%s): %w", str, err)
 		}
@@ -220,13 +217,13 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		return "", nil, fmt.Errorf("field: %w", errs[0])
 	}
 
-	_, err = sb.WriteString(fieldQuery)
+	err = qb.WriteExprQuery(fieldQuery)
 	if err != nil {
 		return "", nil, fmt.Errorf("write field(%s): %w", fieldQuery, err)
 	}
 
 	str = " AS res"
-	_, err = sb.WriteString(str)
+	err = qb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write as(%s): %w", str, err)
 	}
@@ -234,7 +231,7 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 	args = append(args, fieldArgs...)
 
 	str = " FROM "
-	_, err = sb.WriteString(str)
+	err = qb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write from(%s): %w", str, err)
 	}
@@ -244,7 +241,7 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		return "", nil, fmt.Errorf("table expr: %w", errs[0])
 	}
 
-	_, err = sb.WriteString(tableQuery)
+	err = qb.WriteExprQuery(tableQuery)
 	if err != nil {
 		return "", nil, fmt.Errorf("write table(%s): %w", tableQuery, err)
 	}
@@ -258,12 +255,12 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " WHERE "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write where(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(whereQuery)
+		err = qb.WriteExprQuery(whereQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write where(%s): %w", whereQuery, err)
 		}
@@ -278,12 +275,12 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(groupExpr)
+		err = qb.WriteExprQuery(groupExpr)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", groupExpr, err)
 		}
@@ -298,12 +295,12 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " HAVING "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write having(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(havingQuery)
+		err = qb.WriteExprQuery(havingQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write having(%s): %w", havingQuery, err)
 		}
@@ -318,12 +315,12 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write order(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(orderQuery)
+		err = qb.WriteExprQuery(orderQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write order(%s): %w", orderQuery, err)
 		}
@@ -338,12 +335,12 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write limit(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(limitQuery)
+		err = qb.WriteString(limitQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write limit(%s): %w", limitQuery, err)
 		}
@@ -358,12 +355,12 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write offset(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(offsetQuery)
+		err = qb.WriteString(offsetQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write offset(%s): %w", offsetQuery, err)
 		}
@@ -378,12 +375,12 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write lock(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(lockQuery)
+		err = qb.WriteString(lockQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write lock(%s): %w", lockQuery, err)
 		}
@@ -391,5 +388,5 @@ func (c *PluckContext[T, S]) buildQuery() (string, []ExprType, error) {
 		args = append(args, lockArgs...)
 	}
 
-	return sb.String(), args, nil
+	return qb.String(), args, nil
 }

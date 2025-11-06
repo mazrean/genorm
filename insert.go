@@ -76,8 +76,6 @@ func (c *InsertContext[T]) DoCtx(ctx context.Context, db DB) (rowsAffected int64
 		return 0, fmt.Errorf("build query: %w", err)
 	}
 
-	query = c.config.formatQuery(query)
-
 	result, err := db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("exec: %w", err)
@@ -144,6 +142,7 @@ func (c *InsertContext[T]) buildQuery() (string, []any, error) {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
+	argIndex := 1
 	for i, value := range c.values {
 		if i != 0 {
 			str = ", "
@@ -154,7 +153,7 @@ func (c *InsertContext[T]) buildQuery() (string, []any, error) {
 		}
 
 		var err error
-		sb, args, err = c.buildValueList(sb, args, fields, value.ColumnMap())
+		sb, args, argIndex, err = c.buildValueList(sb, args, argIndex, fields, value.ColumnMap())
 		if err != nil {
 			return "", nil, fmt.Errorf("build value list: %w", err)
 		}
@@ -163,11 +162,11 @@ func (c *InsertContext[T]) buildQuery() (string, []any, error) {
 	return sb.String(), args, nil
 }
 
-func (c *InsertContext[T]) buildValueList(sb *strings.Builder, args []any, fields []string, fieldValueMap map[string]ColumnFieldExprType) (*strings.Builder, []any, error) {
+func (c *InsertContext[T]) buildValueList(sb *strings.Builder, args []any, argIndex int, fields []string, fieldValueMap map[string]ColumnFieldExprType) (*strings.Builder, []any, int, error) {
 	str := "("
 	_, err := sb.WriteString(str)
 	if err != nil {
-		return sb, args, fmt.Errorf("write string(%s): %w", str, err)
+		return sb, args, argIndex, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
 	for i, columnName := range fields {
@@ -175,42 +174,43 @@ func (c *InsertContext[T]) buildValueList(sb *strings.Builder, args []any, field
 			str = ", "
 			_, err = sb.WriteString(str)
 			if err != nil {
-				return sb, args, fmt.Errorf("write string(%s): %w", str, err)
+				return sb, args, argIndex, fmt.Errorf("write string(%s): %w", str, err)
 			}
 		}
 
 		columnField, ok := fieldValueMap[columnName]
 		if !ok {
-			return sb, nil, fmt.Errorf("field(%s) not found", columnName)
+			return sb, nil, argIndex, fmt.Errorf("field(%s) not found", columnName)
 		}
 
 		_, err := columnField.Value()
 		if err != nil && !errors.Is(err, ErrNullValue) {
-			return sb, nil, fmt.Errorf("failed to get field value: %w", err)
+			return sb, nil, argIndex, fmt.Errorf("failed to get field value: %w", err)
 		}
 
 		if errors.Is(err, ErrNullValue) {
 			str = "NULL"
 			_, err = sb.WriteString(str)
 			if err != nil {
-				return sb, nil, fmt.Errorf("write string(%s): %w", str, err)
+				return sb, nil, argIndex, fmt.Errorf("write string(%s): %w", str, err)
 			}
 		} else {
-			str = "?"
+			str = c.config.placeholder(argIndex)
 			_, err = sb.WriteString(str)
 			if err != nil {
-				return sb, nil, fmt.Errorf("write string(%s): %w", str, err)
+				return sb, nil, argIndex, fmt.Errorf("write string(%s): %w", str, err)
 			}
 
 			args = append(args, columnField)
+			argIndex++
 		}
 	}
 
 	str = ")"
 	_, err = sb.WriteString(str)
 	if err != nil {
-		return sb, nil, fmt.Errorf("write string(%s): %w", str, err)
+		return sb, nil, argIndex, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
-	return sb, args, nil
+	return sb, args, argIndex, nil
 }

@@ -71,7 +71,7 @@ func TestFormatQuery(t *testing.T) {
 			t.Parallel()
 
 			config := genormConfig{dbType: test.dbType}
-			result := config.formatQuery(test.input)
+			result, _ := config.replacePlaceholders(test.input, 1)
 
 			assert.Equal(t, test.expected, result)
 		})
@@ -129,7 +129,7 @@ func TestInLitPlaceholders(t *testing.T) {
 
 			// Verify it can be formatted for PostgreSQL
 			config := genormConfig{dbType: PostgreSQL}
-			pgQuery := config.formatQuery(query)
+			pgQuery, _ := config.replacePlaceholders(query, 1)
 
 			// Count placeholders in result
 			placeholderCount := strings.Count(pgQuery, "$")
