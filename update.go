@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 )
 
 type UpdateContext[T Table] struct {
@@ -15,8 +14,8 @@ type UpdateContext[T Table] struct {
 	limit          limitClause
 }
 
-func Update[T Table](table T) *UpdateContext[T] {
-	ctx := newContext(table)
+func Update[T Table](table T, options ...Option) *UpdateContext[T] {
+	ctx := newContext(table, options...)
 
 	return &UpdateContext[T]{
 		Context: ctx,
@@ -101,11 +100,10 @@ func (c *UpdateContext[T]) Do(db DB) (rowsAffected int64, err error) {
 
 func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 	args := []ExprType{}
-
-	sb := strings.Builder{}
+	qb := c.config.newQueryBuilder()
 
 	str := "UPDATE "
-	_, err := sb.WriteString(str)
+	err := qb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
@@ -115,7 +113,7 @@ func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 		return "", nil, fmt.Errorf("table expr: %w", errs[0])
 	}
 
-	_, err = sb.WriteString(tableQuery)
+	err = qb.WriteExprQuery(tableQuery)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", tableQuery, err)
 	}
@@ -127,26 +125,29 @@ func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 	}
 
 	str = " SET "
-	_, err = sb.WriteString(str)
+	err = qb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
-	assignments := make([]string, 0, len(c.assignExprs))
-	for _, expr := range c.assignExprs {
+	for i, expr := range c.assignExprs {
+		if i > 0 {
+			err = qb.WriteString(", ")
+			if err != nil {
+				return "", nil, fmt.Errorf("write string: %w", err)
+			}
+		}
+
 		assignmentQuery, assignmentArgs, errs := expr.AssignExpr()
 		if len(errs) != 0 {
 			return "", nil, errs[0]
 		}
 
-		assignments = append(assignments, assignmentQuery)
+		err = qb.WriteExprQuery(assignmentQuery)
+		if err != nil {
+			return "", nil, fmt.Errorf("write assignment: %w", err)
+		}
 		args = append(args, assignmentArgs...)
-	}
-
-	str = strings.Join(assignments, ", ")
-	_, err = sb.WriteString(str)
-	if err != nil {
-		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
 	if c.whereCondition.exists() {
@@ -156,12 +157,12 @@ func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " WHERE "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(whereQuery)
+		err = qb.WriteExprQuery(whereQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", whereQuery, err)
 		}
@@ -176,12 +177,12 @@ func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(orderQuery)
+		err = qb.WriteExprQuery(orderQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", orderQuery, err)
 		}
@@ -196,12 +197,12 @@ func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(limitQuery)
+		err = qb.WriteExprQuery(limitQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", limitQuery, err)
 		}
@@ -209,5 +210,5 @@ func (c *UpdateContext[T]) buildQuery() (string, []ExprType, error) {
 		args = append(args, limitArgs...)
 	}
 
-	return sb.String(), args, nil
+	return qb.String(), args, nil
 }
