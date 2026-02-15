@@ -3,7 +3,6 @@ package genorm
 import (
 	"context"
 	"fmt"
-	"strings"
 )
 
 type DeleteContext[T BasicTable] struct {
@@ -13,8 +12,8 @@ type DeleteContext[T BasicTable] struct {
 	limit          limitClause
 }
 
-func Delete[T BasicTable](table T) *DeleteContext[T] {
-	ctx := newContext(table)
+func Delete[T BasicTable](table T, options ...Option) *DeleteContext[T] {
+	ctx := newContext(table, options...)
 
 	return &DeleteContext[T]{
 		Context: ctx,
@@ -88,17 +87,16 @@ func (c *DeleteContext[T]) Do(db DB) (rowsAffected int64, err error) {
 
 func (c *DeleteContext[T]) buildQuery() (string, []ExprType, error) {
 	args := []ExprType{}
-
-	sb := strings.Builder{}
+	qb := c.config.newQueryBuilder()
 
 	str := "DELETE FROM "
-	_, err := sb.WriteString(str)
+	err := qb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
 
 	str = c.table.TableName()
-	_, err = sb.WriteString(str)
+	err = qb.WriteString(str)
 	if err != nil {
 		return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 	}
@@ -110,12 +108,12 @@ func (c *DeleteContext[T]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " WHERE "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(whereQuery)
+		err = qb.WriteExprQuery(whereQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", whereQuery, err)
 		}
@@ -130,12 +128,12 @@ func (c *DeleteContext[T]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(orderQuery)
+		err = qb.WriteExprQuery(orderQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", orderQuery, err)
 		}
@@ -150,12 +148,12 @@ func (c *DeleteContext[T]) buildQuery() (string, []ExprType, error) {
 		}
 
 		str = " "
-		_, err = sb.WriteString(str)
+		err = qb.WriteString(str)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", str, err)
 		}
 
-		_, err = sb.WriteString(limitQuery)
+		err = qb.WriteExprQuery(limitQuery)
 		if err != nil {
 			return "", nil, fmt.Errorf("write string(%s): %w", limitQuery, err)
 		}
@@ -163,5 +161,5 @@ func (c *DeleteContext[T]) buildQuery() (string, []ExprType, error) {
 		args = append(args, limitArgs...)
 	}
 
-	return sb.String(), args, nil
+	return qb.String(), args, nil
 }
