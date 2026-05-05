@@ -1,0 +1,8 @@
+name: genorm
+version: 0.1.0
+description: Type-safe ORM / query builder for Go.
+
+dependencies:
+  apm:
+    - mazrean/apm-plackage/common
+    - mazrean/apm-plackage/go
